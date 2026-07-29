@@ -2,7 +2,9 @@ import 'package:flutter/scheduler.dart';
 import 'package:motionpath_core/motionpath_core.dart';
 
 class MotionPathTickerDriver {
-  MotionPathTickerDriver(this.engine, TickerProvider provider) : _ticker = provider.createTicker(_tick);
+  MotionPathTickerDriver(this.engine, TickerProvider provider) {
+    _ticker = provider.createTicker(_tick);
+  }
 
   final MotionPathEngine engine;
   late final Ticker _ticker;
@@ -17,8 +19,9 @@ class MotionPathTickerDriver {
     final previous = _last;
     _last = elapsed;
     if (previous == null) return;
+    // Engine tick integration follows in the next runtime slice. This driver
+    // deliberately owns the only frame source and currently measures delta.
     final delta = (elapsed - previous).inMicroseconds / Duration.microsecondsPerSecond;
-    // Engine tick integration is intentionally next: the driver owns the only frame source.
-    if (delta < 0) engine.destroy();
+    if (delta < 0) _last = elapsed;
   }
 }
