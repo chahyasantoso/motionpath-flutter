@@ -1,0 +1,16 @@
+name: motionpath_flutter
+description: Flutter adapters and renderers for the MotionPath v4 engine.
+version: 0.1.0
+publish_to: none
+environment:
+  sdk: '>=3.4.0 <4.0.0'
+  flutter: '>=3.22.0'
+dependencies:
+  flutter:
+    sdk: flutter
+  motionpath_core:
+    path: ../motionpath_core
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
