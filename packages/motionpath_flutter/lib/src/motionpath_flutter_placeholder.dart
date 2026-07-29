@@ -1,10 +1,4 @@
-import 'package:flutter/foundation.dart';
-
-/// Temporary adapter marker until the Ticker-backed driver lands in Phase 4.
+/// Placeholder adapter retained for the package smoke test.
 class MotionPathFlutterAdapter {
   const MotionPathFlutterAdapter();
-
-  void assertFlutterAvailable() {
-    assert(kIsWeb || !kIsWeb);
-  }
 }
