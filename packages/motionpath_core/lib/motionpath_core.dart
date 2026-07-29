@@ -3,3 +3,4 @@ library motionpath_core;
 
 export 'src/contract/motionpath_types.dart';
 export 'src/validation/validate_project.dart';
+export 'src/graph/observation_graph.dart';
