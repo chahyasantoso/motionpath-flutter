@@ -5,12 +5,13 @@
 - Phase 0: package boundaries, documentation, CI, analyzer configuration, and smoke tests.
 - Phase 1: v4 project/motion/track contract, JSON parsing, structured diagnostics, and collect-all validation.
 - Phase 2: immutable observation graph nodes and edges, stable topological ordering, diagnostics, and dependency policy.
-- Phase 3 slice: numeric interpolation, normalized Track progress, Motion playback controls, Engine load/mount/unmount/destroy, and runtime tests.
+- Phase 3: numeric interpolation, normalized Track progress, Motion playback controls, Engine lifecycle, mount-time graph compilation, and runtime tests.
+- Phase 4 slice: delay/repeat/yoyo trigger math, dirty-track GraphPublisher, and a single-source Flutter Ticker driver boundary.
 
 ## Next
 
-Wire authored keyframe stops into runtime tracks, add repeat/yoyo/delay semantics, then implement GraphPublisher batching and Flutter ticker integration.
+Add Engine tick propagation, authored keyframe-to-stop compilation, input/output graph patch composition, and CustomPainter rendering. Keep the ticker as the only frame source.
 
 ## Honest status
 
-This is the first runtime vertical slice, not feature-complete parity. Graph compilation is attached at mount time, but graph-aware patch composition and full trigger semantics are still ahead.
+The ticker driver is wired as an ownership boundary but does not yet advance Engine state. The publisher batches patches but does not yet merge observation inputs/outputs. Those are deliberate next slices, not hidden capabilities.

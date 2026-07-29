@@ -8,3 +8,5 @@ export 'src/interpolation/interpolator.dart';
 export 'src/runtime/engine.dart';
 export 'src/runtime/motion.dart';
 export 'src/runtime/track.dart';
+export 'src/runtime/trigger.dart';
+export 'src/composition/graph_publisher.dart';
