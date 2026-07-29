@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main, phase-0-ci-and-contract]
+  pull_request:
+
+jobs:
+  dart-core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+      - name: Pub get
+        working-directory: packages/motionpath_core
+        run: dart pub get
+      - name: Analyze
+        working-directory: packages/motionpath_core
+        run: dart analyze
+      - name: Test
+        working-directory: packages/motionpath_core
+        run: dart test
+
+  flutter-adapter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Pub get
+        working-directory: packages/motionpath_flutter
+        run: flutter pub get
+      - name: Analyze
+        working-directory: packages/motionpath_flutter
+        run: flutter analyze
+      - name: Test
+        working-directory: packages/motionpath_flutter
+        run: flutter test
