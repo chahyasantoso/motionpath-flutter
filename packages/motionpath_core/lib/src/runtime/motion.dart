@@ -9,6 +9,7 @@ class MotionPathMotionRuntime {
   bool playing = false;
 
   ObservationGraph? graph;
+  double duration = 1;
 
   void prepare(ObservationGraph nextGraph) => graph = nextGraph;
 
@@ -18,6 +19,11 @@ class MotionPathMotionRuntime {
   void seek(double value) {
     progress = value.clamp(0.0, 1.0);
     for (final track in tracks) track.seek(progress);
+  }
+
+  void tick(double delta) {
+    seek(progress + delta / duration);
+    if (progress >= 1) pause();
   }
 
   void dispose() {

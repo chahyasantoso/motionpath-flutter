@@ -12,16 +12,13 @@ class MotionPathTickerDriver {
 
   void start() => _ticker.start();
   void stop() => _ticker.stop();
-
   void dispose() => _ticker.dispose();
 
   void _tick(Duration elapsed) {
     final previous = _last;
     _last = elapsed;
     if (previous == null) return;
-    // Engine tick integration follows in the next runtime slice. This driver
-    // deliberately owns the only frame source and currently measures delta.
     final delta = (elapsed - previous).inMicroseconds / Duration.microsecondsPerSecond;
-    if (delta < 0) _last = elapsed;
+    if (delta > 0) engine.tick(delta);
   }
 }
