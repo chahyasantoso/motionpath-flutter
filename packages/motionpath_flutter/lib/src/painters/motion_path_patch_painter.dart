@@ -1,7 +1,9 @@
 import 'dart:math' as math;
 import 'dart:typed_data';
+import 'dart:ui' show Canvas, Color, Paint, Rect, Size;
 
-import 'package:flutter/rendering.dart';
+import 'package:flutter/foundation.dart' show immutable, mapEquals;
+import 'package:flutter/rendering.dart' show CustomPainter;
 
 /// Default diagnostic fill, expressed as plain ARGB data so the renderer
 /// boundary never depends on framework colour helpers.
@@ -32,15 +34,15 @@ class MotionPathPatchTransform {
     Map<String, Object?> patch, {
     int fallbackArgb = kMotionPathDefaultArgb,
   }) {
-    final double scale = _read(patch, const <String>['scale'], 1);
+    final double scale = _read(patch, const <String>['scale'], 1.0);
     final Object? color = patch['color'];
     return MotionPathPatchTransform(
-      translateX: _read(patch, const <String>['x', 'translateX'], 0),
-      translateY: _read(patch, const <String>['y', 'translateY'], 0),
-      rotation: _read(patch, const <String>['rotation', 'rotate'], 0),
+      translateX: _read(patch, const <String>['x', 'translateX'], 0.0),
+      translateY: _read(patch, const <String>['y', 'translateY'], 0.0),
+      rotation: _read(patch, const <String>['rotation', 'rotate'], 0.0),
       scaleX: _read(patch, const <String>['scaleX'], scale),
       scaleY: _read(patch, const <String>['scaleY'], scale),
-      opacity: _read(patch, const <String>['opacity'], 1).clamp(0.0, 1.0),
+      opacity: _clamp01(_read(patch, const <String>['opacity'], 1.0)),
       argb: color is int ? color : fallbackArgb,
     );
   }
@@ -68,8 +70,13 @@ class MotionPathPatchTransform {
 
   /// Fill colour with [opacity] folded into the alpha channel.
   Color get color {
-    final int alpha =
-        (((argb >> 24) & 0xFF) * opacity).round().clamp(0, 255);
+    final int sourceAlpha = (argb >> 24) & 0xFF;
+    int alpha = (sourceAlpha * opacity).round();
+    if (alpha < 0) {
+      alpha = 0;
+    } else if (alpha > 255) {
+      alpha = 255;
+    }
     return Color.fromARGB(
       alpha,
       (argb >> 16) & 0xFF,
@@ -96,6 +103,19 @@ class MotionPathPatchTransform {
     return storage;
   }
 
+  static double _clamp01(double value) {
+    if (value.isNaN) {
+      return 0;
+    }
+    if (value < 0) {
+      return 0;
+    }
+    if (value > 1) {
+      return 1;
+    }
+    return value;
+  }
+
   static double _read(
     Map<String, Object?> patch,
     List<String> keys,
@@ -103,7 +123,9 @@ class MotionPathPatchTransform {
   ) {
     for (final String key in keys) {
       final Object? value = patch[key];
-      if (value is num) return value.toDouble();
+      if (value is num) {
+        return value.toDouble();
+      }
     }
     return fallback;
   }
