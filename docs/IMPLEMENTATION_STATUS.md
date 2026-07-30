@@ -32,10 +32,14 @@ Audited against merged pull requests and remote branches, not against memory.
   frame source introduced.
 - Phase 22 (#23): deterministic Walker scene geometry coverage instead of
   brittle pixel goldens.
-- Phase 23: pluggable track composition layout policy. `LayoutDelegate`,
+- Phase 23 (#24): pluggable track composition layout policy. `LayoutDelegate`,
   `GaplessLayoutDelegate`, and `StaticLayoutDelegate` are ported from the
-  reference, and runtime tracks now own the parent/child mechanics those
-  policies exist to serve.
+  reference, and runtime tracks own the parent/child mechanics those policies
+  exist to serve.
+- Phase 24: a Flutter spawn and drain surface. Composed children are mounted at
+  their settled offsets, their playheads are driven from the parent's elapsed
+  time, and completed children drain back through the layout policy. This closes
+  the gap phase 23 left open: placement was bookkeeping with nobody consuming it.
 
 ## Branch audit
 
@@ -43,16 +47,17 @@ Phases 10 and 22 have no pull request of their own: `phase-10-plugin-registry`,
 `phase-8-plugins-fk-scroll`, `phase-9-easing-and-rig-renderer`, and
 `phase-22-integration-hardening` were pushed straight to `main` and later
 appeared only as the base commit of the next PR. `phase-23-status-and-branch-audit`
-never carried a commit at all: it points at `main`, which is why this file still
-listed the already-merged phases 19-22 work as upcoming. Every phase branch
-through `phase-22-golden-scene-coverage` is merged and safe to delete.
+never carried a commit at all: it points at an older `main`, which is why this
+file once listed the already-merged phases 19-22 work as upcoming. Every phase
+branch through `phase-23-track-composition-and-layout` is merged and safe to
+delete.
 
 ## Next
 
-- Give the host mechanics a real consumer: a Flutter-side spawn and drain
-  surface that mounts composed children at their settled offsets.
 - Add viewport observation and scroll pinning delegates without introducing a
   second frame source.
+- Drive the spawn surface from the ticker in a real scene, so spawn, drain, and
+  reflow are exercised end to end rather than only under direct time control.
 - Add lifecycle leak tests around widget route changes, not just around
   explicit disposal.
 - Run the benchmark harness for 14, 50, and 250-track rigs in a controlled
@@ -62,12 +67,12 @@ through `phase-22-golden-scene-coverage` is merged and safe to delete.
 
 ## Honest status
 
-The pure Dart core parses, validates, composes, and publishes v4 projects, and
-now models child placement policy the way the reference does. What it does not
-do is schedule children: `currentOffset` is settled bookkeeping plus a host
-hook, so a spawned child is placed but nothing advances its playhead until an
-adapter mounts it. Image loading, CSS, and overlay rendering stay in adapters by
-design. The benchmark harness reports local composition timing only and is not a
-cross-machine performance claim. Scene coverage is resolved segment geometry
-rather than committed pixel baselines, which is deliberate while the scene still
-changes most phases.
+The pure Dart core parses, validates, composes, and publishes v4 projects, models
+child placement policy the way the reference does, and now has a Flutter surface
+that actually mounts and drains those children. Image loading, CSS, and overlay
+rendering stay in adapters by design. Nothing yet drives the spawn surface from a
+live ticker in a demo scene, so churn behaviour is proven by deterministic time
+control rather than by a running rig. The benchmark harness reports local
+composition timing only and is not a cross-machine performance claim. Scene
+coverage is resolved segment geometry rather than committed pixel baselines,
+which is deliberate while the scene still changes most phases.
