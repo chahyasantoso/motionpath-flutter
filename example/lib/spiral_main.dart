@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:motionpath_core/motionpath_core.dart';
 import 'package:motionpath_flutter/motionpath_flutter.dart';
 
+import 'spiral_project.dart';
+
 void main() => runApp(const SpiralZumaApp());
 
 class SpiralZumaApp extends StatelessWidget {
@@ -26,14 +28,18 @@ class SpiralZumaPage extends StatefulWidget {
 
 class _SpiralZumaPageState extends State<SpiralZumaPage>
     with SingleTickerProviderStateMixin {
+  static const double _spawnInterval = 1.25;
+  static const double _ballRadius = 21;
+  static const double _ballDuration = 12;
+
   late final MotionPathTickerDriver _ticker;
   late final MotionPathSpawnController _spawns;
   late final MotionPathSpawnTickerBinding _tickerBinding;
   late final void Function() _removeAutoSpawnListener;
   final MotionPathEngine _engine = MotionPathEngine();
+  final List<Offset> _spiral = <Offset>[];
   double _spawnClock = 0;
   int _nextId = 0;
-  final List<Offset> _spiral = <Offset>[];
 
   @override
   void initState() {
@@ -42,7 +48,7 @@ class _SpiralZumaPageState extends State<SpiralZumaPage>
     _ticker = MotionPathTickerDriver(_engine, this);
     _spawns = MotionPathSpawnController(
       parent: MotionPathTrackRuntime('spiral-parent'),
-      childDuration: 8,
+      childDuration: _ballDuration,
       drainOnComplete: true,
     );
     _tickerBinding = MotionPathSpawnTickerBinding(
@@ -51,32 +57,47 @@ class _SpiralZumaPageState extends State<SpiralZumaPage>
     );
     _removeAutoSpawnListener = _ticker.addTickListener(_autoSpawn);
     _ticker.start();
+    _spawn();
   }
 
   void _buildSpiral() {
     const Offset centre = Offset(180, 180);
-    for (int index = 0; index < 180; index++) {
-      final double t = index / 179;
-      final double radius = 150 - t * 122;
-      final double angle = t * math.pi * 8;
+    const int segments = 240;
+    for (int index = 0; index <= segments; index++) {
+      final double t = index / segments;
+      final double radius = 150 - t * 118;
+      final double angle = t * math.pi * 7 - math.pi / 2;
       _spiral.add(centre + Offset(math.cos(angle) * radius, math.sin(angle) * radius));
     }
   }
 
   void _autoSpawn(double delta) {
     _spawnClock += delta;
-    if (_spawnClock >= 0.7) {
-      _spawnClock -= 0.7;
+    while (_spawnClock >= _spawnInterval) {
+      _spawnClock -= _spawnInterval;
+      _spawn();
+    }
+    if (_spawns.liveCount == 0) {
+      _spawnClock = 0;
       _spawn();
     }
   }
 
   void _spawn() {
     final String id = 'ball-${_nextId++}';
-    _spawns.spawn(MotionPathTrackRuntime(id), stagger: 0.16);
+    _spawns.spawn(
+      createAuthoredSpiralBall(id),
+      stagger: _ballRadius * 2 / 110,
+    );
   }
 
-  void _pop(String id) => _spawns.remove(id);
+  void _pop(String id) {
+    _spawns.remove(id);
+    if (_spawns.liveCount == 0) {
+      _spawnClock = 0;
+      _spawn();
+    }
+  }
 
   @override
   void dispose() {
@@ -124,10 +145,16 @@ class _SpiralZumaPageState extends State<SpiralZumaPage>
                       nearest = instance;
                     }
                   }
-                  if (nearest != null && distance < 24) _pop(nearest.id);
+                  if (nearest != null && distance < _ballRadius * 1.8) {
+                    _pop(nearest.id);
+                  }
                 },
                 child: CustomPaint(
-                  painter: _SpiralPainter(path: _spiral, instances: _spawns.instances, positionOf: _ballPosition),
+                  painter: _SpiralPainter(
+                    path: _spiral,
+                    instances: _spawns.instances,
+                    positionOf: _ballPosition,
+                  ),
                 ),
               ),
             ),
@@ -136,7 +163,7 @@ class _SpiralZumaPageState extends State<SpiralZumaPage>
       );
 
   Offset _ballPosition(MotionPathSpawnInstance instance) {
-    final int index = ((instance.progress.clamp(0.0, 1.0)) * (_spiral.length - 1)).round();
+    final int index = (instance.progress.clamp(0.0, 1.0) * (_spiral.length - 1)).round();
     return _spiral[index];
   }
 }
@@ -156,23 +183,40 @@ class _SpiralPainter extends CustomPainter {
       ..strokeWidth = 2
       ..strokeCap = StrokeCap.round;
     final Path spiral = Path()..moveTo(path.first.dx, path.first.dy);
-    for (final Offset point in path.skip(1)) spiral.lineTo(point.dx, point.dy);
+    for (final Offset point in path.skip(1)) {
+      spiral.lineTo(point.dx, point.dy);
+    }
     canvas.drawPath(spiral, guide);
-
     final Offset centre = path.last;
-    canvas.drawCircle(centre, 40, Paint()..color = const Color(0xFF160A25));
-    canvas.drawCircle(centre, 28, Paint()..color = const Color(0xFF05040A));
-    canvas.drawCircle(centre, 9, Paint()..color = const Color(0xAA7C5CFF));
+    canvas.drawCircle(centre, 44, Paint()..color = const Color(0xFF160A25));
+    canvas.drawCircle(centre, 29, Paint()..color = const Color(0xFF05040A));
+    canvas.drawCircle(centre, 10, Paint()..color = const Color(0xAA7C5CFF));
 
     for (final MotionPathSpawnInstance instance in instances) {
       final Offset point = positionOf(instance);
-      final double radius = 8 + instance.progress * 4;
-      final Paint ball = Paint()..color = Color.lerp(const Color(0xFFFF8F55), const Color(0xFFBCA8FF), instance.progress)!;
-      canvas.drawCircle(point, radius, ball);
-      canvas.drawCircle(point + const Offset(-2, -2), radius * 0.25, Paint()..color = const Color(0xCCFFFFFF));
+      final double opacity = instance.hasStarted ? 1 : 0.35;
+      final Color base = Color.lerp(
+        const Color(0xFFFF6BCA),
+        const Color(0xFF00E5FF),
+        instance.progress,
+      )!;
+      final Paint ball = Paint()..color = _withOpacity(base, opacity);
+      canvas.drawCircle(point, _SpiralZumaPageState._ballRadius, ball);
+      canvas.drawCircle(
+        point + const Offset(-6, -6),
+        5,
+        Paint()..color = const Color(0xCCFFFFFF),
+      );
     }
   }
 
   @override
   bool shouldRepaint(covariant _SpiralPainter oldDelegate) => oldDelegate.instances != instances;
 }
+
+Color _withOpacity(Color color, double opacity) => Color.fromARGB(
+      ((color.a * opacity * 255).round().clamp(0, 255)).toInt(),
+      (color.r * 255).round().clamp(0, 255),
+      (color.g * 255).round().clamp(0, 255),
+      (color.b * 255).round().clamp(0, 255),
+    );
