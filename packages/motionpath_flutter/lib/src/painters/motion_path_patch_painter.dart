@@ -53,7 +53,11 @@ class MotionPathPatchTransform {
   /// Vertical translation in logical pixels.
   final double translateY;
 
-  /// Rotation around the origin in radians.
+  /// Rotation in DEGREES, which is the authored v4 unit.
+  ///
+  /// The pure Dart core composes forward kinematics in degrees to stay
+  /// byte-compatible with the JavaScript reference, so the conversion to radians
+  /// belongs here at the renderer boundary and nowhere else.
   final double rotation;
 
   /// Horizontal scale factor.
@@ -67,6 +71,9 @@ class MotionPathPatchTransform {
 
   /// Fill colour as packed ARGB data.
   final int argb;
+
+  /// [rotation] converted into the radians Flutter's canvas expects.
+  double get rotationRadians => rotation * math.pi / 180;
 
   /// Fill colour with [opacity] folded into the alpha channel.
   Color get color {
@@ -89,8 +96,9 @@ class MotionPathPatchTransform {
   ///
   /// Exposed so transform math can be asserted without a canvas.
   Float64List toMatrix4Storage() {
-    final double cos = math.cos(rotation);
-    final double sin = math.sin(rotation);
+    final double radians = rotationRadians;
+    final double cos = math.cos(radians);
+    final double sin = math.sin(radians);
     final Float64List storage = Float64List(16);
     storage[0] = cos * scaleX;
     storage[1] = sin * scaleX;
@@ -157,7 +165,7 @@ class MotionPathPatchTransform {
 ///
 /// This is intentionally a focused renderer boundary: it draws one diagnostic
 /// square so transform, opacity, and invalidation behaviour can be verified
-/// before the Walker renderer and production scene widgets exist.
+/// independently of any particular scene.
 class MotionPathPatchPainter extends CustomPainter {
   /// Creates a painter for a single composed [patch].
   ///
