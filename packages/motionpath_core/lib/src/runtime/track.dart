@@ -2,16 +2,7 @@ import '../contract/motionpath_types.dart';
 import '../interpolation/interpolator.dart';
 
 class MotionPathTrackRuntime {
-  MotionPathTrackRuntime(this.id, {Map<String, List<MotionPathStop>>? properties, List<MotionPathStop>? stops})
-      : stops = stops ?? const <MotionPathStop>[],
-        properties = _resolveProperties(properties, stops);
-
-  static Map<String, List<MotionPathStop>> _resolveProperties(Map<String, List<MotionPathStop>>? properties, List<MotionPathStop>? stops) {
-    if (properties != null) return properties;
-    if (stops != null) return <String, List<MotionPathStop>>{'value': stops};
-    return const <String, List<MotionPathStop>>{};
-  }
-
+  MotionPathTrackRuntime(this.id, {this.properties = const <String, List<MotionPathStop>>{}, this.stops = const <MotionPathStop>[]});
   final String id;
   final List<MotionPathStop> stops;
   final Map<String, List<MotionPathStop>> properties;
@@ -21,7 +12,8 @@ class MotionPathTrackRuntime {
   Map<String, Object?> compose({Map<String, Object?> inputs = const <String, Object?>{}}) {
     final patch = <String, Object?>{};
     patch.addAll(inputs);
-    for (final entry in properties.entries) patch[entry.key] = interpolateStops(entry.value, progress);
+    final authored = properties.isEmpty && stops.isNotEmpty ? <String, List<MotionPathStop>>{'value': stops} : properties;
+    for (final entry in authored.entries) patch[entry.key] = interpolateStops(entry.value, progress);
     patch['progress'] = progress;
     return patch;
   }
@@ -38,10 +30,10 @@ class MotionPathTrackRuntime {
 
 List<MotionPathStop> stopsFromKeyframe(Object? raw) {
   if (raw is! Map) return const <MotionPathStop>[];
-  final rawStops = raw['stops'];
-  if (rawStops is! List) return const <MotionPathStop>[];
+  final stops = raw['stops'];
+  if (stops is! List) return const <MotionPathStop>[];
   final result = <MotionPathStop>[];
-  for (final candidate in rawStops) {
+  for (final candidate in stops) {
     if (candidate is! Map) continue;
     final progress = candidate['p'];
     result.add(MotionPathStop(progress: progress is num ? progress.toDouble() : 0, value: candidate['v']));
