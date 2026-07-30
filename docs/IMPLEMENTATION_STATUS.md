@@ -31,12 +31,12 @@ Audited against merged pull requests and remote branches, not against memory.
 - Phase 33 (#38): runnable pinned viewport plus dynamic spawn example.
 - Phase 34 (#40): canonical v4 integration fixture and trust-boundary compatibility test. PR #39 was a duplicate branch and is closed as superseded.
 - Phase 35 (#41): first publishable API subset is explicitly classified as stable or experimental, with package-level READMEs.
-- Phase 36 (#42): fixed spawn visibility and added the Spiral/Zuma example.
-- Phase 37: the example now uses the ticker listener disposer correctly, and CI analyzes and tests the example package instead of silently skipping it.
+- Phase 36 (#42, #45): Spiral/Zuma demo corrected and teardown listener disposal fixed. #44 was a conflicted superseded fix.
+- Phase 37: Spiral balls are now authored through validated v4 JSON, use the reference's slower pacing and larger ball size, and respawn immediately when the live chain drains to zero.
 
 ## Branch audit
 
-Phases 10 and 22 had slices pushed straight to `main`; phase `phase-23-status-and-branch-audit` never carried a commit. Every phase branch through `phase-36-spiral-zuma-demo` is merged and safe to delete. Closed superseded viewport, fixture, and duplicate iterations remain available for audit.
+Phases 10 and 22 had slices pushed straight to `main`; phase `phase-23-status-and-branch-audit` never carried a commit. Every phase branch through `phase-36-spiral-zuma-demo` is merged and safe to delete. Closed superseded viewport, fixture, and listener-fix iterations remain available for audit.
 
 ## Next
 
@@ -45,4 +45,4 @@ Phases 10 and 22 had slices pushed straight to `main`; phase `phase-23-status-an
 
 ## Honest status
 
-The example is now covered by the same analyzer and test gate as the packages, so demo-only compile errors cannot hide behind green package CI. The ticker listener API returns an idempotent disposer; callers should retain and invoke it rather than inventing a missing remove method. Packages remain unpublished until generated docs, fixture review, and release checks are complete.
+The Spiral demo now uses schema-authored, validated ball tracks, with a 12-second travel span, 1.25-second spawn cadence, 42px balls, and an explicit zero-chain respawn rule. Its path geometry is still rendered by the host painter, matching the adapter boundary: the schema owns authored motion data, while Flutter owns the visual guide and hit testing.
