@@ -46,9 +46,14 @@ Audited against merged pull requests and remote branches, not against memory.
 - Phase 26 (#27): spawn surfaces subscribe to the existing engine ticker.
   Dynamic children advance from the same frame delta as mounted motions without
   a second ticker or competing clock.
-- Phase 27: viewport observation and pinning are clock-neutral. The Flutter
-  adapter samples content-space geometry against a scroll position, reports
-  visibility and pinned state, seeks the motion, and resets cleanly on detach.
+- Phase 27 (#30, #32): viewport observation and pinning are clock-neutral. The
+  Flutter adapter samples content-space geometry against a scroll position,
+  reports visibility and pinned state, seeks the motion, and resets cleanly on
+  detach. #32 is the final merged implementation; #28, #29, and #31 were
+  superseded iterations and remain closed without merge.
+- Phase 28: viewport binding disposal is terminal and idempotent. After route
+  teardown, it cannot be reattached or sample a motion, and its state resets
+  cleanly for lifecycle assertions.
 
 ## Branch audit
 
@@ -57,7 +62,8 @@ Phases 10 and 22 have no pull request of their own: `phase-10-plugin-registry`,
 `phase-22-integration-hardening` were pushed straight to `main` and later
 appeared only as the base commit of the next PR. `phase-23-status-and-branch-audit`
 never carried a commit at all. Every phase branch through
-`phase-26-ticker-driven-spawn-surface` is merged and safe to delete.
+`phase-27-viewport-observation-pinning-v2` is merged and safe to delete; the
+closed superseded viewport iterations remain available for audit.
 
 ## Next
 
@@ -75,4 +81,9 @@ renderer-neutral patches, scroll scrubbing, dynamic child placement and
   draining, shared-ticker advancement, and viewport geometry observation. The
 viewport binding reports renderer-neutral pin state and paint offset but does
 not mutate layout or scroll position; a host widget still owns actual pinned
-rendering. Image loading, CSS, and overlay rendering stay in adapters by design.
+rendering. Viewport teardown is now terminal, so a disposed binding cannot leak
+listeners into a reused route. Image loading, CSS, and overlay rendering stay
+in adapters by design. The benchmark harness reports local composition timing
+only and is not a cross-machine performance claim. Scene coverage is resolved
+segment geometry rather than committed pixel baselines, which is deliberate
+while the scene still changes most phases.
