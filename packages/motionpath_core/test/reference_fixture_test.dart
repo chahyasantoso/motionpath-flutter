@@ -62,7 +62,8 @@ void main() {
     expect(manual.playing, isFalse);
     expect(paused.playing, isFalse);
     manual.seek(0.5);
-    expect(manual.patches['needle']?['rotation'], closeTo(0, 1e-9));
+    final Map<String, Map<String, Object?>> patches = manual.composeGraph();
+    expect(patches['needle']?['rotation'], closeTo(0, 1e-9));
     engine.destroy();
   });
 }
