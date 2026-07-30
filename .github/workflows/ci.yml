@@ -58,6 +58,16 @@ jobs:
       - name: Pub get
         run: flutter pub get
       - name: Analyze
-        run: flutter analyze
+        run: |
+          status=0
+          flutter analyze > analyze.log 2>&1 || status=$?
+          cat analyze.log
+          {
+            echo '### flutter-example analyze'
+            echo '```text'
+            cat analyze.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
       - name: Test
         run: flutter test
