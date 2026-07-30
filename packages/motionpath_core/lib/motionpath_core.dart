@@ -25,4 +25,5 @@ export 'src/runtime/motion.dart';
 export 'src/runtime/scroll_binding.dart';
 export 'src/runtime/track.dart';
 export 'src/runtime/trigger.dart';
+export 'src/runtime/viewport_binding.dart';
 export 'src/validation/validate_project.dart';

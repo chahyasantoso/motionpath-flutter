@@ -6,6 +6,7 @@
 library motionpath_flutter;
 
 export 'src/bindings/motion_path_scroll_binding.dart';
+export 'src/bindings/motion_path_viewport_pin_binding.dart';
 export 'src/consumers/motion_path_patch_consumers.dart';
 export 'src/controllers/motion_path_patch_controller.dart';
 export 'src/controllers/motion_path_spawn_controller.dart';
