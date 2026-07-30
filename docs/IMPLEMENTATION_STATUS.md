@@ -34,15 +34,20 @@ Audited against merged pull requests and remote branches, not against memory.
 - Phase 36 (#42): fixed spawn visibility and added the Spiral/Zuma example.
 - Phase 37: the example now uses the ticker listener disposer correctly, and CI analyzes and tests the example package instead of silently skipping it.
 
+## Active
+
+- Phase 38: JS path parity. Branch `phase-38-path-parity` is implementing curved control points, z coordinates, and arc-length sampling. See [PATH_PARITY_PLAN.md](PATH_PARITY_PLAN.md).
+
 ## Branch audit
 
-Phases 10 and 22 had slices pushed straight to `main`; phase `phase-23-status-and-branch-audit` never carried a commit. Every phase branch through `phase-36-spiral-zuma-demo` is merged and safe to delete. Closed superseded viewport, fixture, and duplicate iterations remain available for audit.
+Phases 10 and 22 had slices pushed straight to `main`; phase `phase-23-status-and-branch-audit` never carried a commit. Every phase branch through `phase-37-example-ci-and-ticker-disposer` is merged and safe to delete. Closed superseded viewport, fixture, and duplicate iterations remain available for audit.
 
 ## Next
 
+- Complete Phases 38-41 in order, merging each phase before starting the next.
 - Add generated API docs for the stable subset.
 - Decide whether to remove `publish_to: none` in a dedicated release PR after the checklist passes.
 
 ## Honest status
 
-The example is now covered by the same analyzer and test gate as the packages, so demo-only compile errors cannot hide behind green package CI. The ticker listener API returns an idempotent disposer; callers should retain and invoke it rather than inventing a missing remove method. Packages remain unpublished until generated docs, fixture review, and release checks are complete.
+The example is covered by the same analyzer and test gate as the packages. The current Flutter path plugin is still a normalized polyline sampler and does not yet match the JavaScript control-point or arc-length implementation; Phase 38 addresses that gap first. Packages remain unpublished until generated docs, fixture review, and release checks are complete.
