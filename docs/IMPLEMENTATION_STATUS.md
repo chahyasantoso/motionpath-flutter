@@ -54,8 +54,11 @@ Audited against merged pull requests and remote branches, not against memory.
 - Phase 28 (#33): viewport binding disposal is terminal and idempotent. After
   route teardown, it cannot be reattached or sample a motion, and its state
   resets cleanly for lifecycle assertions.
-- Phase 29: widget-level route teardown coverage proves the host disposes and
-  detaches a viewport binding when its scene leaves the tree.
+- Phase 29 (#34): widget-level route teardown coverage proves the host disposes
+  and detaches a viewport binding when its scene leaves the tree.
+- Phase 30: controlled pure Dart benchmark reporting for 14, 50, and 250-track
+  compositions, with warmup, repeated runs, min/mean/max summaries, and JSON
+  output suitable for local artifact capture.
 
 ## Branch audit
 
@@ -64,13 +67,11 @@ Phases 10 and 22 have no pull request of their own: `phase-10-plugin-registry`,
 `phase-22-integration-hardening` were pushed straight to `main` and later
 appeared only as the base commit of the next PR. `phase-23-status-and-branch-audit`
 never carried a commit at all. Every phase branch through
-`phase-28-viewport-disposal-hardening` is merged and safe to delete; the closed
+`phase-29-route-lifecycle-coverage` is merged and safe to delete; the closed
 superseded viewport iterations remain available for audit.
 
 ## Next
 
-- Run the benchmark harness for 14, 50, and 250-track rigs in a controlled
-  environment and record results per commit.
 - Stabilize the public API surface and write migration and compatibility notes
   before either package is published.
 - Add a real example scene that renders a pinned viewport item and a dynamic
@@ -84,9 +85,9 @@ renderer-neutral patches, scroll scrubbing, dynamic child placement and
 viewport binding reports renderer-neutral pin state and paint offset but does
 not mutate layout or scroll position; a host widget still owns actual pinned
 rendering. Route teardown is covered at both binding and widget-host level, so
- disposed viewport bindings cannot leak listeners into a reused route. Image
-loading, CSS, and overlay rendering stay in adapters by design. The benchmark
-harness reports local composition timing only and is not a cross-machine
-performance claim. Scene coverage is resolved segment geometry rather than
-committed pixel baselines, which is deliberate while the scene still changes
-most phases.
+ disposed viewport bindings cannot leak listeners into a reused route. The
+benchmark harness now supports controlled local comparisons but remains
+explicitly non-comparative across machines. Image loading, CSS, and overlay
+rendering stay in adapters by design. Scene coverage is resolved segment
+geometry rather than committed pixel baselines, which is deliberate while the
+scene still changes most phases.
