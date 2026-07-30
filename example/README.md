@@ -27,3 +27,5 @@ reflows the remaining chain through its layout policy.
 
 The host owns painting and hit testing. The engine still owns schema validation,
 playheads, lifecycle, and the one shared clock.
+
+CI note: the example is analyzed and tested as a first-class Flutter package.
