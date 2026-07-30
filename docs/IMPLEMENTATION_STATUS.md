@@ -24,79 +24,47 @@ Audited against merged pull requests and remote branches, not against memory.
 - Phase 17 (#18): opt-in numeric filter group normalization.
 - Phase 18 (#19): opt-in Overlay field filtering and bounded Spawner instance
   expansion.
-- Phase 19 (#20): a local runtime benchmark harness for 14, 50, and 250-track
-  compositions.
+- Phase 19 (#20): controlled pure Dart benchmark reporting for 14, 50, and
+  250-track compositions.
 - Phase 20 (#21): Flutter-side patch consumers for image frames, CSS custom
   properties, blur filters, and Spawner instances.
-- Phase 21 (#22): idempotent scroll driver and ticker disposal, with no second
-  frame source introduced.
-- Phase 22 (#23): deterministic Walker scene geometry coverage instead of
-  brittle pixel goldens.
-- Phase 23 (#24): pluggable track composition layout policy. `LayoutDelegate`,
-  `GaplessLayoutDelegate`, and `StaticLayoutDelegate` are ported from the
-  reference, and runtime tracks own the parent/child mechanics those policies
-  exist to serve.
-- Phase 24 (#25): a Flutter spawn and drain surface. Composed children are
-  mounted at their settled offsets, their playheads are driven from the
-  parent's elapsed time, and completed children drain back through the layout
-  policy.
-- Phase 25 (#26): scroll scrub sampling is explicit and clock-neutral. Flutter
-  scroll bindings expose target/applied progress, apply core scrub math only
-  when the caller supplies elapsed time, and reset state on detach.
-- Phase 26 (#27): spawn surfaces subscribe to the existing engine ticker.
-  Dynamic children advance from the same frame delta as mounted motions without
-  a second ticker or competing clock.
-- Phase 27 (#30, #32): viewport observation and pinning are clock-neutral. The
-  Flutter adapter samples content-space geometry against a scroll position,
-  reports visibility and pinned state, seeks the motion, and resets cleanly on
-  detach. #32 is the final merged implementation; #28, #29, and #31 were
-  superseded iterations and remain closed without merge.
-- Phase 28 (#33): viewport binding disposal is terminal and idempotent. After
-  route teardown, it cannot be reattached or sample a motion, and its state
-  resets cleanly for lifecycle assertions.
-- Phase 29 (#34): widget-level route teardown coverage proves the host disposes
-  and detaches a viewport binding when its scene leaves the tree.
-- Phase 30 (#35): controlled pure Dart benchmark reporting for 14, 50, and
-  250-track compositions, with warmup, repeated runs, min/mean/max summaries,
-  and JSON output suitable for local artifact capture.
-- Phase 31 (#36): public API inventory, lifecycle rules, and JavaScript-to-Dart
-  migration guidance are documented before package stabilization.
-- Phase 32 (#37): package repository, issue tracker, documentation metadata, a
-  changelog, and a publish checklist are in place. Packages remain unpublished
-  and keep their local path dependency until the checklist is complete.
-- Phase 33: a runnable Flutter example combines a clock-neutral pinned viewport
-  item with dynamic children advanced by the shared ticker.
+- Phase 21 (#22): idempotent scroll driver and ticker disposal.
+- Phase 22 (#23): deterministic Walker scene geometry coverage.
+- Phase 23 (#24): pluggable track composition layout policy.
+- Phase 24 (#25): Flutter spawn and drain surface.
+- Phase 25 (#26): explicit, clock-neutral scroll scrub sampling.
+- Phase 26 (#27): shared-ticker advancement for dynamic spawn surfaces.
+- Phase 27 (#30, #32): clock-neutral viewport observation and pinning. #32 is
+  the final merged implementation; #28, #29, and #31 were superseded.
+- Phase 28 (#33): terminal viewport binding disposal.
+- Phase 29 (#34): widget-level route teardown coverage.
+- Phase 30 (#35): controlled benchmark warmup, repeated runs, summaries, and
+  JSON output.
+- Phase 31 (#36): public API inventory and JavaScript-to-Dart migration guide.
+- Phase 32 (#37): package metadata, changelog, and release checklist.
+- Phase 33 (#38): runnable pinned viewport plus dynamic spawn example.
+- Phase 34: canonical JavaScript integration fixture copied to JSON, with a
+  compatibility test proving fatal-diagnostic parity at the Dart trust
+  boundary and preserving the authored coverage shape.
 
 ## Branch audit
 
-Phases 10 and 22 have no pull request of their own: `phase-10-ci-and-contract`,
-`phase-8-plugins-fk-scroll`, `phase-9-easing-and-rig-renderer`, and
-`phase-22-integration-hardening` were pushed straight to `main` and later
-appeared only as the base commit of the next PR. `phase-23-status-and-branch-audit`
-never carried a commit at all. Every phase branch through
-`phase-32-release-prep` is merged and safe to delete; the closed superseded
-viewport iterations remain available for audit.
+Phases 10 and 22 have no PR of their own: several slices were pushed straight
+ to `main` and later appeared as the base commit of the next PR. Phase
+`phase-23-status-and-branch-audit` never carried a commit. Every phase branch
+through `phase-33-pinned-spawn-example` is merged and safe to delete; closed
+superseded viewport iterations remain available for audit.
 
 ## Next
 
-- Finish fixture compatibility review and decide the first publishable API
-  subset.
-- Replace the example's hand-built runtime with a shared v4 fixture once the
-  fixture port lands.
+- Decide the first publishable API subset and remove `publish_to: none` only in
+  a deliberate release PR.
+- Add generated API docs and package-level examples before publishing.
 
 ## Honest status
 
-The core and Flutter adapters now cover schema validation, graph composition,
-renderer-neutral patches, scroll scrubbing, dynamic child placement and
-  draining, shared-ticker advancement, and viewport geometry observation. The
-viewport binding reports renderer-neutral pin state and paint offset but does
-not mutate layout or scroll position; a host widget still owns actual pinned
-rendering. Route teardown is covered at both binding and widget-host level, so
- disposed viewport bindings cannot leak listeners into a reused route. The
-benchmark harness supports controlled local comparisons but remains explicitly
-non-comparative across machines. Package metadata and release gates make the
-unpublished status explicit. The example intentionally demonstrates the two
-clock/lifecycle boundaries without claiming production scene coverage. Image
-loading, CSS, and overlay rendering stay in adapters by design. Scene coverage
-is resolved segment geometry rather than committed pixel baselines, which is
-deliberate while the scene still changes most phases.
+The canonical fixture now exists in Dart-owned JSON and is checked before
+runtime mounting. This validates the schema boundary and authored coverage, not
+pixel parity or full cross-runtime output equivalence. The example combines
+viewport pinning and dynamic spawning, while image, CSS, and overlay rendering
+remain adapter responsibilities.
