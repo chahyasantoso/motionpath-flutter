@@ -160,10 +160,14 @@ class MotionPathPatchTransform {
 /// before the Walker renderer and production scene widgets exist.
 class MotionPathPatchPainter extends CustomPainter {
   /// Creates a painter for a single composed [patch].
+  ///
+  /// Pass `repaint` to drive invalidation straight from a patch source instead
+  /// of rebuilding the widget that owns this painter.
   MotionPathPatchPainter({
     required this.patch,
     this.fallbackArgb = kMotionPathDefaultArgb,
     this.extent = 80,
+    super.repaint,
   });
 
   /// The composed, renderer-neutral patch to draw.

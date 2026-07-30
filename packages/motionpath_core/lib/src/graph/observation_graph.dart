@@ -6,10 +6,22 @@ class ObservationNode {
 }
 
 class ObservationEdge {
-  const ObservationEdge({required this.source, required this.target, this.role = 'output'});
+  const ObservationEdge({required this.source, required this.target, this.role = 'output', this.inputKey});
+
+  /// Track that is observed.
   final String source;
+
+  /// Track that declared the observation.
   final String target;
+
+  /// Either `input` or `output`.
   final String role;
+
+  /// Patch key the observed data is delivered under for `input` edges.
+  ///
+  /// This is the authored `observes[].target`, for example `parentWorld`. It
+  /// falls back to [source] so older callers keep working.
+  final String? inputKey;
 }
 
 class ObservationGraph {
@@ -64,7 +76,7 @@ ObservationGraph normalizeObservationGraph(MotionPathMotion motion) {
         diagnostics.add(MotionPathDiagnostic(path: path, code: 'duplicate-edge', message: 'Observation edge is duplicated.'));
         continue;
       }
-      edges.add(ObservationEdge(source: source, target: track.id, role: role));
+      edges.add(ObservationEdge(source: source, target: track.id, role: role, inputKey: target));
     }
   }
 

@@ -9,12 +9,21 @@
 - Phase 4: delay/repeat/yoyo trigger math, dirty-track GraphPublisher, and a single-source Flutter Ticker driver boundary.
 - Phase 5: Engine tick propagation, authored keyframe stop extraction, and ticker-driven runtime progress.
 - Phase 6: per-property interpolation patches and parent-first graph composition scaffolding.
-- Phase 7 slice: renderer-neutral Flutter patch painter supporting opacity, translation, rotation, scale, and basic color boundary handling.
+- Phase 7: renderer-neutral Flutter patch painter supporting opacity, translation, rotation, scale, and colour.
+- Phase 8:
+  - `composeWorld` ported from the JavaScript `fkMath` boundary, with degrees kept as the authored unit.
+  - Forward kinematics folding: `parentWorld` plus `boneLength`/`boneRotation` become flat world `x`/`y`/`rotation`, and internal keys never reach a renderer.
+  - Observation edges now carry the authored `target` key, so an input edge lands under `parentWorld` instead of the source id.
+  - v4 JSON parsing for motion tracks, keyframes, `duration`, and `observes`, plus project-level track libraries.
+  - `GraphPublisher` composes the full graph parent-first and publishes only dirty tracks, matching the reference runtime.
+  - Renderer-neutral scroll progress and scrub smoothing in the core, with a Flutter `ScrollController` driver on top.
+  - Composed patches reach painter invalidation through `MotionPathPatchSource`, a `ChangeNotifier` fed by `Motion.onPatches`.
+  - Walker FK rig fixtures ported from the demo, asserting bone-length invariants, knee bend, head bob, and forward travel.
 
 ## Next
 
-Connect composed graph patches to painter invalidation, add scroll bindings, port Walker FK fixtures, and add matrix/golden tests. Keep platform rendering outside the pure Dart core.
+Port the Walker scene renderer (bones, joints, and tones) on top of the composed patches, add golden tests for it, then port the remaining property plugins: path sampling, image sequences, filters, and colour interpolation. After that, wire trigger delegates (scroll pinning, viewport observation) and the Spawner/Overlay use cases.
 
 ## Honest status
 
-The painter is a focused renderer boundary, not a complete widget system. It intentionally renders a diagnostic square while the Walker renderer and production scene widgets are built.
+The engine now composes a real FK rig end to end and paints it, but the only renderer is still one diagnostic square per track. Property coverage is numeric interpolation only: no path sampling, no colour interpolation between authored colours, no per-segment easing (authored `ease` values are parsed and ignored, which is safe while the demo scenes author `"none"`). Trigger delegates are math, not bindings: nothing yet observes a viewport or pins a scroll section.
