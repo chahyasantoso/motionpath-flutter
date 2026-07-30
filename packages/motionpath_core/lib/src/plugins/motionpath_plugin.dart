@@ -74,19 +74,19 @@ void assertPluginContract(MotionPathPlugin plugin) {
   if (plugin.name.trim().isEmpty) {
     throw StateError('Plugin name must not be empty.');
   }
-  final Set<String> outputs = <String>{};
-  for (final String output in plugin.outputs) {
-    if (output.isEmpty || !outputs.add(output)) {
-      throw StateError('Plugin "${plugin.name}" declares duplicate or empty outputs.');
+  void assertNonEmptyUnique(String label, Iterable<String> values) {
+    final Set<String> seen = <String>{};
+    for (final String value in values) {
+      if (value.isEmpty || !seen.add(value)) {
+        throw StateError('Plugin "${plugin.name}" has invalid $label.');
+      }
     }
   }
-  final Set<String> internal = plugin.internalKeys.toSet();
-  if (!internal.containsAll(plugin.internalKeys)) {
-    throw StateError('Plugin "${plugin.name}" has invalid internal keys.');
-  }
-  if (plugin.internalKeys.any((String key) => key.isEmpty)) {
-    throw StateError('Plugin "${plugin.name}" declares an empty internal key.');
-  }
+
+  assertNonEmptyUnique('keys', plugin.keys);
+  assertNonEmptyUnique('inputs', plugin.inputs);
+  assertNonEmptyUnique('outputs', plugin.outputs);
+  assertNonEmptyUnique('internal keys', plugin.internalKeys);
 }
 
 class MotionPathPluginRegistry {
