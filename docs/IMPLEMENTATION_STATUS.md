@@ -34,21 +34,22 @@ Audited against merged pull requests and remote branches, not against memory.
 - Phase 36 (#42): fixed spawn visibility and added the Spiral/Zuma example.
 - Phase 37: the example now uses the ticker listener disposer correctly, and CI analyzes and tests the example package instead of silently skipping it.
 - Phase 38 (#49): JS-compatible path node controls, z coordinates, cubic elevation, and approximate arc-length sampling.
+- Phase 39 (#50): JS-compatible cumulative-distance spiral geometry and physical-speed-based spawn spacing.
 
 ## Active
 
-- Phase 39: JS-compatible Spiral geometry and speed calibration. Branch `phase-39-spiral-geometry` is porting cumulative-length resampling and physical-speed-derived spawning. See [PATH_PARITY_PLAN.md](PATH_PARITY_PLAN.md).
+- Phase 40: entrance, exit, continuous completion handling, and animated reflow for the Spiral/Zuma example. Branch `phase-40-spiral-lifecycle` implements the JS-style 0.35s entrance/exit overlays and 0.55s power2-out survivor reflow. See [PATH_PARITY_PLAN.md](PATH_PARITY_PLAN.md).
 
 ## Branch audit
 
-Phases 10 and 22 had slices pushed straight to `main`; phase `phase-23-status-and-branch-audit` never carried a commit. Every phase branch through Phase 38 is merged and safe to delete. Closed superseded viewport, fixture, and duplicate iterations remain available for audit.
+Phases 10 and 22 had slices pushed straight to `main`; phase `phase-23-status-and-branch-audit` never carried a commit. Every phase branch through Phase 39 is merged and safe to delete. Closed superseded viewport, fixture, and duplicate iterations remain available for audit.
 
 ## Next
 
-- Complete Phases 39-41 in order, merging each phase before starting the next.
+- Complete Phases 40-41 in order, merging each phase before starting the next.
 - Add generated API docs for the stable subset.
 - Decide whether to remove `publish_to: none` in a dedicated release PR after the checklist passes.
 
 ## Honest status
 
-The example is covered by the same analyzer and test gate as the packages. Phase 38 closes the core path-model gap; the example still needs the JS spiral's cumulative-length geometry and the lifecycle fix in Phases 39-40. Packages remain unpublished until generated docs, fixture review, and release checks are complete.
+The example is covered by the same analyzer and test gate as the packages. Phases 38-39 fix path shape and constant-speed geometry; Phase 40 is closing the remaining visual lifecycle gap. Packages remain unpublished until generated docs, fixture review, and release checks are complete.
