@@ -51,9 +51,11 @@ Audited against merged pull requests and remote branches, not against memory.
   reports visibility and pinned state, seeks the motion, and resets cleanly on
   detach. #32 is the final merged implementation; #28, #29, and #31 were
   superseded iterations and remain closed without merge.
-- Phase 28: viewport binding disposal is terminal and idempotent. After route
-  teardown, it cannot be reattached or sample a motion, and its state resets
-  cleanly for lifecycle assertions.
+- Phase 28 (#33): viewport binding disposal is terminal and idempotent. After
+  route teardown, it cannot be reattached or sample a motion, and its state
+  resets cleanly for lifecycle assertions.
+- Phase 29: widget-level route teardown coverage proves the host disposes and
+  detaches a viewport binding when its scene leaves the tree.
 
 ## Branch audit
 
@@ -62,17 +64,17 @@ Phases 10 and 22 have no pull request of their own: `phase-10-plugin-registry`,
 `phase-22-integration-hardening` were pushed straight to `main` and later
 appeared only as the base commit of the next PR. `phase-23-status-and-branch-audit`
 never carried a commit at all. Every phase branch through
-`phase-27-viewport-observation-pinning-v2` is merged and safe to delete; the
-closed superseded viewport iterations remain available for audit.
+`phase-28-viewport-disposal-hardening` is merged and safe to delete; the closed
+superseded viewport iterations remain available for audit.
 
 ## Next
 
-- Add widget-level lifecycle leak coverage around route changes and viewport
-  detach/reattach.
 - Run the benchmark harness for 14, 50, and 250-track rigs in a controlled
   environment and record results per commit.
 - Stabilize the public API surface and write migration and compatibility notes
   before either package is published.
+- Add a real example scene that renders a pinned viewport item and a dynamic
+  spawn chain together.
 
 ## Honest status
 
@@ -81,9 +83,10 @@ renderer-neutral patches, scroll scrubbing, dynamic child placement and
   draining, shared-ticker advancement, and viewport geometry observation. The
 viewport binding reports renderer-neutral pin state and paint offset but does
 not mutate layout or scroll position; a host widget still owns actual pinned
-rendering. Viewport teardown is now terminal, so a disposed binding cannot leak
-listeners into a reused route. Image loading, CSS, and overlay rendering stay
-in adapters by design. The benchmark harness reports local composition timing
-only and is not a cross-machine performance claim. Scene coverage is resolved
-segment geometry rather than committed pixel baselines, which is deliberate
-while the scene still changes most phases.
+rendering. Route teardown is covered at both binding and widget-host level, so
+ disposed viewport bindings cannot leak listeners into a reused route. Image
+loading, CSS, and overlay rendering stay in adapters by design. The benchmark
+harness reports local composition timing only and is not a cross-machine
+performance claim. Scene coverage is resolved segment geometry rather than
+committed pixel baselines, which is deliberate while the scene still changes
+most phases.
