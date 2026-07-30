@@ -29,7 +29,6 @@ class _BallVisual {
   double targetOffset;
   double entranceAge = 0;
   double reflowAge = 1;
-  bool exiting = false;
   double exitAge = 0;
   Offset lastPosition = Offset.zero;
   double progress = 0;
@@ -42,6 +41,7 @@ class _SpiralZumaPageState extends State<SpiralZumaPage>
   static const double _entranceDuration = 0.35;
   static const double _exitDuration = 0.35;
   static const double _reflowDuration = 0.55;
+  static const int _waveSize = 30;
   static const int _rawSegments = 2000;
   static const int _pathSegments = 240;
 
@@ -55,6 +55,7 @@ class _SpiralZumaPageState extends State<SpiralZumaPage>
   final List<_BallVisual> _exiting = <_BallVisual>[];
   double _spawnInterval = 1.25;
   double _spawnClock = 0;
+  int _waveSpawned = 0;
   int _nextId = 0;
 
   @override
@@ -91,7 +92,6 @@ class _SpiralZumaPageState extends State<SpiralZumaPage>
       total += (raw[i] - raw[i - 1]).distance;
       distances.add(total);
     }
-    _spiral.clear();
     final double step = total / _pathSegments;
     for (int i = 0; i <= _pathSegments; i++) {
       final double target = i * step;
@@ -105,13 +105,19 @@ class _SpiralZumaPageState extends State<SpiralZumaPage>
   }
 
   void _autoSpawn(double delta) {
-    _spawnClock += delta;
-    while (_spawnClock >= _spawnInterval) {
-      _spawnClock -= _spawnInterval;
-      _spawn();
+    if (_waveSpawned < _waveSize) {
+      _spawnClock += delta;
+      while (_waveSpawned < _waveSize && _spawnClock >= _spawnInterval) {
+        _spawnClock -= _spawnInterval;
+        _spawn();
+      }
     }
     _syncVisuals(delta);
-    if (_spawns.liveCount == 0) {
+    if (_spawns.liveCount == 0 && _waveSpawned > 0) {
+      // JS Spawner.resetWave() + hostTrack.seek(0): the next wave starts at
+      // the outer endpoint, never at the old drained timeline offset.
+      _spawns.restartEmptyWave();
+      _waveSpawned = 0;
       _spawnClock = 0;
       _spawn();
     }
@@ -122,10 +128,7 @@ class _SpiralZumaPageState extends State<SpiralZumaPage>
     final Set<String> live = <String>{};
     for (final MotionPathSpawnInstance instance in _spawns.instances) {
       live.add(instance.id);
-      final _BallVisual visual = _visuals.putIfAbsent(
-        instance.id,
-        () => _BallVisual(id: instance.id, offset: instance.offset),
-      );
+      final _BallVisual visual = _visuals.putIfAbsent(instance.id, () => _BallVisual(id: instance.id, offset: instance.offset));
       if ((visual.targetOffset - instance.offset).abs() > 1e-6) {
         visual.offset = _displayOffset(visual);
         visual.targetOffset = instance.offset;
@@ -139,7 +142,6 @@ class _SpiralZumaPageState extends State<SpiralZumaPage>
     for (final String id in _visuals.keys.toList()) {
       if (live.contains(id)) continue;
       final _BallVisual visual = _visuals.remove(id)!;
-      visual.exiting = true;
       visual.exitAge = 0;
       visual.progress = 1;
       _exiting.add(visual);
@@ -151,8 +153,7 @@ class _SpiralZumaPageState extends State<SpiralZumaPage>
   double _displayOffset(_BallVisual visual) {
     if (visual.reflowAge >= _reflowDuration) return visual.targetOffset;
     final double t = (visual.reflowAge / _reflowDuration).clamp(0.0, 1.0);
-    final double eased = 1 - math.pow(1 - t, 2).toDouble();
-    return visual.offset + (visual.targetOffset - visual.offset) * eased;
+    return visual.offset + (visual.targetOffset - visual.offset) * (1 - math.pow(1 - t, 2).toDouble());
   }
 
   Offset _position(double progress) {
@@ -161,8 +162,10 @@ class _SpiralZumaPageState extends State<SpiralZumaPage>
   }
 
   void _spawn() {
+    if (_waveSpawned >= _waveSize) return;
     final String id = 'ball-${_nextId++}';
     _spawns.spawn(createAuthoredSpiralBall(id), stagger: _spawnInterval);
+    _waveSpawned++;
   }
 
   void _pop(String id) {
@@ -231,7 +234,6 @@ class _SpiralPainter extends CustomPainter {
     canvas.drawCircle(centre, 44, Paint()..color = const Color(0xFF160A25));
     canvas.drawCircle(centre, 29, Paint()..color = const Color(0xFF05040A));
     canvas.drawCircle(centre, 10, Paint()..color = const Color(0xAA7C5CFF));
-
     for (final MotionPathSpawnInstance instance in instances) {
       final _BallVisual? visual = visuals[instance.id];
       if (visual == null || !instance.hasStarted) continue;
@@ -249,7 +251,6 @@ class _SpiralPainter extends CustomPainter {
     canvas.drawCircle(point, _SpiralZumaPageState._ballRadius * scale, Paint()..color = _withOpacity(base, opacity));
     canvas.drawCircle(point + const Offset(-6, -6), 5 * scale, Paint()..color = _withOpacity(Colors.white, opacity));
   }
-
   @override
   bool shouldRepaint(covariant _SpiralPainter oldDelegate) => true;
 }
