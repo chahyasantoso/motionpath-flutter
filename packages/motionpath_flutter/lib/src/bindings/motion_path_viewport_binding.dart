@@ -49,6 +49,7 @@ class MotionPathViewportBinding {
   final void Function(MotionPathViewportSample sample)? onSample;
 
   ScrollPosition? _position;
+  bool _disposed = false;
   MotionPathViewportSample _sample = const MotionPathViewportSample(
     scrollPixels: 0,
     localOffset: 0,
@@ -59,6 +60,7 @@ class MotionPathViewportBinding {
   );
 
   bool get isAttached => _position != null;
+  bool get isDisposed => _disposed;
   MotionPathViewportSample get sample => _sample;
 
   static MotionPathViewportSample sampleAt({
@@ -95,6 +97,9 @@ class MotionPathViewportBinding {
 
   /// Attaches to [position] and samples immediately.
   void attach(ScrollPosition position) {
+    if (_disposed) {
+      return;
+    }
     detach();
     _position = position;
     position.addListener(_onScroll);
@@ -117,6 +122,9 @@ class MotionPathViewportBinding {
 
   /// Samples an already-known scroll offset. The caller owns scheduling.
   void sampleFromOffset(double scrollPixels) {
+    if (_disposed) {
+      return;
+    }
     _sample = sampleAt(
       scrollPixels: scrollPixels,
       itemStart: itemStart,
@@ -131,11 +139,21 @@ class MotionPathViewportBinding {
   }
 
   void _onScroll() {
+    if (_disposed) {
+      return;
+    }
     final ScrollPosition? position = _position;
     if (position != null) {
       sampleFromOffset(position.pixels);
     }
   }
 
-  void dispose() => detach();
+  /// Permanently releases the scroll subscription.
+  void dispose() {
+    if (_disposed) {
+      return;
+    }
+    _disposed = true;
+    detach();
+  }
 }
