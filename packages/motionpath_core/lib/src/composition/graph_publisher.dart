@@ -1,3 +1,4 @@
+import '../composition/patch_composition.dart';
 import '../graph/observation_graph.dart';
 import '../runtime/track.dart';
 
@@ -21,11 +22,15 @@ class MotionPathGraphPublisher {
 
   void _wireGraph() {
     final ObservationGraph? current = graph;
-    if (current == null) return;
+    if (current == null) {
+      return;
+    }
     for (final ObservationEdge edge in current.edges) {
       final MotionPathTrackRuntime? source = tracks[edge.source];
       final MotionPathTrackRuntime? target = tracks[edge.target];
-      if (source == null || target == null) continue;
+      if (source == null || target == null) {
+        continue;
+      }
       target.observe(source, role: edge.role, input: edge.input);
     }
   }
@@ -35,12 +40,16 @@ class MotionPathGraphPublisher {
 
   /// Marks one track dirty.
   void markDirty(String id) {
-    if (tracks.containsKey(id)) _dirty.add(id);
+    if (tracks.containsKey(id)) {
+      _dirty.add(id);
+    }
   }
 
   /// Marks every track in [order] dirty.
   void markAllDirty(Iterable<String> order) {
-    for (final String id in order) markDirty(id);
+    for (final String id in order) {
+      markDirty(id);
+    }
   }
 
   /// Composes every node in [order] parent-first, but publishes only dirty nodes.
@@ -58,7 +67,9 @@ class MotionPathGraphPublisher {
         <String, Map<String, Object?>>{};
     for (final String id in order) {
       final MotionPathTrackRuntime? track = tracks[id];
-      if (track == null) continue;
+      if (track == null) {
+        continue;
+      }
       final Map<String, Object?> patch = track.compose(context: context);
       if (dirty.contains(id)) {
         published[id] = stripInternalPatchKeys(patch);
