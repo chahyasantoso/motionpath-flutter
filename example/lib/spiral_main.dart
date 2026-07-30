@@ -10,7 +10,6 @@ void main() => runApp(const SpiralZumaApp());
 
 class SpiralZumaApp extends StatelessWidget {
   const SpiralZumaApp({super.key});
-
   @override
   Widget build(BuildContext context) => MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -21,15 +20,31 @@ class SpiralZumaApp extends StatelessWidget {
 
 class SpiralZumaPage extends StatefulWidget {
   const SpiralZumaPage({super.key});
-
   @override
   State<SpiralZumaPage> createState() => _SpiralZumaPageState();
+}
+
+class _BallVisual {
+  _BallVisual({required this.id, required this.offset})
+      : targetOffset = offset;
+  final String id;
+  double offset;
+  double targetOffset;
+  double entranceAge = 0;
+  double reflowAge = 1;
+  bool exiting = false;
+  double exitAge = 0;
+  Offset lastPosition = Offset.zero;
+  double progress = 0;
 }
 
 class _SpiralZumaPageState extends State<SpiralZumaPage>
     with SingleTickerProviderStateMixin {
   static const double _ballRadius = 21;
   static const double _ballDuration = 12;
+  static const double _entranceDuration = 0.35;
+  static const double _exitDuration = 0.35;
+  static const double _reflowDuration = 0.55;
   static const int _rawSegments = 2000;
   static const int _pathSegments = 240;
 
@@ -39,6 +54,8 @@ class _SpiralZumaPageState extends State<SpiralZumaPage>
   late final void Function() _removeAutoSpawnListener;
   final MotionPathEngine _engine = MotionPathEngine();
   final List<Offset> _spiral = <Offset>[];
+  final Map<String, _BallVisual> _visuals = <String, _BallVisual>{};
+  final List<_BallVisual> _exiting = <_BallVisual>[];
   double _spawnInterval = 1.25;
   double _spawnClock = 0;
   int _nextId = 0;
@@ -77,7 +94,6 @@ class _SpiralZumaPageState extends State<SpiralZumaPage>
         radius * math.sin(theta - math.pi / 2),
       ));
     }
-
     final List<double> distances = <double>[0];
     double totalLength = 0;
     for (int index = 1; index < raw.length; index++) {
@@ -92,13 +108,12 @@ class _SpiralZumaPageState extends State<SpiralZumaPage>
       while (cursor < distances.length - 1 && distances[cursor + 1] < target) {
         cursor++;
       }
-      final double startDistance = distances[cursor];
-      final double endDistance = distances[cursor + 1];
-      final double span = endDistance - startDistance;
-      final double ratio = span == 0 ? 0 : (target - startDistance) / span;
+      final double span = distances[cursor + 1] - distances[cursor];
+      final double ratio = span == 0
+          ? 0
+          : (target - distances[cursor]) / span;
       _spiral.add(Offset.lerp(raw[cursor], raw[cursor + 1], ratio)!);
     }
-
     final double ballSpeed = totalLength / _ballDuration;
     _spawnInterval = (_ballRadius * 2) / ballSpeed;
   }
@@ -109,26 +124,72 @@ class _SpiralZumaPageState extends State<SpiralZumaPage>
       _spawnClock -= _spawnInterval;
       _spawn();
     }
+    _syncVisuals(delta);
     if (_spawns.liveCount == 0) {
       _spawnClock = 0;
       _spawn();
     }
+    if (mounted) setState(() {});
+  }
+
+  void _syncVisuals(double delta) {
+    final Set<String> liveIds = <String>{};
+    for (final MotionPathSpawnInstance instance in _spawns.instances) {
+      liveIds.add(instance.id);
+      final _BallVisual visual = _visuals.putIfAbsent(
+        instance.id,
+        () => _BallVisual(id: instance.id, offset: instance.offset),
+      );
+      if ((visual.targetOffset - instance.offset).abs() > 1e-6) {
+        visual.offset = _displayOffset(visual);
+        visual.targetOffset = instance.offset;
+        visual.reflowAge = 0;
+      }
+      visual.entranceAge = (visual.entranceAge + delta).clamp(0, _entranceDuration).toDouble();
+      visual.reflowAge = (visual.reflowAge + delta).clamp(0, _reflowDuration).toDouble();
+      visual.progress = ((_spawns.elapsed - _displayOffset(visual)) / _ballDuration)
+          .clamp(0.0, 1.0)
+          .toDouble();
+      visual.lastPosition = _spiralPosition(visual.progress);
+    }
+    for (final String id in _visuals.keys.toList()) {
+      if (liveIds.contains(id)) continue;
+      final _BallVisual visual = _visuals.remove(id)!;
+      visual.exiting = true;
+      visual.exitAge = 0;
+      visual.progress = 1;
+      visual.lastPosition = _spiralPosition(1);
+      _exiting.add(visual);
+    }
+    for (final _BallVisual visual in _exiting) {
+      visual.exitAge += delta;
+    }
+    _exiting.removeWhere((visual) => visual.exitAge >= _exitDuration);
+  }
+
+  double _displayOffset(_BallVisual visual) {
+    if (visual.reflowAge >= _reflowDuration) return visual.targetOffset;
+    final double t = (visual.reflowAge / _reflowDuration).clamp(0.0, 1.0);
+    final double eased = 1 - math.pow(1 - t, 2).toDouble();
+    return visual.offset + (visual.targetOffset - visual.offset) * eased;
+  }
+
+  Offset _spiralPosition(double progress) {
+    final int index = (progress.clamp(0.0, 1.0) * (_spiral.length - 1)).round();
+    return _spiral[index];
   }
 
   void _spawn() {
     final String id = 'ball-${_nextId++}';
     _spawns.spawn(
       createAuthoredSpiralBall(id),
-      stagger: _ballRadius * 2 / 110,
+      stagger: _spawnInterval,
     );
   }
 
   void _pop(String id) {
+    if (!_visuals.containsKey(id)) return;
     _spawns.remove(id);
-    if (_spawns.liveCount == 0) {
-      _spawnClock = 0;
-      _spawn();
-    }
   }
 
   @override
@@ -167,25 +228,27 @@ class _SpiralZumaPageState extends State<SpiralZumaPage>
               child: GestureDetector(
                 onTapUp: (TapUpDetails details) {
                   final Offset point = details.localPosition;
-                  MotionPathSpawnInstance? nearest;
+                  String? nearestId;
                   double distance = double.infinity;
                   for (final MotionPathSpawnInstance instance in _spawns.instances) {
-                    final Offset ball = _ballPosition(instance);
-                    final double d = (ball - point).distance;
+                    final _BallVisual? visual = _visuals[instance.id];
+                    if (visual == null) continue;
+                    final double d = (_spiralPosition(visual.progress) - point).distance;
                     if (d < distance) {
                       distance = d;
-                      nearest = instance;
+                      nearestId = instance.id;
                     }
                   }
-                  if (nearest != null && distance < _ballRadius * 1.8) {
-                    _pop(nearest.id);
+                  if (nearestId != null && distance < _ballRadius * 1.8) {
+                    _pop(nearestId);
                   }
                 },
                 child: CustomPaint(
                   painter: _SpiralPainter(
                     path: _spiral,
                     instances: _spawns.instances,
-                    positionOf: _ballPosition,
+                    visuals: _visuals,
+                    exiting: _exiting,
                   ),
                 ),
               ),
@@ -193,18 +256,19 @@ class _SpiralZumaPageState extends State<SpiralZumaPage>
           ),
         ),
       );
-
-  Offset _ballPosition(MotionPathSpawnInstance instance) {
-    final int index = (instance.progress.clamp(0.0, 1.0) * (_spiral.length - 1)).round();
-    return _spiral[index];
-  }
 }
 
 class _SpiralPainter extends CustomPainter {
-  const _SpiralPainter({required this.path, required this.instances, required this.positionOf});
+  const _SpiralPainter({
+    required this.path,
+    required this.instances,
+    required this.visuals,
+    required this.exiting,
+  });
   final List<Offset> path;
   final List<MotionPathSpawnInstance> instances;
-  final Offset Function(MotionPathSpawnInstance) positionOf;
+  final Map<String, _BallVisual> visuals;
+  final List<_BallVisual> exiting;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -225,25 +289,43 @@ class _SpiralPainter extends CustomPainter {
     canvas.drawCircle(centre, 10, Paint()..color = const Color(0xAA7C5CFF));
 
     for (final MotionPathSpawnInstance instance in instances) {
-      final Offset point = positionOf(instance);
-      final double opacity = instance.hasStarted ? 1 : 0.35;
-      final Color base = Color.lerp(
-        const Color(0xFFFF6BCA),
-        const Color(0xFF00E5FF),
-        instance.progress,
-      )!;
-      final Paint ball = Paint()..color = _withOpacity(base, opacity);
-      canvas.drawCircle(point, _SpiralZumaPageState._ballRadius, ball);
-      canvas.drawCircle(
-        point + const Offset(-6, -6),
-        5,
-        Paint()..color = const Color(0xCCFFFFFF),
-      );
+      final _BallVisual? visual = visuals[instance.id];
+      if (visual == null || !instance.hasStarted) continue;
+      final double entrance = (visual.entranceAge / _SpiralZumaPageState._entranceDuration).clamp(0.0, 1.0);
+      final double opacity = math.min(1, entrance);
+      final double scale = 1 + 0.7 * math.sin(math.pi * entrance);
+      _drawBall(canvas, _SpiralZumaPageState._spiralPositionFor(path, visual.progress), opacity, scale, visual.progress);
+    }
+    for (final _BallVisual visual in exiting) {
+      final double t = (visual.exitAge / _SpiralZumaPageState._exitDuration).clamp(0.0, 1.0);
+      _drawBall(canvas, visual.lastPosition, 1 - t, 1 + 0.7 * t, 1);
     }
   }
 
+  void _drawBall(Canvas canvas, Offset point, double opacity, double scale, double progress) {
+    final Color base = Color.lerp(
+      const Color(0xFFFF6BCA),
+      const Color(0xFF00E5FF),
+      progress.clamp(0.0, 1.0),
+    )!;
+    final Paint ball = Paint()..color = _withOpacity(base, opacity);
+    canvas.drawCircle(point, _SpiralZumaPageState._ballRadius * scale, ball);
+    canvas.drawCircle(
+      point + const Offset(-6, -6),
+      5 * scale,
+      Paint()..color = _withOpacity(const Color(0xFFFFFFFF), opacity),
+    );
+  }
+
   @override
-  bool shouldRepaint(covariant _SpiralPainter oldDelegate) => oldDelegate.instances != instances;
+  bool shouldRepaint(covariant _SpiralPainter oldDelegate) => true;
+}
+
+extension on _SpiralZumaPageState {
+  static Offset _spiralPositionFor(List<Offset> path, double progress) {
+    final int index = (progress.clamp(0.0, 1.0) * (path.length - 1)).round();
+    return path[index];
+  }
 }
 
 int _channel(double channel) => (channel * 255).round().clamp(0, 255).toInt();
