@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:motionpath_core/motionpath_core.dart';
 import 'package:motionpath_flutter/motionpath_flutter.dart';
@@ -16,13 +17,15 @@ void main() {
     expect(seen, isEmpty);
   });
 
-  testWidgets('ticker driver can stop and dispose repeatedly', (WidgetTester tester) async {
+  testWidgets('ticker driver can stop and dispose repeatedly',
+      (WidgetTester tester) async {
     final MotionPathEngine engine = MotionPathEngine();
     late MotionPathTickerDriver driver;
-    await tester.pumpWidget(_TickerHost(onReady: (MotionPathTickerProvider provider) {
+    await tester.pumpWidget(_TickerHost(onReady: (TickerProvider provider) {
       driver = MotionPathTickerDriver(engine, provider);
       driver.start();
     }));
+    await tester.pump();
     expect(driver.isActive, isTrue);
     driver.stop();
     driver.stop();
@@ -32,32 +35,29 @@ void main() {
   });
 }
 
-class MotionPathTickerProvider extends StatefulWidget {
-  const MotionPathTickerProvider({required this.child, super.key});
-  final Widget child;
-  @override
-  State<MotionPathTickerProvider> createState() => _MotionPathTickerProviderState();
-}
-
-class _MotionPathTickerProviderState extends State<MotionPathTickerProvider>
-    with SingleTickerProviderStateMixin {
-  @override
-  Widget build(BuildContext context) => widget.child;
-}
-
-class _TickerHost extends StatelessWidget {
+class _TickerHost extends StatefulWidget {
   const _TickerHost({required this.onReady});
-  final void Function(MotionPathTickerProvider provider) onReady;
+
+  final void Function(TickerProvider provider) onReady;
+
+  @override
+  State<_TickerHost> createState() => _TickerHostState();
+}
+
+class _TickerHostState extends State<_TickerHost>
+    with SingleTickerProviderStateMixin {
+  bool _reported = false;
+
   @override
   Widget build(BuildContext context) {
-    final MotionPathTickerProvider provider = MotionPathTickerProvider(
-      child: Builder(builder: (BuildContext context) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          onReady(context.findAncestorStateOfType<_MotionPathTickerProviderState>()!.widget);
-        });
-        return const SizedBox.shrink();
-      }),
-    );
-    return provider;
+    if (!_reported) {
+      _reported = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          widget.onReady(this);
+        }
+      });
+    }
+    return const SizedBox.shrink();
   }
 }
