@@ -1,5 +1,3 @@
-import 'package:motionpath_core/motionpath_core.dart';
-
 import '../controllers/motion_path_spawn_controller.dart';
 import 'motion_path_ticker_driver.dart';
 

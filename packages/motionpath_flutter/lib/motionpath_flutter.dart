@@ -1,6 +1,7 @@
 /// Public entrypoint for Flutter scheduling and rendering adapters.
 library motionpath_flutter;
 
+export 'package:motionpath_core/motionpath_core.dart';
 export 'src/bindings/motion_path_scroll_binding.dart';
 export 'src/bindings/motion_path_viewport_pin_binding.dart';
 export 'src/consumers/motion_path_patch_consumers.dart';
