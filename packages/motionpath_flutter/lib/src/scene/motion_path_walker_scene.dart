@@ -31,6 +31,14 @@ enum MotionPathWalkerTone {
   far,
 }
 
+/// Paint order: the far side sits behind the torso, the near side in front.
+const List<MotionPathWalkerTone> kMotionPathWalkerToneOrder =
+    <MotionPathWalkerTone>[
+  MotionPathWalkerTone.far,
+  MotionPathWalkerTone.core,
+  MotionPathWalkerTone.near,
+];
+
 /// How a tone is painted.
 @immutable
 class MotionPathWalkerToneStyle {
@@ -164,6 +172,21 @@ class MotionPathWalkerSegment {
   double get length => (tip - origin).distance;
 }
 
+/// Folds [opacity] into the alpha channel of [argb].
+///
+/// Deliberately arithmetic rather than a framework colour helper: those have
+/// churned across SDK versions, and the renderer boundary already speaks ARGB.
+Color motionPathArgbWithOpacity(int argb, double opacity) {
+  final int source = (argb >> 24) & 0xFF;
+  var alpha = (source * opacity).round();
+  if (alpha < 0) {
+    alpha = 0;
+  } else if (alpha > 255) {
+    alpha = 255;
+  }
+  return Color.fromARGB(alpha, (argb >> 16) & 0xFF, (argb >> 8) & 0xFF, argb & 0xFF);
+}
+
 /// Resolves the drawn bones for one frame of composed patches.
 ///
 /// A bone rotates around its own joint, so [MotionPathWalkerSegment.origin] is
@@ -231,11 +254,7 @@ class MotionPathWalkerPainter extends CustomPainter {
     final Map<String, Map<String, Object?>> patches = source.patches;
     _paintGround(canvas, size);
     _paintShadow(canvas, patches);
-    for (final MotionPathWalkerTone tone in <MotionPathWalkerTone>[
-      MotionPathWalkerTone.far,
-      MotionPathWalkerTone.core,
-      MotionPathWalkerTone.near,
-    ]) {
+    for (final MotionPathWalkerTone tone in kMotionPathWalkerToneOrder) {
       _paintTone(canvas, patches, tone);
     }
     _paintHead(canvas, patches);
@@ -259,8 +278,7 @@ class MotionPathWalkerPainter extends CustomPainter {
     final double lift = (kMotionPathWalkerHipY - transform.translateY) / 5;
     final double opacity = (0.3 - lift * 0.06).clamp(0.0, 1.0);
     final double width = 104 * (1 - lift * 0.08);
-    final Paint shadow = Paint()
-      ..color = Color.fromRGBO(0, 0, 0, opacity);
+    final Paint shadow = Paint()..color = Color.fromRGBO(0, 0, 0, opacity);
     canvas.drawOval(
       Rect.fromCenter(
         center: Offset(transform.translateX, groundY + 10),
@@ -278,7 +296,7 @@ class MotionPathWalkerPainter extends CustomPainter {
   ) {
     final MotionPathWalkerToneStyle style = kMotionPathWalkerToneStyles[tone]!;
     final Paint stroke = Paint()
-      ..color = Color(style.argb).withValues(alpha: style.opacity)
+      ..color = motionPathArgbWithOpacity(style.argb, style.opacity)
       ..strokeWidth = style.thickness
       ..strokeCap = StrokeCap.round;
     final List<MotionPathWalkerBone> toned = <MotionPathWalkerBone>[
