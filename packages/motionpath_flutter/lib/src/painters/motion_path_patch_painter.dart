@@ -17,7 +17,7 @@ class MotionPathPatchPainter extends CustomPainter {
     final scaleX = (patch['scaleX'] as num?)?.toDouble() ?? (patch['scale'] as num?)?.toDouble() ?? 1;
     final scaleY = (patch['scaleY'] as num?)?.toDouble() ?? (patch['scale'] as num?)?.toDouble() ?? 1;
 
-    final paint = Paint()..color = color.withValues(alpha: opacity.clamp(0, 1).toDouble());
+    final paint = Paint()..color = color.withOpacity(opacity.clamp(0, 1).toDouble());
     canvas.save();
     canvas.translate(size.width / 2 + x, size.height / 2 + y);
     canvas.rotate(rotation);
