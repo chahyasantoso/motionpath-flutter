@@ -43,9 +43,12 @@ Audited against merged pull requests and remote branches, not against memory.
 - Phase 25 (#26): scroll scrub sampling is explicit and clock-neutral. Flutter
   scroll bindings expose target/applied progress, apply core scrub math only
   when the caller supplies elapsed time, and reset state on detach.
-- Phase 26: spawn surfaces can subscribe to the existing engine ticker. Dynamic
-  children now advance from the same frame delta as mounted motions without a
+- Phase 26 (#27): spawn surfaces subscribe to the existing engine ticker. Dynamic
+  children advance from the same frame delta as mounted motions without a
   second ticker or competing clock.
+- Phase 27: viewport observation and pin-state sampling are lifecycle-safe and
+  clock-neutral. The host receives geometry and normalized progress without the
+  binding mutating layout or creating a frame source.
 
 ## Branch audit
 
@@ -54,12 +57,10 @@ Phases 10 and 22 have no pull request of their own: `phase-10-plugin-registry`,
 `phase-22-integration-hardening` were pushed straight to `main` and later
 appeared only as the base commit of the next PR. `phase-23-status-and-branch-audit`
 never carried a commit at all. Every phase branch through
-`phase-25-scroll-scrub-and-viewport-lifecycle` is merged and safe to delete.
+`phase-26-ticker-driven-spawn-surface` is merged and safe to delete.
 
 ## Next
 
-- Add viewport observation and scroll pinning delegates without introducing a
-  second frame source.
 - Add lifecycle leak tests around widget route changes, not just explicit
   disposal.
 - Run the benchmark harness for 14, 50, and 250-track rigs in a controlled
@@ -71,7 +72,7 @@ never carried a commit at all. Every phase branch through
 
 The core and Flutter adapters now cover schema validation, graph composition,
 renderer-neutral patches, scroll scrubbing, dynamic child placement, draining,
-and shared-ticker advancement. The spawn ticker binding is lifecycle-only: it
-never starts or stops the shared ticker, and disposing it leaves the engine clock
-untouched. Image loading, CSS, and overlay rendering stay in adapters by design.
-Viewport pinning and route-level leak coverage remain intentionally unimplemented.
+shared-ticker advancement, and viewport geometry sampling. Viewport binding
+reports pin state but leaves the actual layout mutation to the host by design.
+Image loading, CSS, and overlay rendering stay in adapters by design. Route-level
+leak coverage and controlled benchmark recording remain intentionally open.
