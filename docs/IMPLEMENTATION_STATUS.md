@@ -40,10 +40,12 @@ Audited against merged pull requests and remote branches, not against memory.
   mounted at their settled offsets, their playheads are driven from the
   parent's elapsed time, and completed children drain back through the layout
   policy.
-- Phase 25: scroll scrub sampling is explicit and clock-neutral. Flutter scroll
-  bindings now expose target/applied progress, apply core scrub math only when
-  the caller supplies elapsed time, and reset state on detach for safe viewport
-  reuse.
+- Phase 25 (#26): scroll scrub sampling is explicit and clock-neutral. Flutter
+  scroll bindings expose target/applied progress, apply core scrub math only
+  when the caller supplies elapsed time, and reset state on detach.
+- Phase 26: spawn surfaces can subscribe to the existing engine ticker. Dynamic
+  children now advance from the same frame delta as mounted motions without a
+  second ticker or competing clock.
 
 ## Branch audit
 
@@ -51,33 +53,25 @@ Phases 10 and 22 have no pull request of their own: `phase-10-plugin-registry`,
 `phase-8-plugins-fk-scroll`, `phase-9-easing-and-rig-renderer`, and
 `phase-22-integration-hardening` were pushed straight to `main` and later
 appeared only as the base commit of the next PR. `phase-23-status-and-branch-audit`
-never carried a commit at all: it points at an older `main`, which is why this
-file once listed the already-merged phases 19-22 work as upcoming. Every phase
-branch through `phase-24-spawn-and-drain-surface` is merged and safe to delete.
+never carried a commit at all. Every phase branch through
+`phase-25-scroll-scrub-and-viewport-lifecycle` is merged and safe to delete.
 
 ## Next
 
 - Add viewport observation and scroll pinning delegates without introducing a
   second frame source.
-- Drive the spawn surface from the ticker in a real scene, so spawn, drain, and
-  reflow are exercised end to end rather than only under direct time control.
-- Add lifecycle leak tests around widget route changes, not just around
-  explicit disposal.
+- Add lifecycle leak tests around widget route changes, not just explicit
+  disposal.
 - Run the benchmark harness for 14, 50, and 250-track rigs in a controlled
   environment and record results per commit.
-- Stabilize the public API surface and write the migration and compatibility
-  notes needed before either package is published.
+- Stabilize the public API surface and write migration and compatibility notes
+  before either package is published.
 
 ## Honest status
 
-The pure Dart core parses, validates, composes, and publishes v4 projects, models
-child placement policy the way the reference does, and now has a Flutter surface
-that actually mounts and drains those children. Scroll bindings now distinguish
-the sampled target from the applied progress without owning a clock. Image
-loading, CSS, and overlay rendering stay in adapters by design. Nothing yet
-runs the spawn surface from a live ticker in a demo scene, so churn behaviour is
-proven by deterministic time control rather than by a running rig. The benchmark
-harness reports local composition timing only and is not a cross-machine
-performance claim. Scene coverage is resolved segment geometry rather than
-committed pixel baselines, which is deliberate while the scene still changes
-most phases.
+The core and Flutter adapters now cover schema validation, graph composition,
+renderer-neutral patches, scroll scrubbing, dynamic child placement, draining,
+and shared-ticker advancement. The spawn ticker binding is lifecycle-only: it
+never starts or stops the shared ticker, and disposing it leaves the engine clock
+untouched. Image loading, CSS, and overlay rendering stay in adapters by design.
+Viewport pinning and route-level leak coverage remain intentionally unimplemented.
