@@ -4,7 +4,13 @@ import '../interpolation/interpolator.dart';
 class MotionPathTrackRuntime {
   MotionPathTrackRuntime(this.id, {Map<String, List<MotionPathStop>>? properties, List<MotionPathStop>? stops})
       : stops = stops ?? const <MotionPathStop>[],
-        properties = properties ?? (stops == null ? const <String, List<MotionPathStop>>{} : <String, List<MotionPathStop>>{'value': stops});
+        properties = _resolveProperties(properties, stops);
+
+  static Map<String, List<MotionPathStop>> _resolveProperties(Map<String, List<MotionPathStop>>? properties, List<MotionPathStop>? stops) {
+    if (properties != null) return properties;
+    if (stops != null) return <String, List<MotionPathStop>>{'value': stops};
+    return const <String, List<MotionPathStop>>{};
+  }
 
   final String id;
   final List<MotionPathStop> stops;
@@ -32,10 +38,10 @@ class MotionPathTrackRuntime {
 
 List<MotionPathStop> stopsFromKeyframe(Object? raw) {
   if (raw is! Map) return const <MotionPathStop>[];
-  final stops = raw['stops'];
-  if (stops is! List) return const <MotionPathStop>[];
+  final rawStops = raw['stops'];
+  if (rawStops is! List) return const <MotionPathStop>[];
   final result = <MotionPathStop>[];
-  for (final candidate in stops) {
+  for (final candidate in rawStops) {
     if (candidate is! Map) continue;
     final progress = candidate['p'];
     result.add(MotionPathStop(progress: progress is num ? progress.toDouble() : 0, value: candidate['v']));
