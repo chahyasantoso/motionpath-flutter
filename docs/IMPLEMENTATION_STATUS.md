@@ -56,9 +56,11 @@ Audited against merged pull requests and remote branches, not against memory.
   resets cleanly for lifecycle assertions.
 - Phase 29 (#34): widget-level route teardown coverage proves the host disposes
   and detaches a viewport binding when its scene leaves the tree.
-- Phase 30: controlled pure Dart benchmark reporting for 14, 50, and 250-track
-  compositions, with warmup, repeated runs, min/mean/max summaries, and JSON
-  output suitable for local artifact capture.
+- Phase 30 (#35): controlled pure Dart benchmark reporting for 14, 50, and
+  250-track compositions, with warmup, repeated runs, min/mean/max summaries,
+  and JSON output suitable for local artifact capture.
+- Phase 31: public API inventory, lifecycle rules, and JavaScript-to-Dart
+  migration guidance are documented before package stabilization.
 
 ## Branch audit
 
@@ -67,15 +69,14 @@ Phases 10 and 22 have no pull request of their own: `phase-10-plugin-registry`,
 `phase-22-integration-hardening` were pushed straight to `main` and later
 appeared only as the base commit of the next PR. `phase-23-status-and-branch-audit`
 never carried a commit at all. Every phase branch through
-`phase-29-route-lifecycle-coverage` is merged and safe to delete; the closed
+`phase-30-controlled-benchmarks` is merged and safe to delete; the closed
 superseded viewport iterations remain available for audit.
 
 ## Next
 
-- Stabilize the public API surface and write migration and compatibility notes
-  before either package is published.
 - Add a real example scene that renders a pinned viewport item and a dynamic
   spawn chain together.
+- Stabilize package metadata, changelog, and release checklist before publishing.
 
 ## Honest status
 
@@ -86,8 +87,9 @@ viewport binding reports renderer-neutral pin state and paint offset but does
 not mutate layout or scroll position; a host widget still owns actual pinned
 rendering. Route teardown is covered at both binding and widget-host level, so
  disposed viewport bindings cannot leak listeners into a reused route. The
-benchmark harness now supports controlled local comparisons but remains
-explicitly non-comparative across machines. Image loading, CSS, and overlay
-rendering stay in adapters by design. Scene coverage is resolved segment
-geometry rather than committed pixel baselines, which is deliberate while the
-scene still changes most phases.
+benchmark harness supports controlled local comparisons but remains explicitly
+non-comparative across machines. The public API is now documented as a boundary,
+not a promise of source-level GSAP or DOM parity. Image loading, CSS, and overlay
+rendering stay in adapters by design. Scene coverage is resolved segment geometry
+rather than committed pixel baselines, which is deliberate while the scene still
+changes most phases.
