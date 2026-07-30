@@ -14,6 +14,7 @@ class MotionPathViewportPinBinding {
     required this.motion,
     required this.delegate,
     required this.sampler,
+    this.scrub = 0,
   });
 
   /// Motion driven by viewport position.
@@ -24,6 +25,9 @@ class MotionPathViewportPinBinding {
 
   /// Reads the current target geometry in viewport coordinates.
   final MotionPathViewportSample Function() sampler;
+
+  /// Smoothing window in seconds. Zero applies samples immediately.
+  final double scrub;
 
   ScrollPosition? _position;
   double _progress = 0;
@@ -57,15 +61,15 @@ class MotionPathViewportPinBinding {
     final MotionPathViewportSample current = sampler();
     final double target = delegate.progressFor(current);
     _pinned = delegate.isPinned(current);
-    if (deltaSeconds <= 0) {
+    if (scrub <= 0 || deltaSeconds <= 0) {
       _progress = target;
     } else {
-      final MotionPathScrollBinding scrub = MotionPathScrollBinding(
+      final MotionPathScrollBinding scrubMath = MotionPathScrollBinding(
         start: 0,
         end: 1,
-        scrub: deltaSeconds,
+        scrub: scrub,
       );
-      _progress = scrub.scrubToward(_progress, target, deltaSeconds);
+      _progress = scrubMath.scrubToward(_progress, target, deltaSeconds);
     }
     motion.seek(_progress);
   }
