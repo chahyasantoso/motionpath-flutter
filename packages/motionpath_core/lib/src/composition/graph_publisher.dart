@@ -1,60 +1,57 @@
-import '../graph/observation_graph.dart';
 import '../runtime/track.dart';
-import 'patch_composition.dart';
 
-/// Collects dirty tracks and publishes composed patches once per flush.
+/// Collects dirty graph nodes and publishes composed patches once per flush.
 ///
-/// Composition always walks the full [ObservationGraph] order so a child sees a
-/// freshly composed parent, but only dirty tracks are returned. That mirrors the
-/// JavaScript `GraphPublisher`, which composes everything and publishes little.
+/// The publisher composes every node in the compiled order so parents share one
+/// composition context with their children, but it only returns the nodes that
+/// were actually marked dirty.
 class MotionPathGraphPublisher {
-  MotionPathGraphPublisher(this.tracks, {this.graph});
+  /// Creates a publisher over mounted [tracks].
+  MotionPathGraphPublisher(this.tracks);
 
+  /// Mounted tracks keyed by id.
   final Map<String, MotionPathTrackRuntime> tracks;
-
-  /// Optional graph used to feed observed inputs while composing.
-  final ObservationGraph? graph;
 
   final Set<String> _dirty = <String>{};
 
-  /// Tracks queued for the next flush.
-  Set<String> get dirty => Set<String>.unmodifiable(_dirty);
+  /// Whether anything is pending publication.
+  bool get isDirty => _dirty.isNotEmpty;
 
-  void markDirty(String id) => _dirty.add(id);
+  /// Marks one track dirty.
+  void markDirty(String id) {
+    if (tracks.containsKey(id)) {
+      _dirty.add(id);
+    }
+  }
 
-  /// Queues every track in [order] that this publisher owns.
+  /// Marks every track in [order] dirty.
   void markAllDirty(Iterable<String> order) {
     for (final String id in order) {
-      if (tracks.containsKey(id)) _dirty.add(id);
+      markDirty(id);
     }
   }
 
+  /// Composes [order] parents-first and returns only the dirty patches.
   Map<String, Map<String, Object?>> flush(List<String> order) {
-    final Map<String, Map<String, Object?>> published = <String, Map<String, Object?>>{};
-    final Map<String, Map<String, Object?>> composed = <String, Map<String, Object?>>{};
+    if (_dirty.isEmpty) {
+      return const <String, Map<String, Object?>>{};
+    }
+    final Set<String> dirty = Set<String>.of(_dirty);
+    _dirty.clear();
+    final Map<MotionPathTrackRuntime, Map<String, Object?>?> context =
+        <MotionPathTrackRuntime, Map<String, Object?>?>{};
+    final Map<String, Map<String, Object?>> published =
+        <String, Map<String, Object?>>{};
     for (final String id in order) {
       final MotionPathTrackRuntime? track = tracks[id];
-      if (track == null) continue;
-      final Map<String, Object?> patch = applyForwardKinematics(
-        track.compose(inputs: _inputsFor(id, composed)),
-      );
-      composed[id] = patch;
-      if (_dirty.contains(id)) published[id] = stripInternalPatchKeys(patch);
+      if (track == null) {
+        continue;
+      }
+      final Map<String, Object?> patch = track.compose(context: context);
+      if (dirty.contains(id)) {
+        published[id] = patch;
+      }
     }
-    _dirty.clear();
     return published;
-  }
-
-  Map<String, Object?> _inputsFor(String id, Map<String, Map<String, Object?>> composed) {
-    final ObservationGraph? currentGraph = graph;
-    if (currentGraph == null) return const <String, Object?>{};
-    final Map<String, Object?> inputs = <String, Object?>{};
-    for (final ObservationEdge edge in currentGraph.edges) {
-      if (edge.target != id || edge.role != 'input') continue;
-      final Map<String, Object?>? source = composed[edge.source];
-      if (source == null) continue;
-      inputs[edge.inputKey ?? edge.source] = Map<String, Object?>.of(source);
-    }
-    return inputs;
   }
 }

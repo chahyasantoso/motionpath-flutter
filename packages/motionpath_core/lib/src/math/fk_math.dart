@@ -1,25 +1,30 @@
 import 'dart:math' as math;
 
-/// A plain 2D world transform.
-///
-/// Rotation is expressed in degrees to stay byte-compatible with the authored
-/// v4 JSON, which is DOM-space: `+x` is right and `+y` is down.
-class MotionPathWorldTransform {
-  /// Creates a world transform.
-  const MotionPathWorldTransform({this.x = 0, this.y = 0, this.rotation = 0});
+import 'package:meta/meta.dart';
 
-  /// Reads `x`, `y`, and `rotation` out of a composed patch.
-  ///
-  /// Missing or non-numeric entries fall back to zero, which matches the
-  /// reference runtime's nullish handling.
-  factory MotionPathWorldTransform.fromPatch(Map<String, Object?>? patch) {
-    if (patch == null) return const MotionPathWorldTransform();
-    return MotionPathWorldTransform(
-      x: _readNumber(patch['x']),
-      y: _readNumber(patch['y']),
-      rotation: _readNumber(patch['rotation']),
-    );
-  }
+import '../contract/motionpath_types.dart';
+
+/// A 2D world transform used by forward kinematics.
+///
+/// [rotation] is in degrees so the value stays interchangeable with the
+/// JavaScript reference runtime and with authored keyframes. Renderers convert
+/// to radians at the boundary.
+@immutable
+class MotionPathWorldTransform {
+  /// Creates a transform.
+  const MotionPathWorldTransform({
+    this.x = 0,
+    this.y = 0,
+    this.rotation = 0,
+  });
+
+  /// Reads `x`, `y`, and `rotation` from a renderer-neutral patch.
+  factory MotionPathWorldTransform.fromPatch(Map<String, Object?> patch) =>
+      MotionPathWorldTransform(
+        x: _readDouble(patch['x']),
+        y: _readDouble(patch['y']),
+        rotation: _readDouble(patch['rotation']),
+      );
 
   /// Horizontal world position.
   final double x;
@@ -30,26 +35,43 @@ class MotionPathWorldTransform {
   /// World rotation in degrees.
   final double rotation;
 
-  /// The transform as a flat, renderer-neutral patch.
-  Map<String, Object?> toPatch() => <String, Object?>{'x': x, 'y': y, 'rotation': rotation};
+  /// Serializes back into a renderer-neutral patch fragment.
+  Map<String, Object?> toPatch() => <String, Object?>{
+        'x': x,
+        'y': y,
+        'rotation': rotation,
+      };
+
+  /// Distance to [other] in world space.
+  double distanceTo(MotionPathWorldTransform other) {
+    final double dx = other.x - x;
+    final double dy = other.y - y;
+    return math.sqrt(dx * dx + dy * dy);
+  }
+
+  static double _readDouble(Object? value) =>
+      value is num ? value.toDouble() : 0.0;
 
   @override
   bool operator ==(Object other) =>
-      other is MotionPathWorldTransform && other.x == x && other.y == y && other.rotation == rotation;
+      other is MotionPathWorldTransform &&
+      other.x == x &&
+      other.y == y &&
+      other.rotation == rotation;
 
   @override
   int get hashCode => Object.hash(x, y, rotation);
 
   @override
-  String toString() => 'MotionPathWorldTransform(x: $x, y: $y, rotation: $rotation)';
+  String toString() =>
+      'MotionPathWorldTransform(x: $x, y: $y, rotation: $rotation)';
 }
 
-double _readNumber(Object? value) => value is num ? value.toDouble() : 0;
-
-/// Accumulates [local] onto [parentWorld] for forward kinematics.
+/// Accumulates a child's world transform from its parent and local offset.
 ///
-/// This is the Dart port of `packages/core/src/math/fkMath.js`: the local offset
-/// is rotated by the parent's world rotation, then translated, and rotations add.
+/// World rotation accumulates down the chain, so a joint's authored angle is
+/// always local. This is the single place FK math lives; the renderer never
+/// recomputes it.
 MotionPathWorldTransform composeWorld(
   MotionPathWorldTransform parentWorld,
   MotionPathWorldTransform local,
@@ -63,3 +85,12 @@ MotionPathWorldTransform composeWorld(
     rotation: parentWorld.rotation + local.rotation,
   );
 }
+
+/// Distance between two composed patches, for FK invariant assertions.
+double patchDistance(Map<String, Object?> a, Map<String, Object?> b) =>
+    MotionPathWorldTransform.fromPatch(a)
+        .distanceTo(MotionPathWorldTransform.fromPatch(b));
+
+/// Reads a world transform out of an observation input value.
+MotionPathWorldTransform worldFromInput(Object? value) =>
+    MotionPathWorldTransform.fromPatch(asStringKeyedMap(value));

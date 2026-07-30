@@ -1,32 +1,76 @@
-import '../composition/patch_composition.dart';
 import '../graph/observation_graph.dart';
 import 'track.dart';
+import 'trigger.dart';
 
+/// A mounted motion: one trigger, one playhead, and the tracks that share it.
 class MotionPathMotionRuntime {
-  MotionPathMotionRuntime({required this.id, required this.tracks});
+  /// Creates a runtime motion.
+  MotionPathMotionRuntime({
+    required this.id,
+    required this.tracks,
+    this.trigger,
+    this.duration = 1,
+  });
 
+  /// Motion id.
   final String id;
+
+  /// Mounted tracks.
   final List<MotionPathTrackRuntime> tracks;
+
+  /// Trigger semantics, or null for an externally driven motion.
+  final MotionPathTrigger? trigger;
+
+  /// Motion duration in seconds.
+  final double duration;
+
+  /// Normalized playhead in `[0, 1]`.
   double progress = 0;
+
+  /// Whether the frame source should advance this motion.
   bool playing = false;
+
+  /// Compiled observation graph.
   ObservationGraph? graph;
-  double duration = 1;
 
-  /// Called with renderer-facing patches after each composed tick.
-  ///
-  /// This is the only hook a renderer needs: the core never knows who listens.
-  void Function(Map<String, Map<String, Object?>> patches)? onPatches;
+  double _elapsed = 0;
 
-  Map<String, Map<String, Object?>> _patches = const <String, Map<String, Object?>>{};
+  /// Compiled parent-before-child track ids.
+  List<String> get graphOrder => graph == null
+      ? const <String>[]
+      : List<String>.unmodifiable(graph!.order);
 
-  /// The most recently composed renderer-facing patches, keyed by track id.
-  Map<String, Map<String, Object?>> get patches => _patches;
+  /// Stores the compiled graph and wires authored observations.
+  void prepare(ObservationGraph nextGraph) {
+    graph = nextGraph;
+    final Map<String, MotionPathTrackRuntime> byId =
+        <String, MotionPathTrackRuntime>{
+      for (final MotionPathTrackRuntime track in tracks) track.id: track,
+    };
+    for (final ObservationEdge edge in nextGraph.edges) {
+      final MotionPathTrackRuntime? target = byId[edge.target];
+      final MotionPathTrackRuntime? source = byId[edge.source];
+      if (target == null || source == null) {
+        continue;
+      }
+      target.observe(source, role: edge.role, input: edge.input);
+    }
+  }
 
-  void prepare(ObservationGraph nextGraph) => graph = nextGraph;
-  void play() => playing = true;
-  void pause() => playing = false;
+  /// Starts advancing on the frame source.
+  void play() {
+    playing = true;
+  }
+
+  /// Stops advancing on the frame source.
+  void pause() {
+    playing = false;
+  }
+
+  /// Flips the playhead around its midpoint.
   void reverse() => seek(1 - progress);
 
+  /// Moves every track to a normalized [value].
   void seek(double value) {
     progress = value.clamp(0.0, 1.0).toDouble();
     for (final MotionPathTrackRuntime track in tracks) {
@@ -34,59 +78,61 @@ class MotionPathMotionRuntime {
     }
   }
 
-  /// Composes every track parent-first and returns the renderer-facing patches.
-  ///
-  /// Input edges deliver the observed patch under the authored key, output edges
-  /// merge the observed patch on top, and bone data is folded into flat world
-  /// coordinates before internal keys are stripped.
+  /// Composes every track in the compiled order, sharing one context.
   Map<String, Map<String, Object?>> composeGraph() {
-    final ObservationGraph? currentGraph = graph;
-    if (currentGraph == null) return const <String, Map<String, Object?>>{};
-    final Map<String, MotionPathTrackRuntime> byId = <String, MotionPathTrackRuntime>{
+    final ObservationGraph? current = graph;
+    if (current == null) {
+      return const <String, Map<String, Object?>>{};
+    }
+    final Map<String, MotionPathTrackRuntime> byId =
+        <String, MotionPathTrackRuntime>{
       for (final MotionPathTrackRuntime track in tracks) track.id: track,
     };
-    final Map<String, Map<String, Object?>> composed = <String, Map<String, Object?>>{};
-    for (final String id in currentGraph.order) {
-      final MotionPathTrackRuntime? track = byId[id];
-      if (track == null) continue;
-      final Map<String, Object?> inputs = <String, Object?>{};
-      for (final ObservationEdge edge in currentGraph.edges) {
-        if (edge.target != id || edge.role != 'input') continue;
-        final Map<String, Object?>? source = composed[edge.source];
-        if (source == null) continue;
-        inputs[edge.inputKey ?? edge.source] = Map<String, Object?>.of(source);
+    final Map<MotionPathTrackRuntime, Map<String, Object?>?> context =
+        <MotionPathTrackRuntime, Map<String, Object?>?>{};
+    final Map<String, Map<String, Object?>> patches =
+        <String, Map<String, Object?>>{};
+    for (final String trackId in current.order) {
+      final MotionPathTrackRuntime? track = byId[trackId];
+      if (track == null) {
+        continue;
       }
-      Map<String, Object?> patch = track.compose(inputs: inputs);
-      for (final ObservationEdge edge in currentGraph.edges) {
-        if (edge.target != id || edge.role != 'output') continue;
-        final Map<String, Object?>? source = composed[edge.source];
-        if (source != null) patch.addAll(source);
-      }
-      patch = applyForwardKinematics(patch);
-      composed[id] = patch;
+      patches[trackId] = track.compose(context: context);
     }
-    final Map<String, Map<String, Object?>> published = <String, Map<String, Object?>>{};
-    for (final MapEntry<String, Map<String, Object?>> entry in composed.entries) {
-      published[entry.key] = stripInternalPatchKeys(entry.value);
-    }
-    _patches = published;
-    return published;
+    return patches;
   }
 
+  /// Advances the playhead by [delta] seconds.
   void tick(double delta) {
-    seek(progress + delta / duration);
-    final Map<String, Map<String, Object?>> published = composeGraph();
-    final void Function(Map<String, Map<String, Object?>>)? listener = onPatches;
-    if (listener != null) listener(published);
-    if (progress >= 1) pause();
+    final MotionPathTrigger? currentTrigger = trigger;
+    final double span = duration <= 0 ? 1 : duration;
+    if (currentTrigger == null) {
+      seek(progress + delta / span);
+    } else {
+      _elapsed += delta;
+      seek(currentTrigger.progressAt(_elapsed, span));
+    }
+    if (progress < 1) {
+      return;
+    }
+    if (currentTrigger == null || currentTrigger.isFinished(_elapsed, span)) {
+      pause();
+    }
   }
 
+  /// Rewinds the trigger clock without touching authored data.
+  void restart() {
+    _elapsed = 0;
+    seek(0);
+  }
+
+  /// Releases every track and subscription.
   void dispose() {
-    onPatches = null;
     for (final MotionPathTrackRuntime track in tracks) {
       track.dispose();
     }
     tracks.clear();
-    _patches = const <String, Map<String, Object?>>{};
+    graph = null;
+    playing = false;
   }
 }
