@@ -14,6 +14,10 @@ const int kMotionPathDefaultArgb = 0xFF2196F3;
 /// A patch is plain Dart data produced by `motionpath_core`. This type is the
 /// only place that decides how those keys map onto Flutter painting concepts,
 /// which keeps the pure Dart core free of any rendering knowledge.
+///
+/// Patch rotation is authored and composed in degrees, matching the JavaScript
+/// reference runtime and the forward-kinematics math. This type converts once,
+/// at the boundary.
 @immutable
 class MotionPathPatchTransform {
   /// Creates a resolved transform.
@@ -39,7 +43,7 @@ class MotionPathPatchTransform {
     return MotionPathPatchTransform(
       translateX: _read(patch, const <String>['x', 'translateX'], 0.0),
       translateY: _read(patch, const <String>['y', 'translateY'], 0.0),
-      rotation: _read(patch, const <String>['rotation', 'rotate'], 0.0),
+      rotation: _readRotationRadians(patch),
       scaleX: _read(patch, const <String>['scaleX'], scale),
       scaleY: _read(patch, const <String>['scaleY'], scale),
       opacity: _clamp01(_read(patch, const <String>['opacity'], 1.0)),
@@ -116,6 +120,16 @@ class MotionPathPatchTransform {
     return value;
   }
 
+  static double _readRotationRadians(Map<String, Object?> patch) {
+    final Object? radians = patch['rotationRadians'];
+    if (radians is num) {
+      return radians.toDouble();
+    }
+    final double degrees =
+        _read(patch, const <String>['rotation', 'rotate'], 0.0);
+    return degrees * math.pi / 180;
+  }
+
   static double _read(
     Map<String, Object?> patch,
     List<String> keys,
@@ -157,17 +171,13 @@ class MotionPathPatchTransform {
 ///
 /// This is intentionally a focused renderer boundary: it draws one diagnostic
 /// square so transform, opacity, and invalidation behaviour can be verified
-/// before the Walker renderer and production scene widgets exist.
+/// independently of the rig renderer.
 class MotionPathPatchPainter extends CustomPainter {
   /// Creates a painter for a single composed [patch].
-  ///
-  /// Pass `repaint` to drive invalidation straight from a patch source instead
-  /// of rebuilding the widget that owns this painter.
   MotionPathPatchPainter({
     required this.patch,
     this.fallbackArgb = kMotionPathDefaultArgb,
     this.extent = 80,
-    super.repaint,
   });
 
   /// The composed, renderer-neutral patch to draw.
