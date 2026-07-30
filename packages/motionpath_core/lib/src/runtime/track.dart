@@ -2,7 +2,9 @@ import '../contract/motionpath_types.dart';
 import '../interpolation/interpolator.dart';
 
 class MotionPathTrackRuntime {
-  MotionPathTrackRuntime(this.id, {this.properties = const <String, List<MotionPathStop>>{}});
+  MotionPathTrackRuntime(this.id, {Map<String, List<MotionPathStop>>? properties, List<MotionPathStop>? stops})
+      : properties = properties ?? (stops == null ? const <String, List<MotionPathStop>>{} : <String, List<MotionPathStop>>{'value': stops});
+
   final String id;
   final Map<String, List<MotionPathStop>> properties;
   double progress = 0;
@@ -12,6 +14,7 @@ class MotionPathTrackRuntime {
     final patch = <String, Object?>{};
     patch.addAll(inputs);
     for (final entry in properties.entries) patch[entry.key] = interpolateStops(entry.value, progress);
+    if (properties.length == 1 && properties.containsKey('value')) patch['value'] = patch['value'];
     patch['progress'] = progress;
     return patch;
   }
