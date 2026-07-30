@@ -32,7 +32,7 @@ void main() {
       contentExtent: 100,
       viewportExtent: 400,
       pinStart: 20,
-      pinEnd: 300,
+      pinEnd: 100,
       onSample: (_) {},
     );
 
