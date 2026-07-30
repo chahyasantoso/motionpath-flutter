@@ -1,3 +1,4 @@
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:motionpath_core/motionpath_core.dart';
 import 'package:motionpath_flutter/motionpath_flutter.dart';
@@ -25,7 +26,7 @@ class _FakeEngine extends MotionPathEngine {}
 
 class _FakeProvider implements TickerProvider {
   @override
-  Ticker createTicker(TickerCallback onTick) => throw UnimplementedError();
+  Ticker createTicker(TickerCallback onTick) => Ticker(onTick);
 }
 
 MotionPathTrackRuntime _child(String id) => MotionPathTrackRuntime(
@@ -57,6 +58,7 @@ void main() {
     binding.dispose();
     expect(binding.isAttached, isFalse);
     controller.dispose();
+    driver.dispose();
   });
 
   test('disposing the binding leaves the shared driver alone', () {
