@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:motionpath_core/motionpath_core.dart';
 import 'package:motionpath_flutter/motionpath_flutter.dart';
@@ -29,33 +27,19 @@ class _MotionPathExamplePageState extends State<MotionPathExamplePage>
   final ScrollController _scroll = ScrollController();
   late final MotionPathEngine _engine;
   late final MotionPathTickerDriver _ticker;
-  late final MotionPathMotionRuntime _timeMotion;
   late final MotionPathMotionRuntime _viewportMotion;
   late final MotionPathPatchSource _source;
   late final MotionPathViewportBinding _viewport;
   late final MotionPathTrackRuntime _spawnParent;
   late final MotionPathSpawnController _spawns;
   late final MotionPathSpawnTickerBinding _spawnTicker;
+  int _nextSpawnId = 0;
 
   @override
   void initState() {
     super.initState();
-    _engine = MotionPathEngine()
-      ..loadProject(const MotionPathProject(
-        schemaVersion: 4,
-        projectId: 'example',
-        motions: <MotionPathMotion>[
-          MotionPathMotion(
-            id: 'time',
-            trigger: <String, Object?>{'type': 'time', 'autoplay': true},
-            tracks: <MotionPathTrack>[MotionPathTrack(id: 'clock')],
-          ),
-        ],
-      ));
-    _timeMotion = _engine.mountMotion('time');
-    _timeMotion.play();
+    _engine = MotionPathEngine();
     _ticker = MotionPathTickerDriver(_engine, this);
-
     _viewportMotion = MotionPathMotionRuntime(
       id: 'viewport',
       tracks: <MotionPathTrackRuntime>[
@@ -85,8 +69,8 @@ class _MotionPathExamplePageState extends State<MotionPathExamplePage>
     _spawnParent = MotionPathTrackRuntime('spawn-parent');
     _spawns = MotionPathSpawnController(
       parent: _spawnParent,
-      childDuration: 2.4,
-      drainOnComplete: true,
+      childDuration: 9999,
+      drainOnComplete: false,
     );
     _spawnTicker = MotionPathSpawnTickerBinding(
       driver: _ticker,
@@ -104,12 +88,12 @@ class _MotionPathExamplePageState extends State<MotionPathExamplePage>
   }
 
   void _spawn() {
-    final String id = 'dot-${_spawns.liveCount + DateTime.now().microsecond}';
+    final String id = 'dot-${_nextSpawnId++}';
     _spawns.spawn(
       MotionPathTrackRuntime(
         id,
         properties: <String, List<MotionPathStop>>{
-          'x': const <MotionPathStop>[
+          'progress': const <MotionPathStop>[
             MotionPathStop(progress: 0, value: 0),
             MotionPathStop(progress: 1, value: 1),
           ],
@@ -137,7 +121,7 @@ class _MotionPathExamplePageState extends State<MotionPathExamplePage>
         floatingActionButton: FloatingActionButton.extended(
           onPressed: _spawn,
           icon: const Icon(Icons.add),
-          label: const Text('Spawn'),
+          label: const Text('Spawn dot'),
         ),
         body: ListView(
           controller: _scroll,
@@ -168,8 +152,22 @@ class _MotionPathExamplePageState extends State<MotionPathExamplePage>
               height: 360,
               child: AnimatedBuilder(
                 animation: _spawns,
-                builder: (BuildContext context, Widget? child) => CustomPaint(
-                  painter: _SpawnPainter(instances: _spawns.instances),
+                builder: (BuildContext context, Widget? child) => Stack(
+                  children: <Widget>[
+                    Positioned.fill(
+                      child: CustomPaint(
+                        painter: _SpawnPainter(instances: _spawns.instances),
+                      ),
+                    ),
+                    Positioned(
+                      top: 16,
+                      left: 20,
+                      child: Text(
+                        '${_spawns.liveCount} dots in the chain',
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -186,7 +184,7 @@ class _IntroCard extends StatelessWidget {
   Widget build(BuildContext context) => const Padding(
         padding: EdgeInsets.all(24),
         child: Text(
-          'Scroll to observe viewport progress and pin state. Tap Spawn to add children driven by the shared ticker.',
+          'Scroll to observe viewport progress and pin state. Tap Spawn dot to build a visible chain. Dots stay mounted here so the instance count is easy to inspect.',
           style: TextStyle(fontSize: 18),
         ),
       );
@@ -198,13 +196,14 @@ class _ViewportPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final Paint background = Paint()..color = const Color(0xFF151A2B);
-    canvas.drawRect(Offset.zero & size, background);
+    canvas.drawRect(Offset.zero & size, Paint()..color = const Color(0xFF151A2B));
     final double y = sample.pinned ? 60 : sample.localOffset.clamp(0, size.height);
     final Paint card = Paint()..color = Color.lerp(const Color(0xFF384A80), const Color(0xFF6E82FF), sample.progress)!;
     canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(24, y, size.width - 48, 220), const Radius.circular(24)), card);
-    final Paint label = Paint()..color = Colors.white;
-    final text = TextPainter(text: TextSpan(text: 'progress ${(sample.progress * 100).round()}%', style: const TextStyle(color: Colors.white, fontSize: 22)), textDirection: TextDirection.ltr)..layout();
+    final TextPainter text = TextPainter(
+      text: TextSpan(text: 'progress ${(sample.progress * 100).round()}%', style: const TextStyle(color: Colors.white, fontSize: 22)),
+      textDirection: TextDirection.ltr,
+    )..layout();
     text.paint(canvas, const Offset(48, 84));
   }
 
@@ -219,10 +218,11 @@ class _SpawnPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     canvas.drawRect(Offset.zero & size, Paint()..color = const Color(0xFF0B0D16));
+    final double span = size.width - 72;
     for (final MotionPathSpawnInstance instance in instances) {
-      final double x = 32 + (instance.offset * 54) % (size.width - 64);
-      final double y = size.height / 2 + math.sin(instance.progress * math.pi) * -80;
-      final double radius = 8 + instance.progress * 12;
+      final double x = 36 + (instance.offset * 78) % span;
+      final double y = size.height / 2 + (instance.offset * 24) % 90 - 45;
+      final double radius = 10 + instance.progress * 8;
       canvas.drawCircle(Offset(x, y), radius, Paint()..color = Color.lerp(const Color(0xFFFF8F55), const Color(0xFF6E82FF), instance.progress)!);
     }
   }
