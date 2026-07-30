@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:motionpath_core/motionpath_core.dart';
-
-import '../lib/spiral_project.dart';
+import 'package:motionpath_flutter_example/spiral_project.dart';
 
 void main() {
   test('spiral ball is authored and validated as a v4 project', () {
