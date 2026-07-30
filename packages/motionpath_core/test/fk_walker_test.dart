@@ -132,14 +132,13 @@ void main() {
       const ObservationGraph graph = ObservationGraph(
         nodes: <ObservationNode>[ObservationNode('root'), ObservationNode('bone')],
         edges: <ObservationEdge>[
-          ObservationEdge(source: 'root', target: 'bone', role: 'input', inputKey: 'parentWorld'),
+          ObservationEdge(source: 'root', target: 'bone', role: 'input', input: 'parentWorld'),
         ],
         order: <String>['root', 'bone'],
         errors: <MotionPathDiagnostic>[],
       );
       final MotionPathGraphPublisher publisher = MotionPathGraphPublisher(
         <String, MotionPathTrackRuntime>{'root': root, 'bone': bone},
-        graph: graph,
       );
       publisher.markDirty('bone');
       final Map<String, Map<String, Object?>> published = publisher.flush(graph.order);
