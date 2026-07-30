@@ -1,5 +1,3 @@
-import '../contract/motionpath_types.dart';
-
 /// Built-in trigger types.
 enum MotionPathTriggerType {
   /// Advanced by the frame source.
