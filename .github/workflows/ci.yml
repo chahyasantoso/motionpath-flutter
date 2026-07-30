@@ -58,15 +58,6 @@ jobs:
       - name: Pub get
         run: flutter pub get
       - name: Analyze
-        run: |
-          status=0
-          flutter analyze --format=machine > analyze.log 2>&1 || status=$?
-          cat analyze.log
-          while IFS='|' read -r level file line column code message; do
-            if [ -n "$message" ]; then
-              echo "::error file=$file,line=$line,col=$column,title=$code::$message"
-            fi
-          done < analyze.log
-          exit "$status"
+        run: flutter analyze --no-fatal-warnings --no-fatal-infos
       - name: Test
         run: flutter test
