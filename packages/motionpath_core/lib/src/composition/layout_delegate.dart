@@ -134,27 +134,22 @@ class MotionPathGaplessLayoutDelegate extends MotionPathLayoutDelegate {
   /// Reflow must walk children in actual timeline-position order, not insertion
   /// order, because a manually staggered child can land anywhere relative to
   /// its auto-placed siblings. Ties keep insertion order so an equal-offset
-  /// chain still reflows deterministically; `List.sort` alone is not stable.
+  /// chain still reflows deterministically. This is an insertion pass rather
+  /// than `List.sort` because `List.sort` is not stable, and a child chain is
+  /// far too small for the difference in cost to matter.
   @protected
   List<MotionPathLayoutChild> orderByOffset(
     List<MotionPathLayoutChild> children,
   ) {
-    final List<(int, MotionPathLayoutChild)> decorated =
-        <(int, MotionPathLayoutChild)>[
-      for (int index = 0; index < children.length; index++)
-        (index, children[index]),
-    ];
-    decorated.sort((
-      (int, MotionPathLayoutChild) a,
-      (int, MotionPathLayoutChild) b,
-    ) {
-      final int byOffset =
-          a.$2.currentOffset.compareTo(b.$2.currentOffset);
-      return byOffset != 0 ? byOffset : a.$1.compareTo(b.$1);
-    });
-    return <MotionPathLayoutChild>[
-      for (final (int, MotionPathLayoutChild) entry in decorated) entry.$2,
-    ];
+    final List<MotionPathLayoutChild> ordered = <MotionPathLayoutChild>[];
+    for (final MotionPathLayoutChild child in children) {
+      int slot = ordered.length;
+      while (slot > 0 && ordered[slot - 1].currentOffset > child.currentOffset) {
+        slot--;
+      }
+      ordered.insert(slot, child);
+    }
+    return ordered;
   }
 
   /// Identity rank of [child] within an already ordered chain, or -1.
