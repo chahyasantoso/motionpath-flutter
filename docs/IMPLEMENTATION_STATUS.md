@@ -8,12 +8,13 @@
 - Phase 3: numeric interpolation, normalized Track progress, Motion playback controls, Engine lifecycle, mount-time graph compilation, and runtime tests.
 - Phase 4: delay/repeat/yoyo trigger math, dirty-track GraphPublisher, and a single-source Flutter Ticker driver boundary.
 - Phase 5: Engine tick propagation, authored keyframe stop extraction, and ticker-driven runtime progress.
-- Phase 6 slice: per-property interpolation patches and parent-first graph composition scaffolding.
+- Phase 6: per-property interpolation patches and parent-first graph composition scaffolding.
+- Phase 7 slice: renderer-neutral Flutter patch painter supporting opacity, translation, rotation, scale, and basic color boundary handling.
 
 ## Next
 
-Finish graph patch publishing, implement Flutter CustomPainter and canvas rendering, add scroll bindings, then port Walker FK.
+Connect composed graph patches to painter invalidation, add scroll bindings, port Walker FK fixtures, and add matrix/golden tests. Keep platform rendering outside the pure Dart core.
 
 ## Honest status
 
-Graph composition currently calculates patches internally but does not expose/publish the result yet. Output semantics are intentionally minimal and need dedicated diamond/FK tests before renderer work.
+The painter is a focused renderer boundary, not a complete widget system. It intentionally renders a diagnostic square while the Walker renderer and production scene widgets are built.
