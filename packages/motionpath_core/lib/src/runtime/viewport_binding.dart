@@ -2,14 +2,24 @@ import 'package:meta/meta.dart';
 
 @immutable
 class MotionPathViewportSample {
-  const MotionPathViewportSample({required this.targetOffset, required this.targetExtent, required this.viewportExtent});
+  const MotionPathViewportSample({
+    required this.targetOffset,
+    required this.targetExtent,
+    required this.viewportExtent,
+    this.progress = 0,
+    this.isPinned = false,
+  });
+
   final double targetOffset;
   final double targetExtent;
   final double viewportExtent;
+  final double progress;
+  final bool isPinned;
+
+  double get viewportTop => targetOffset;
+  double get viewportBottom => targetOffset + targetExtent;
 }
 
-/// Maps target viewport geometry to progress and pin state. Layout and clocks
-/// stay outside the pure Dart core.
 class MotionPathViewportPinDelegate {
   const MotionPathViewportPinDelegate({this.enterAt = 1, this.exitAt = 0});
   final double enterAt;
