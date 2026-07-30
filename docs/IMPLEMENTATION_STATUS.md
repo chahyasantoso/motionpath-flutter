@@ -36,10 +36,14 @@ Audited against merged pull requests and remote branches, not against memory.
   `GaplessLayoutDelegate`, and `StaticLayoutDelegate` are ported from the
   reference, and runtime tracks own the parent/child mechanics those policies
   exist to serve.
-- Phase 24: a Flutter spawn and drain surface. Composed children are mounted at
-  their settled offsets, their playheads are driven from the parent's elapsed
-  time, and completed children drain back through the layout policy. This closes
-  the gap phase 23 left open: placement was bookkeeping with nobody consuming it.
+- Phase 24 (#25): a Flutter spawn and drain surface. Composed children are
+  mounted at their settled offsets, their playheads are driven from the
+  parent's elapsed time, and completed children drain back through the layout
+  policy.
+- Phase 25: scroll scrub sampling is explicit and clock-neutral. Flutter scroll
+  bindings now expose target/applied progress, apply core scrub math only when
+  the caller supplies elapsed time, and reset state on detach for safe viewport
+  reuse.
 
 ## Branch audit
 
@@ -49,8 +53,7 @@ Phases 10 and 22 have no pull request of their own: `phase-10-plugin-registry`,
 appeared only as the base commit of the next PR. `phase-23-status-and-branch-audit`
 never carried a commit at all: it points at an older `main`, which is why this
 file once listed the already-merged phases 19-22 work as upcoming. Every phase
-branch through `phase-23-track-composition-and-layout` is merged and safe to
-delete.
+branch through `phase-24-spawn-and-drain-surface` is merged and safe to delete.
 
 ## Next
 
@@ -69,10 +72,12 @@ delete.
 
 The pure Dart core parses, validates, composes, and publishes v4 projects, models
 child placement policy the way the reference does, and now has a Flutter surface
-that actually mounts and drains those children. Image loading, CSS, and overlay
-rendering stay in adapters by design. Nothing yet drives the spawn surface from a
-live ticker in a demo scene, so churn behaviour is proven by deterministic time
-control rather than by a running rig. The benchmark harness reports local
-composition timing only and is not a cross-machine performance claim. Scene
-coverage is resolved segment geometry rather than committed pixel baselines,
-which is deliberate while the scene still changes most phases.
+that actually mounts and drains those children. Scroll bindings now distinguish
+the sampled target from the applied progress without owning a clock. Image
+loading, CSS, and overlay rendering stay in adapters by design. Nothing yet
+runs the spawn surface from a live ticker in a demo scene, so churn behaviour is
+proven by deterministic time control rather than by a running rig. The benchmark
+harness reports local composition timing only and is not a cross-machine
+performance claim. Scene coverage is resolved segment geometry rather than
+committed pixel baselines, which is deliberate while the scene still changes
+most phases.
