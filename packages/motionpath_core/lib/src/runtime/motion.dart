@@ -26,7 +26,7 @@ class MotionPathMotionRuntime {
 
   Map<String, Map<String, Object?>> get patches => _patches;
   List<String> get graphOrder => graph == null
-      ? const <String>[]
+      ? <String>[for (final MotionPathTrackRuntime track in tracks) track.id]
       : List<String>.unmodifiable(graph!.order);
 
   void prepare(ObservationGraph nextGraph) {
@@ -55,9 +55,7 @@ class MotionPathMotionRuntime {
   }
 
   void _seekTracks(double elapsed) {
-    final List<String> order = graph?.order ?? <String>[
-      for (final MotionPathTrackRuntime track in tracks) track.id,
-    ];
+    final List<String> order = graphOrder;
     final Map<String, int> indexById = <String, int>{
       for (int index = 0; index < order.length; index++) order[index]: index,
     };
@@ -73,16 +71,13 @@ class MotionPathMotionRuntime {
   }
 
   Map<String, Map<String, Object?>> composeGraph() {
-    final ObservationGraph? current = graph;
-    if (current == null) {
-      return const <String, Map<String, Object?>>{};
-    }
+    final List<String> order = graphOrder;
     final Map<String, MotionPathTrackRuntime> byId = <String, MotionPathTrackRuntime>{
       for (final MotionPathTrackRuntime track in tracks) track.id: track,
     };
     final Map<MotionPathTrackRuntime, Map<String, Object?>?> context = <MotionPathTrackRuntime, Map<String, Object?>?>{};
     final Map<String, Map<String, Object?>> composed = <String, Map<String, Object?>>{};
-    for (final String trackId in current.order) {
+    for (final String trackId in order) {
       final MotionPathTrackRuntime? track = byId[trackId];
       if (track == null) {
         continue;
