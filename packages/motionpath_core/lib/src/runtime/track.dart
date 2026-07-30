@@ -2,13 +2,19 @@ import '../contract/motionpath_types.dart';
 import '../interpolation/interpolator.dart';
 
 class MotionPathTrackRuntime {
-  MotionPathTrackRuntime(this.id, {this.stops = const <MotionPathStop>[]});
+  MotionPathTrackRuntime(this.id, {this.properties = const <String, List<MotionPathStop>>{}});
   final String id;
-  final List<MotionPathStop> stops;
+  final Map<String, List<MotionPathStop>> properties;
   double progress = 0;
   final List<void Function(Map<String, Object?>)> _listeners = <void Function(Map<String, Object?>)>[];
 
-  Map<String, Object?> compose() => <String, Object?>{'value': interpolateStops(stops, progress), 'progress': progress};
+  Map<String, Object?> compose({Map<String, Object?> inputs = const <String, Object?>{}}) {
+    final patch = <String, Object?>{};
+    patch.addAll(inputs);
+    for (final entry in properties.entries) patch[entry.key] = interpolateStops(entry.value, progress);
+    patch['progress'] = progress;
+    return patch;
+  }
 
   void seek(double value) {
     progress = value.clamp(0.0, 1.0).toDouble();
@@ -33,11 +39,11 @@ List<MotionPathStop> stopsFromKeyframe(Object? raw) {
   return List<MotionPathStop>.unmodifiable(result);
 }
 
-List<MotionPathStop> stopsFromTrack(MotionPathTrack track) {
-  final values = <MotionPathStop>[];
+Map<String, List<MotionPathStop>> propertiesFromTrack(MotionPathTrack track) {
+  final result = <String, List<MotionPathStop>>{};
   for (final entry in track.keyframes.entries) {
     final stops = stopsFromKeyframe(entry.value);
-    if (stops.isNotEmpty) values.addAll(stops);
+    if (stops.isNotEmpty) result[entry.key] = stops;
   }
-  return values;
+  return result;
 }
