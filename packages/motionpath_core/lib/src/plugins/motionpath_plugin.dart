@@ -2,20 +2,12 @@ import 'package:meta/meta.dart';
 
 import '../math/fk_math.dart';
 
-/// Frame-time composition step: raw track state in, patch fragment out.
 typedef PatchComposer = Map<String, Object?>? Function(
   Map<String, Object?> raw,
 );
 
-/// A property plugin.
-///
-/// [keys] are authored keyframe properties the plugin owns. [inputs] are
-/// composed runtime values it consumes from observations. [outputs] are the
-/// patch keys it writes, which is what makes collisions detectable before a
-/// frame is ever composed. [internalKeys] never reach a renderer.
 @immutable
 class MotionPathPlugin {
-  /// Creates a plugin.
   const MotionPathPlugin({
     required this.name,
     required this.compose,
@@ -27,31 +19,15 @@ class MotionPathPlugin {
     this.priority = 0,
   });
 
-  /// Stable plugin name.
   final String name;
-
-  /// Frame-time composition function.
   final PatchComposer compose;
-
-  /// Authored keyframe properties this plugin claims.
   final List<String> keys;
-
-  /// Composed values this plugin consumes from observations.
   final List<String> inputs;
-
-  /// Patch keys this plugin writes.
   final List<String> outputs;
-
-  /// Keys that must never reach a renderer.
   final List<String> internalKeys;
-
-  /// Coarse ordering bucket.
   final int stage;
-
-  /// Fine ordering within a [stage].
   final int priority;
 
-  /// Whether this plugin owns an authored [key].
   bool claimsKey(String key) => keys.contains(key);
 }
 
@@ -70,11 +46,6 @@ Map<String, Object?>? _composeForwardKinematics(Map<String, Object?> raw) {
   return world.toPatch();
 }
 
-/// Forward-kinematics plugin.
-///
-/// A joint angle is authored as `boneRotation`, never `rotation`, because the
-/// plugin already owns `rotation` as an output. Authoring both on one track is
-/// an output collision, not a silent override.
 const MotionPathPlugin forwardKinematicsPlugin = MotionPathPlugin(
   name: 'forward-kinematics',
   keys: <String>['boneLength', 'boneRotation'],
@@ -85,7 +56,6 @@ const MotionPathPlugin forwardKinematicsPlugin = MotionPathPlugin(
   compose: _composeForwardKinematics,
 );
 
-/// Creates a plugin that passes authored [keys] straight through to the patch.
 MotionPathPlugin passthroughPlugin(List<String> keys) {
   final List<String> owned = List<String>.unmodifiable(keys);
   return MotionPathPlugin(
@@ -99,27 +69,48 @@ MotionPathPlugin passthroughPlugin(List<String> keys) {
   );
 }
 
-/// Resolves authored keyframe properties into an ordered plugin list.
+/// Throws when a plugin's declaration is internally inconsistent.
+void assertPluginContract(MotionPathPlugin plugin) {
+  if (plugin.name.trim().isEmpty) {
+    throw StateError('Plugin name must not be empty.');
+  }
+  final Set<String> outputs = <String>{};
+  for (final String output in plugin.outputs) {
+    if (output.isEmpty || !outputs.add(output)) {
+      throw StateError('Plugin "${plugin.name}" declares duplicate or empty outputs.');
+    }
+  }
+  final Set<String> internal = plugin.internalKeys.toSet();
+  if (!internal.containsAll(plugin.internalKeys)) {
+    throw StateError('Plugin "${plugin.name}" has invalid internal keys.');
+  }
+  if (plugin.internalKeys.any((String key) => key.isEmpty)) {
+    throw StateError('Plugin "${plugin.name}" declares an empty internal key.');
+  }
+}
+
 class MotionPathPluginRegistry {
-  /// Creates a registry. Defaults to the built-in plugins.
   MotionPathPluginRegistry({List<MotionPathPlugin>? plugins})
-      : _plugins = List<MotionPathPlugin>.of(
-          plugins ?? const <MotionPathPlugin>[forwardKinematicsPlugin],
-        );
+      : _plugins = <MotionPathPlugin>[] {
+    for (final MotionPathPlugin plugin
+        in plugins ?? const <MotionPathPlugin>[forwardKinematicsPlugin]) {
+      register(plugin);
+    }
+  }
 
   final List<MotionPathPlugin> _plugins;
 
-  /// Registered plugins, in registration order.
   List<MotionPathPlugin> get plugins =>
       List<MotionPathPlugin>.unmodifiable(_plugins);
 
-  /// Registers an additional plugin.
-  void register(MotionPathPlugin plugin) => _plugins.add(plugin);
+  void register(MotionPathPlugin plugin) {
+    assertPluginContract(plugin);
+    if (_plugins.any((MotionPathPlugin existing) => existing.name == plugin.name)) {
+      throw StateError('Plugin "${plugin.name}" is already registered.');
+    }
+    _plugins.add(plugin);
+  }
 
-  /// Resolves the plugins needed for [authoredKeys], in composition order.
-  ///
-  /// Any key no plugin claims falls back to a passthrough plugin, so authored
-  /// data is never silently dropped.
   List<MotionPathPlugin> resolve(Iterable<String> authoredKeys) {
     final List<String> keys = List<String>.of(authoredKeys);
     final List<MotionPathPlugin> resolved = <MotionPathPlugin>[];
@@ -147,11 +138,6 @@ class MotionPathPluginRegistry {
   }
 }
 
-/// Throws when two plugins on one track claim the same output key.
-///
-/// This is what stops an FK bone from stretching but never bending: authoring
-/// `boneLength` next to `rotation` is rejected at mount time instead of
-/// producing a silently wrong rig.
 void assertOutputCompatibility(
   String trackId,
   List<MotionPathPlugin> plugins,
