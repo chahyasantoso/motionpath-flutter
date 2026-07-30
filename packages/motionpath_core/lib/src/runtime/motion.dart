@@ -59,12 +59,11 @@ class MotionPathMotionRuntime {
       for (final MotionPathTrackRuntime track in tracks) track.id,
     ];
     final Map<String, int> indexById = <String, int>{
-      for (int index = 0; index < order.length; index++) {
-        indexById[order[index]] = index;
-      }
+      for (int index = 0; index < order.length; index++) order[index]: index,
     };
     for (final MotionPathTrackRuntime track in tracks) {
-      final double delay = stagger > 0 ? (indexById[track.id] ?? 0) * stagger : 0;
+      final double delay =
+          stagger > 0 ? (indexById[track.id] ?? 0) * stagger : 0;
       final double span = track.duration > 0
           ? track.duration
           : (duration <= 0 ? 1 : duration);
