@@ -28,8 +28,10 @@ void main() {
         ),
       ],
     );
-    expect(segments.single.origin, const Offset(100, 148));
-    expect(segments.single.tip, const Offset(100, 70));
+    expect(segments.single.origin.dx, closeTo(100, 1e-9));
+    expect(segments.single.origin.dy, closeTo(148, 1e-9));
+    expect(segments.single.tip.dx, closeTo(100, 1e-9));
+    expect(segments.single.tip.dy, closeTo(70, 1e-9));
     expect(segments.single.length, closeTo(78, 1e-9));
   });
 }
