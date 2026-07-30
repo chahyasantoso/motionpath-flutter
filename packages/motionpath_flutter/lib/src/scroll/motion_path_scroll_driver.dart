@@ -26,8 +26,9 @@ class MotionPathScrollDriver {
   }
 
   void _handleScroll() {
+    if (_disposed) return;
     final ScrollController? current = _controller;
-    if (_disposed || current == null || !current.hasClients) return;
+    if (current == null || !current.hasClients) return;
     onProgress(binding.progressFor(current.offset));
   }
 

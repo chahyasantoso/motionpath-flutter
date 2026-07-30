@@ -15,9 +15,9 @@ class MotionPathTickerDriver {
   bool get isActive => !_disposed && _ticker.isActive;
 
   void start() {
-    if (_disposed || _ticker.isActive) return;
-    _last = null;
-    _ticker.start();
+    if (!_disposed && !_ticker.isActive) {
+      _ticker.start();
+    }
   }
 
   void stop() {
