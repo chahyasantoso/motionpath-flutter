@@ -1,4 +1,5 @@
 import '../composition/compose_patch.dart';
+import '../composition/layout_delegate.dart';
 import '../contract/motionpath_types.dart';
 import '../interpolation/color_value.dart';
 import '../interpolation/easing.dart';
@@ -28,7 +29,7 @@ class MotionPathObservation {
 }
 
 /// A mounted track: one normalized playhead plus its composition.
-class MotionPathTrackRuntime {
+class MotionPathTrackRuntime implements MotionPathLayoutChild {
   /// Creates a runtime track.
   MotionPathTrackRuntime(
     this.id, {
@@ -36,10 +37,12 @@ class MotionPathTrackRuntime {
         const <String, List<MotionPathStop>>{},
     List<MotionPathStop> stops = const <MotionPathStop>[],
     List<MotionPathPlugin>? plugins,
+    MotionPathLayoutDelegate? layoutDelegate,
     this.duration = 0,
   })  : properties =
             Map<String, List<MotionPathStop>>.unmodifiable(properties),
         stops = List<MotionPathStop>.unmodifiable(stops),
+        layoutDelegate = layoutDelegate ?? kGaplessLayoutDelegate,
         plugins = List<MotionPathPlugin>.unmodifiable(
           plugins ??
               MotionPathPluginRegistry()
@@ -66,19 +69,125 @@ class MotionPathTrackRuntime {
   /// Plugins resolved for this track's authored keys.
   final List<MotionPathPlugin> plugins;
 
+  /// Placement policy for this track's children.
+  final MotionPathLayoutDelegate layoutDelegate;
+
   /// Track duration in seconds. Zero means the motion owns timing.
   final double duration;
 
   /// Normalized playhead in `[0, 1]`.
   double progress = 0;
 
+  /// Called after a child is placed, with its settled offset.
+  ///
+  /// The host uses this to mount the child at that offset. The core never
+  /// schedules anything itself.
+  void Function(MotionPathTrackRuntime child, double offset)? onChildSpawned;
+
+  /// Called after a child is detached, before its siblings reflow.
+  void Function(MotionPathTrackRuntime child)? onChildRemoved;
+
+  /// Called for each survivor the layout policy moved.
+  void Function(MotionPathTrackRuntime child, double offset)? onChildReflowed;
+
   final List<MotionPathObservation> _observed = <MotionPathObservation>[];
   final List<void Function(Map<String, Object?>)> _listeners =
       <void Function(Map<String, Object?>)>[];
+  final Map<String, MotionPathTrackRuntime> _children =
+      <String, MotionPathTrackRuntime>{};
+  MotionPathTrackRuntime? _parent;
+  double _currentOffset = 0;
+  double _staggerOffset = 0;
+  bool _disposed = false;
 
   /// Wired observations, in wiring order.
   List<MotionPathObservation> get observations =>
       List<MotionPathObservation>.unmodifiable(_observed);
+
+  /// Settled logical offset inside the parent, in seconds.
+  ///
+  /// Bookkeeping only. It is the value the host mounts against; this track
+  /// never advances a child's playhead on its own.
+  @override
+  double get currentOffset => _currentOffset;
+
+  /// Stagger this track was spawned with, in seconds.
+  double get staggerOffset => _staggerOffset;
+
+  /// Parent track, or null when this track is a root.
+  MotionPathTrackRuntime? get parent => _parent;
+
+  /// Live children, in insertion order.
+  List<MotionPathTrackRuntime> get children =>
+      List<MotionPathTrackRuntime>.unmodifiable(_children.values);
+
+  /// Number of live children.
+  int get childCount => _children.length;
+
+  /// Whether [dispose] has already run.
+  bool get isDisposed => _disposed;
+
+  /// Finds a child by id.
+  MotionPathTrackRuntime? getChild(String childId) => _children[childId];
+
+  /// Adds [child] and places it through this track's layout policy.
+  ///
+  /// Throws when this track is disposed, when [child] already has a parent, or
+  /// when a child with the same id is already present. Re-parenting silently
+  /// would leave two parents believing they own the same offset.
+  void addChild(MotionPathTrackRuntime child, {double stagger = 0}) {
+    if (_disposed) {
+      throw StateError('Track "$id" is disposed.');
+    }
+    final MotionPathTrackRuntime? existingParent = child._parent;
+    if (existingParent != null) {
+      throw StateError(
+        'Track "${child.id}" is already a child of "${existingParent.id}".',
+      );
+    }
+    if (_children.containsKey(child.id)) {
+      throw StateError('Track "$id" already has a child "${child.id}".');
+    }
+    final double offset = layoutDelegate.computeSpawnOffset(
+      <MotionPathLayoutChild>[..._children.values],
+      stagger: stagger,
+    );
+    child._parent = this;
+    child._staggerOffset = stagger;
+    child._currentOffset = offset;
+    _children[child.id] = child;
+    onChildSpawned?.call(child, offset);
+  }
+
+  /// Removes the child with [childId] and applies the resulting reflow plan.
+  ///
+  /// Removing an unknown id is a no-op.
+  void removeChild(String childId) {
+    final MotionPathTrackRuntime? child = _children[childId];
+    if (child == null) {
+      return;
+    }
+    // The policy reads the chain as it was, so it still contains the removed
+    // child and can rank it.
+    final List<MotionPathLayoutChild> siblings = <MotionPathLayoutChild>[
+      ..._children.values,
+    ];
+    _children.remove(childId);
+    child._parent = null;
+    onChildRemoved?.call(child);
+    for (final MotionPathReflowTarget target in layoutDelegate.computeReflow(
+      siblings,
+      child,
+      stagger: child._staggerOffset,
+    )) {
+      final MotionPathLayoutChild moved = target.child;
+      if (moved is! MotionPathTrackRuntime) {
+        continue;
+      }
+      moved._currentOffset = target.offset;
+      onChildReflowed?.call(moved, target.offset);
+    }
+  }
 
   /// Wires an observation. Observation is never reverse-linked.
   void observe(
@@ -188,10 +297,27 @@ class MotionPathTrackRuntime {
     return () => _listeners.remove(listener);
   }
 
-  /// Releases subscriptions and observations.
+  /// Releases subscriptions, observations, and the child chain.
+  ///
+  /// Disposal cascades to children and is idempotent, so a route change that
+  /// tears down a parent cannot leave a child holding a listener.
   void dispose() {
+    if (_disposed) {
+      return;
+    }
+    _disposed = true;
     _listeners.clear();
     _observed.clear();
+    for (final MotionPathTrackRuntime child
+        in List<MotionPathTrackRuntime>.of(_children.values)) {
+      child._parent = null;
+      child.dispose();
+    }
+    _children.clear();
+    _parent = null;
+    onChildSpawned = null;
+    onChildRemoved = null;
+    onChildReflowed = null;
   }
 }
 
