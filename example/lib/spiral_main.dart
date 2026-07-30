@@ -214,9 +214,11 @@ class _SpiralPainter extends CustomPainter {
   bool shouldRepaint(covariant _SpiralPainter oldDelegate) => oldDelegate.instances != instances;
 }
 
+int _channel(double channel) => (channel * 255).round().clamp(0, 255).toInt();
+
 Color _withOpacity(Color color, double opacity) => Color.fromARGB(
-      ((color.a * opacity * 255).round().clamp(0, 255)).toInt(),
-      (color.r * 255).round().clamp(0, 255),
-      (color.g * 255).round().clamp(0, 255),
-      (color.b * 255).round().clamp(0, 255),
+      (_channel(color.a) * opacity).round().clamp(0, 255).toInt(),
+      _channel(color.r),
+      _channel(color.g),
+      _channel(color.b),
     );
