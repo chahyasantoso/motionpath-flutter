@@ -2,7 +2,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' show Canvas, Color, Paint, Rect, Size;
 
-import 'package:flutter/foundation.dart' show immutable, mapEquals;
+import 'package:flutter/foundation.dart' show Listenable, immutable, mapEquals;
 import 'package:flutter/rendering.dart' show CustomPainter;
 
 /// Default diagnostic fill, expressed as plain ARGB data so the renderer
@@ -160,11 +160,15 @@ class MotionPathPatchTransform {
 /// before the Walker renderer and production scene widgets exist.
 class MotionPathPatchPainter extends CustomPainter {
   /// Creates a painter for a single composed [patch].
+  ///
+  /// Pass [repaint] to drive invalidation straight from a patch source instead
+  /// of rebuilding the widget that owns this painter.
   MotionPathPatchPainter({
     required this.patch,
     this.fallbackArgb = kMotionPathDefaultArgb,
     this.extent = 80,
-  });
+    Listenable? repaint,
+  }) : super(repaint: repaint);
 
   /// The composed, renderer-neutral patch to draw.
   final Map<String, Object?> patch;
