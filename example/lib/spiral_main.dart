@@ -214,7 +214,7 @@ class _SpiralPainter extends CustomPainter {
 }
 
 Color _withOpacity(Color color, double opacity) => Color.fromARGB(
-      (color.alpha * opacity).round().clamp(0, 255),
+      ((color.alpha * opacity).round().clamp(0, 255)).toInt(),
       color.red,
       color.green,
       color.blue,
