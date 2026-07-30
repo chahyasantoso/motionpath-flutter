@@ -132,7 +132,7 @@ void main() {
       const ObservationGraph graph = ObservationGraph(
         nodes: <ObservationNode>[ObservationNode('root'), ObservationNode('bone')],
         edges: <ObservationEdge>[
-          ObservationEdge(source: 'root', target: 'bone', role: 'input', inputKey: 'parentWorld'),
+          ObservationEdge(source: 'root', target: 'bone', role: 'input', input: 'parentWorld'),
         ],
         order: <String>['root', 'bone'],
         errors: <MotionPathDiagnostic>[],

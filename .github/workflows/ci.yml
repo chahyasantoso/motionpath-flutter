@@ -21,29 +21,49 @@ jobs:
         run: dart pub get
       - name: Analyze
         run: |
+          status=0
+          dart analyze > out.log 2>&1 || status=$?
+          cat out.log
           {
             echo '### dart analyze'
             echo '```text'
+            cat out.log
+            echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
-          status=0
-          dart analyze > analyze.log 2>&1 || status=$?
-          cat analyze.log
-          cat analyze.log >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-          rm -f analyze.log
+          if [ "$status" -ne 0 ]; then
+            grep -E '^[[:space:]]+(error|warning|info)' out.log | head -n 9 > issues.log || true
+            if [ ! -s issues.log ]; then
+              tail -n 9 out.log > issues.log
+            fi
+            while IFS= read -r line; do
+              echo "::error title=dart-analyze::${line}"
+            done < issues.log
+            rm -f issues.log
+          fi
+          rm -f out.log
           exit $status
       - name: Test
         run: |
+          status=0
+          dart test > out.log 2>&1 || status=$?
+          cat out.log
           {
             echo '### dart test'
             echo '```text'
+            tail -n 200 out.log
+            echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
-          status=0
-          dart test > test.log 2>&1 || status=$?
-          cat test.log
-          tail -n 200 test.log >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-          rm -f test.log
+          if [ "$status" -ne 0 ]; then
+            grep -E '(\[E\]|Expected:|Actual:|Which:|Error:|error •)' out.log | head -n 9 > issues.log || true
+            if [ ! -s issues.log ]; then
+              tail -n 9 out.log > issues.log
+            fi
+            while IFS= read -r line; do
+              echo "::error title=dart-test::${line}"
+            done < issues.log
+            rm -f issues.log
+          fi
+          rm -f out.log
           exit $status
 
   flutter-adapter:
@@ -60,40 +80,67 @@ jobs:
           cache: true
       - name: Pub get
         run: |
+          status=0
+          flutter pub get > out.log 2>&1 || status=$?
+          cat out.log
           {
             echo '### flutter pub get'
             echo '```text'
+            tail -n 100 out.log
+            echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
-          status=0
-          flutter pub get > pub.log 2>&1 || status=$?
-          cat pub.log
-          tail -n 100 pub.log >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-          rm -f pub.log
+          if [ "$status" -ne 0 ]; then
+            tail -n 9 out.log > issues.log
+            while IFS= read -r line; do
+              echo "::error title=flutter-pub-get::${line}"
+            done < issues.log
+            rm -f issues.log
+          fi
+          rm -f out.log
           exit $status
       - name: Analyze
         run: |
+          status=0
+          flutter analyze > out.log 2>&1 || status=$?
+          cat out.log
           {
             echo '### flutter analyze'
             echo '```text'
+            cat out.log
+            echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
-          status=0
-          flutter analyze > analyze.log 2>&1 || status=$?
-          cat analyze.log
-          cat analyze.log >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-          rm -f analyze.log
+          if [ "$status" -ne 0 ]; then
+            grep -E '^[[:space:]]*(error|warning|info)' out.log | head -n 9 > issues.log || true
+            if [ ! -s issues.log ]; then
+              tail -n 9 out.log > issues.log
+            fi
+            while IFS= read -r line; do
+              echo "::error title=flutter-analyze::${line}"
+            done < issues.log
+            rm -f issues.log
+          fi
+          rm -f out.log
           exit $status
       - name: Test
         run: |
+          status=0
+          flutter test > out.log 2>&1 || status=$?
+          cat out.log
           {
             echo '### flutter test'
             echo '```text'
+            tail -n 200 out.log
+            echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
-          status=0
-          flutter test > test.log 2>&1 || status=$?
-          cat test.log
-          tail -n 200 test.log >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-          rm -f test.log
+          if [ "$status" -ne 0 ]; then
+            grep -E '(\[E\]|Expected:|Actual:|Which:|Error:|error •|failed)' out.log | head -n 9 > issues.log || true
+            if [ ! -s issues.log ]; then
+              tail -n 9 out.log > issues.log
+            fi
+            while IFS= read -r line; do
+              echo "::error title=flutter-test::${line}"
+            done < issues.log
+            rm -f issues.log
+          fi
+          rm -f out.log
           exit $status

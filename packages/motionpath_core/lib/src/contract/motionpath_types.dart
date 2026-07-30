@@ -1,26 +1,114 @@
 import 'dart:convert';
 
+import 'package:meta/meta.dart';
+
+import '../validation/validate_project.dart';
+
+/// Severity of a validation diagnostic.
+///
+/// Mirrors the JavaScript reference runtime, where only [MotionPathSeverity.error]
+/// blocks a project from loading and [MotionPathSeverity.warning] reports an
+/// authoring smell that the runtime can still tolerate.
+enum MotionPathSeverity {
+  /// Fatal: the project must never reach the runtime.
+  error,
+
+  /// Non-fatal authoring warning.
+  warning,
+}
+
+/// A single structured validation result.
+@immutable
+class MotionPathDiagnostic {
+  /// Creates a diagnostic.
+  const MotionPathDiagnostic({
+    required this.path,
+    required this.code,
+    required this.message,
+    this.severity = MotionPathSeverity.error,
+  });
+
+  /// JSON path of the offending value, for example `motions[0].trigger`.
+  final String path;
+
+  /// Stable rule identifier, matching the JavaScript `ruleId`.
+  final String code;
+
+  /// Human readable explanation.
+  final String message;
+
+  /// Whether this diagnostic blocks loading.
+  final MotionPathSeverity severity;
+
+  /// Whether this diagnostic blocks loading.
+  bool get isFatal => severity == MotionPathSeverity.error;
+
+  @override
+  String toString() => '$path [$code:${severity.name}] $message';
+
+  @override
+  bool operator ==(Object other) =>
+      other is MotionPathDiagnostic &&
+      other.path == path &&
+      other.code == code &&
+      other.message == message &&
+      other.severity == severity;
+
+  @override
+  int get hashCode => Object.hash(path, code, message, severity);
+}
+
+/// Thrown when a project fails validation at the trust boundary.
 class MotionPathValidationException implements Exception {
+  /// Creates an exception carrying every collected diagnostic.
   const MotionPathValidationException(this.diagnostics);
 
+  /// Every diagnostic collected before failing.
   final List<MotionPathDiagnostic> diagnostics;
 
   @override
-  String toString() => diagnostics.map((d) => d.toString()).join('\n');
+  String toString() {
+    final String body = diagnostics
+        .map((MotionPathDiagnostic diagnostic) => diagnostic.toString())
+        .join('\n');
+    return 'MotionPathValidationException:\n$body';
+  }
 }
 
-class MotionPathDiagnostic {
-  const MotionPathDiagnostic({required this.path, required this.code, required this.message});
-
-  final String path;
-  final String code;
-  final String message;
-
-  @override
-  String toString() => '$path [$code]: $message';
+/// Reads a decoded JSON object into a string keyed map.
+///
+/// Non-object values and non-string keys are dropped instead of throwing so
+/// that validation can report every problem in one pass.
+Map<String, Object?> asStringKeyedMap(Object? value) {
+  if (value is! Map<Object?, Object?>) {
+    return const <String, Object?>{};
+  }
+  final Map<String, Object?> result = <String, Object?>{};
+  value.forEach((Object? key, Object? entry) {
+    if (key is String) {
+      result[key] = entry;
+    }
+  });
+  return result;
 }
 
+/// Reads a decoded JSON array into a list of string keyed maps.
+List<Map<String, Object?>> asStringKeyedMapList(Object? value) {
+  if (value is! List<Object?>) {
+    return const <Map<String, Object?>>[];
+  }
+  return <Map<String, Object?>>[
+    for (final Object? entry in value) asStringKeyedMap(entry),
+  ];
+}
+
+String? _optionalString(Object? value) => value is String ? value : null;
+
+num? _optionalNum(Object? value) => value is num ? value : null;
+
+/// A MotionPath v4 project.
 class MotionPathProject {
+  /// Creates a project from already validated data.
   const MotionPathProject({
     required this.schemaVersion,
     required this.projectId,
@@ -30,149 +118,167 @@ class MotionPathProject {
     this.tracks = const <MotionPathTrack>[],
   });
 
-  final int schemaVersion;
-  final String? projectId;
-  final num? perspective;
-  final List<Map<String, Object?>> templates;
-  final List<MotionPathMotion> motions;
-  final List<MotionPathTrack> tracks;
-
+  /// Validates and parses a decoded JSON project.
+  ///
+  /// This is the trust boundary: every fatal diagnostic is collected first and
+  /// thrown together as a single [MotionPathValidationException].
   factory MotionPathProject.fromJson(Map<String, Object?> json) {
-    final diagnostics = <MotionPathDiagnostic>[];
-    final version = json['schemaVersion'];
-    if (version is! int) {
-      diagnostics.add(const MotionPathDiagnostic(path: 'schemaVersion', code: 'required', message: 'Must be an integer.'));
-    } else if (version != 4) {
-      diagnostics.add(const MotionPathDiagnostic(path: 'schemaVersion', code: 'unsupported', message: 'Only schema version 4 is supported.'));
+    final List<MotionPathDiagnostic> fatal = validateProject(json)
+        .where((MotionPathDiagnostic diagnostic) => diagnostic.isFatal)
+        .toList(growable: false);
+    if (fatal.isNotEmpty) {
+      throw MotionPathValidationException(
+        List<MotionPathDiagnostic>.unmodifiable(fatal),
+      );
     }
-
-    final projectId = json['projectId'];
-    if (projectId != null && projectId is! String) {
-      diagnostics.add(const MotionPathDiagnostic(path: 'projectId', code: 'type', message: 'Must be a string.'));
-    }
-
-    final perspective = json['perspective'];
-    if (perspective != null && perspective is! num) {
-      diagnostics.add(const MotionPathDiagnostic(path: 'perspective', code: 'type', message: 'Must be numeric.'));
-    }
-
-    final motions = <MotionPathMotion>[];
-    final rawMotions = json['motions'];
-    if (rawMotions is! List) {
-      diagnostics.add(const MotionPathDiagnostic(path: 'motions', code: 'required', message: 'Must be an array.'));
-    } else {
-      for (var i = 0; i < rawMotions.length; i++) {
-        final value = rawMotions[i];
-        if (value is Map) {
-          motions.add(MotionPathMotion.fromJson(Map<String, Object?>.from(value), 'motions[$i]', diagnostics));
-        } else {
-          diagnostics.add(MotionPathDiagnostic(path: 'motions[$i]', code: 'type', message: 'Must be an object.'));
-        }
-      }
-    }
-
-    final libraryTracks = parseTrackList(json['tracks'], 'tracks', diagnostics);
-
-    if (diagnostics.isNotEmpty) throw MotionPathValidationException(List.unmodifiable(diagnostics));
+    final List<Map<String, Object?>> templates =
+        asStringKeyedMapList(json['templates']);
     return MotionPathProject(
-      schemaVersion: version as int,
-      projectId: projectId as String?,
-      perspective: perspective as num?,
-      motions: List.unmodifiable(motions),
-      tracks: libraryTracks,
+      schemaVersion: 4,
+      projectId: _optionalString(json['projectId']),
+      perspective: _optionalNum(json['perspective']),
+      templates: List<Map<String, Object?>>.unmodifiable(templates),
+      motions: List<MotionPathMotion>.unmodifiable(<MotionPathMotion>[
+        for (final Map<String, Object?> motion
+            in asStringKeyedMapList(json['motions']))
+          MotionPathMotion.fromJson(motion, templates: templates),
+      ]),
+      tracks: List<MotionPathTrack>.unmodifiable(<MotionPathTrack>[
+        for (final Map<String, Object?> track
+            in asStringKeyedMapList(json['tracks']))
+          MotionPathTrack.fromJson(track, templates: templates),
+      ]),
     );
   }
 
-  factory MotionPathProject.fromJsonString(String source) => MotionPathProject.fromJson(
-        Map<String, Object?>.from(jsonDecode(source) as Map),
-      );
-}
+  /// Validates and parses a JSON source string.
+  factory MotionPathProject.fromJsonString(String source) =>
+      MotionPathProject.fromJson(asStringKeyedMap(jsonDecode(source)));
 
-/// Parses an optional array of track objects, collecting diagnostics.
-List<MotionPathTrack> parseTrackList(Object? raw, String path, List<MotionPathDiagnostic> diagnostics) {
-  if (raw == null) return const <MotionPathTrack>[];
-  if (raw is! List) {
-    diagnostics.add(MotionPathDiagnostic(path: path, code: 'type', message: 'Must be an array.'));
-    return const <MotionPathTrack>[];
-  }
-  final parsed = <MotionPathTrack>[];
-  for (var i = 0; i < raw.length; i++) {
-    final value = raw[i];
-    if (value is Map) {
-      parsed.add(MotionPathTrack.fromJson(Map<String, Object?>.from(value), '$path[$i]', diagnostics));
-    } else {
-      diagnostics.add(MotionPathDiagnostic(path: '$path[$i]', code: 'type', message: 'Must be an object.'));
-    }
-  }
-  return List<MotionPathTrack>.unmodifiable(parsed);
-}
+  /// Only schema version 4 is supported.
+  final int schemaVersion;
 
-class MotionPathMotion {
-  const MotionPathMotion({required this.id, required this.trigger, this.tracks = const <MotionPathTrack>[]});
+  /// Optional authored project identifier.
+  final String? projectId;
 
-  final String id;
-  final Map<String, Object?> trigger;
+  /// Optional perspective used by 3D aware renderers.
+  final num? perspective;
+
+  /// Raw track templates, still JSON shaped.
+  final List<Map<String, Object?>> templates;
+
+  /// Motions declared by the project.
+  final List<MotionPathMotion> motions;
+
+  /// Standalone tracks declared outside any motion.
   final List<MotionPathTrack> tracks;
 
-  factory MotionPathMotion.fromJson(Map<String, Object?> json, String path, List<MotionPathDiagnostic> diagnostics) {
-    final id = json['id'];
-    if (id is! String || id.isEmpty) diagnostics.add(MotionPathDiagnostic(path: '$path.id', code: 'required', message: 'Must be a non-empty string.'));
-    final trigger = json['trigger'];
-    if (trigger is! Map) diagnostics.add(MotionPathDiagnostic(path: '$path.trigger', code: 'required', message: 'Must be an object.'));
-    return MotionPathMotion(
-      id: id is String ? id : '',
-      trigger: trigger is Map ? Map<String, Object?>.from(trigger) : const <String, Object?>{},
-      tracks: parseTrackList(json['tracks'], '$path.tracks', diagnostics),
-    );
+  /// Finds a motion by authored id.
+  MotionPathMotion? motionById(String id) {
+    for (final MotionPathMotion motion in motions) {
+      if (motion.id == id) {
+        return motion;
+      }
+    }
+    return null;
   }
 }
 
-class MotionPathTrack {
-  const MotionPathTrack({required this.id, this.duration, this.keyframes = const <String, Object?>{}, this.observes = const <Map<String, Object?>>[]});
+/// One motion: a single trigger and the tracks that share it.
+class MotionPathMotion {
+  /// Creates a motion.
+  const MotionPathMotion({
+    required this.id,
+    required this.trigger,
+    this.stagger = 0,
+    this.tracks = const <MotionPathTrack>[],
+  });
 
+  /// Reads a motion from validated JSON, resolving track templates.
+  factory MotionPathMotion.fromJson(
+    Map<String, Object?> json, {
+    List<Map<String, Object?>> templates = const <Map<String, Object?>>[],
+  }) {
+    return MotionPathMotion(
+      id: _optionalString(json['id']) ?? '',
+      trigger: asStringKeyedMap(json['trigger']),
+      stagger: _optionalNum(json['stagger'])?.toDouble() ?? 0,
+      tracks: <MotionPathTrack>[
+        for (final Map<String, Object?> track
+            in asStringKeyedMapList(json['tracks']))
+          MotionPathTrack.fromJson(track, templates: templates),
+      ],
+    );
+  }
+
+  /// Authoritative motion id. `motionId` is a forbidden v3 field.
   final String id;
-  final num? duration;
-  final Map<String, Object?> keyframes;
-  final List<Map<String, Object?>> observes;
 
-  factory MotionPathTrack.fromJson(Map<String, Object?> json, String path, List<MotionPathDiagnostic> diagnostics) {
-    final id = json['id'];
-    if (id is! String || id.isEmpty) {
-      diagnostics.add(MotionPathDiagnostic(path: '$path.id', code: 'required', message: 'Must be a non-empty string.'));
-    }
+  /// Raw trigger data, interpreted by the runtime trigger.
+  final Map<String, Object?> trigger;
 
-    final duration = json['duration'];
-    if (duration != null && duration is! num) {
-      diagnostics.add(MotionPathDiagnostic(path: '$path.duration', code: 'type', message: 'Must be numeric.'));
-    }
+  /// Stagger between child tracks, in seconds.
+  final double stagger;
 
-    final keyframes = json['keyframes'];
-    if (keyframes != null && keyframes is! Map) {
-      diagnostics.add(MotionPathDiagnostic(path: '$path.keyframes', code: 'type', message: 'Must be an object.'));
-    }
+  /// Tracks owned by this motion.
+  final List<MotionPathTrack> tracks;
+}
 
-    final observes = <Map<String, Object?>>[];
-    final rawObserves = json['observes'];
-    if (rawObserves != null) {
-      if (rawObserves is! List) {
-        diagnostics.add(MotionPathDiagnostic(path: '$path.observes', code: 'type', message: 'Must be an array.'));
-      } else {
-        for (var i = 0; i < rawObserves.length; i++) {
-          final entry = rawObserves[i];
-          if (entry is Map) {
-            observes.add(Map<String, Object?>.from(entry));
-          } else {
-            diagnostics.add(MotionPathDiagnostic(path: '$path.observes[$i]', code: 'type', message: 'Must be an object.'));
-          }
+/// One track: a normalized playhead plus authored keyframes and observations.
+class MotionPathTrack {
+  /// Creates a track.
+  const MotionPathTrack({
+    required this.id,
+    this.use,
+    this.duration,
+    this.keyframes = const <String, Object?>{},
+    this.observes = const <Map<String, Object?>>[],
+  });
+
+  /// Reads a track from validated JSON, merging its template when present.
+  factory MotionPathTrack.fromJson(
+    Map<String, Object?> json, {
+    List<Map<String, Object?>> templates = const <Map<String, Object?>>[],
+  }) {
+    final String? use = _optionalString(json['use']);
+    Map<String, Object?> template = const <String, Object?>{};
+    if (use != null) {
+      for (final Map<String, Object?> candidate in templates) {
+        if (_optionalString(candidate['templateId']) == use) {
+          template = candidate;
+          break;
         }
       }
     }
-
+    final Map<String, Object?> keyframes = <String, Object?>{
+      ...asStringKeyedMap(template['keyframes']),
+      ...asStringKeyedMap(json['keyframes']),
+    };
+    final List<Map<String, Object?>> observes = json.containsKey('observes')
+        ? asStringKeyedMapList(json['observes'])
+        : asStringKeyedMapList(template['observes']);
     return MotionPathTrack(
-      id: id is String ? id : '',
-      duration: duration is num ? duration : null,
-      keyframes: keyframes is Map ? Map<String, Object?>.from(keyframes) : const <String, Object?>{},
+      id: _optionalString(json['id']) ?? '',
+      use: use,
+      duration:
+          _optionalNum(json['duration']) ?? _optionalNum(template['duration']),
+      keyframes: Map<String, Object?>.unmodifiable(keyframes),
       observes: List<Map<String, Object?>>.unmodifiable(observes),
     );
   }
+
+  /// Track id, unique within its motion.
+  final String id;
+
+  /// Optional template id this track stamps from.
+  final String? use;
+
+  /// Track duration in seconds. Forbidden on scroll-scrub motions.
+  final num? duration;
+
+  /// Authored keyframes, keyed by property name.
+  final Map<String, Object?> keyframes;
+
+  /// Declarative observation edges.
+  final List<Map<String, Object?>> observes;
 }
