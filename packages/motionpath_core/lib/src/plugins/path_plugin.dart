@@ -117,8 +117,9 @@ Map<String, Object?> _samplePath(List<_PathNode> nodes, double progress) {
   }
 
   double target = progress * totalLength;
-  for (final _CubicSegment segment in segments) {
-    if (target <= segment.length || identical(segment, segments.last)) {
+  for (int index = 0; index < segments.length; index++) {
+    final _CubicSegment segment = segments[index];
+    if (target <= segment.length || index == segments.length - 1) {
       final double localDistance = target.clamp(0, segment.length).toDouble();
       final double t = _parameterAtDistance(segment, localDistance);
       return _point(segment, t);
@@ -148,21 +149,26 @@ Map<String, Object?> _point(_CubicSegment segment, double t) {
   };
 }
 
+double _distance(_PathNode a, _PathNode b) {
+  final double dx = b.x - a.x;
+  final double dy = b.y - a.y;
+  final double dz = b.z - a.z;
+  return math.sqrt(dx * dx + dy * dy + dz * dz);
+}
+
 double _cubicLength(_PathNode p0, _PathNode p1, _PathNode p2, _PathNode p3) {
   const int samples = 64;
+  final _CubicSegment segment = _CubicSegment(p0, p1, p2, p3, 0);
   double length = 0;
   _PathNode previous = p0;
   for (int index = 1; index <= samples; index++) {
-    final _CubicSegment segment = _CubicSegment(p0, p1, p2, p3, 0);
     final Map<String, Object?> point = _point(segment, index / samples);
     final _PathNode current = _PathNode(
       x: point['x']! as double,
       y: point['y']! as double,
       z: point['z']! as double,
     );
-    length += math.sqrt(math.pow(current.x - previous.x, 2) as num) +
-        math.sqrt(math.pow(current.y - previous.y, 2) as num) +
-        math.sqrt(math.pow(current.z - previous.z, 2) as num);
+    length += _distance(previous, current);
     previous = current;
   }
   return length;
@@ -182,11 +188,7 @@ double _parameterAtDistance(_CubicSegment segment, double distance) {
       y: point['y']! as double,
       z: point['z']! as double,
     );
-    final double step = math.sqrt(
-      math.pow(current.x - previous.x, 2) +
-          math.pow(current.y - previous.y, 2) +
-          math.pow(current.z - previous.z, 2),
-    );
+    final double step = _distance(previous, current);
     if (travelled + step >= distance) {
       final double fraction = step == 0 ? 0 : (distance - travelled) / step;
       return (index - 1 + fraction) / samples;
