@@ -13,6 +13,7 @@ export 'src/interpolation/color_value.dart';
 export 'src/interpolation/easing.dart';
 export 'src/interpolation/interpolator.dart';
 export 'src/math/fk_math.dart';
+export 'src/plugins/image_sequence_plugin.dart';
 export 'src/plugins/motionpath_plugin.dart';
 export 'src/plugins/path_plugin.dart';
 export 'src/runtime/engine.dart';
