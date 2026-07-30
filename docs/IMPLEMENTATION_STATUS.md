@@ -61,9 +61,11 @@ Audited against merged pull requests and remote branches, not against memory.
   and JSON output suitable for local artifact capture.
 - Phase 31 (#36): public API inventory, lifecycle rules, and JavaScript-to-Dart
   migration guidance are documented before package stabilization.
-- Phase 32: package repository, issue tracker, documentation metadata, a
+- Phase 32 (#37): package repository, issue tracker, documentation metadata, a
   changelog, and a publish checklist are in place. Packages remain unpublished
   and keep their local path dependency until the checklist is complete.
+- Phase 33: a runnable Flutter example combines a clock-neutral pinned viewport
+  item with dynamic children advanced by the shared ticker.
 
 ## Branch audit
 
@@ -72,15 +74,15 @@ Phases 10 and 22 have no pull request of their own: `phase-10-ci-and-contract`,
 `phase-22-integration-hardening` were pushed straight to `main` and later
 appeared only as the base commit of the next PR. `phase-23-status-and-branch-audit`
 never carried a commit at all. Every phase branch through
-`phase-31-api-stabilization-docs` is merged and safe to delete; the closed
-superseded viewport iterations remain available for audit.
+`phase-32-release-prep` is merged and safe to delete; the closed superseded
+viewport iterations remain available for audit.
 
 ## Next
 
-- Add a real example scene that renders a pinned viewport item and a dynamic
-  spawn chain together.
 - Finish fixture compatibility review and decide the first publishable API
   subset.
+- Replace the example's hand-built runtime with a shared v4 fixture once the
+  fixture port lands.
 
 ## Honest status
 
@@ -92,8 +94,9 @@ not mutate layout or scroll position; a host widget still owns actual pinned
 rendering. Route teardown is covered at both binding and widget-host level, so
  disposed viewport bindings cannot leak listeners into a reused route. The
 benchmark harness supports controlled local comparisons but remains explicitly
-non-comparative across machines. Package metadata and release gates now make the
-unpublished status explicit. Image loading, CSS, and overlay rendering stay in
-adapters by design. Scene coverage is resolved segment geometry rather than
-committed pixel baselines, which is deliberate while the scene still changes
-most phases.
+non-comparative across machines. Package metadata and release gates make the
+unpublished status explicit. The example intentionally demonstrates the two
+clock/lifecycle boundaries without claiming production scene coverage. Image
+loading, CSS, and overlay rendering stay in adapters by design. Scene coverage
+is resolved segment geometry rather than committed pixel baselines, which is
+deliberate while the scene still changes most phases.
