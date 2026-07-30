@@ -43,12 +43,12 @@ Audited against merged pull requests and remote branches, not against memory.
 - Phase 25 (#26): scroll scrub sampling is explicit and clock-neutral. Flutter
   scroll bindings expose target/applied progress, apply core scrub math only
   when the caller supplies elapsed time, and reset state on detach.
-- Phase 26 (#27): spawn surfaces subscribe to the existing engine ticker. Dynamic
-  children advance from the same frame delta as mounted motions without a
-  second ticker or competing clock.
-- Phase 27: viewport observation and pin-state sampling are lifecycle-safe and
-  clock-neutral. The host receives geometry and normalized progress without the
-  binding mutating layout or creating a frame source.
+- Phase 26 (#27): spawn surfaces subscribe to the existing engine ticker.
+  Dynamic children advance from the same frame delta as mounted motions without
+  a second ticker or competing clock.
+- Phase 27: viewport observation and pinning are clock-neutral. The Flutter
+  adapter samples content-space geometry against a scroll position, reports
+  visibility and pinned state, seeks the motion, and resets cleanly on detach.
 
 ## Branch audit
 
@@ -61,8 +61,8 @@ never carried a commit at all. Every phase branch through
 
 ## Next
 
-- Add lifecycle leak tests around widget route changes, not just explicit
-  disposal.
+- Add widget-level lifecycle leak coverage around route changes and viewport
+  detach/reattach.
 - Run the benchmark harness for 14, 50, and 250-track rigs in a controlled
   environment and record results per commit.
 - Stabilize the public API surface and write migration and compatibility notes
@@ -71,8 +71,8 @@ never carried a commit at all. Every phase branch through
 ## Honest status
 
 The core and Flutter adapters now cover schema validation, graph composition,
-renderer-neutral patches, scroll scrubbing, dynamic child placement, draining,
-shared-ticker advancement, and viewport geometry sampling. Viewport binding
-reports pin state but leaves the actual layout mutation to the host by design.
-Image loading, CSS, and overlay rendering stay in adapters by design. Route-level
-leak coverage and controlled benchmark recording remain intentionally open.
+renderer-neutral patches, scroll scrubbing, dynamic child placement and
+  draining, shared-ticker advancement, and viewport geometry observation. The
+viewport binding reports renderer-neutral pin state and paint offset but does
+not mutate layout or scroll position; a host widget still owns actual pinned
+rendering. Image loading, CSS, and overlay rendering stay in adapters by design.
