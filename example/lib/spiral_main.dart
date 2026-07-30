@@ -28,9 +28,10 @@ class SpiralZumaPage extends StatefulWidget {
 
 class _SpiralZumaPageState extends State<SpiralZumaPage>
     with SingleTickerProviderStateMixin {
-  static const double _spawnInterval = 1.25;
   static const double _ballRadius = 21;
   static const double _ballDuration = 12;
+  static const int _rawSegments = 2000;
+  static const int _pathSegments = 240;
 
   late final MotionPathTickerDriver _ticker;
   late final MotionPathSpawnController _spawns;
@@ -38,6 +39,7 @@ class _SpiralZumaPageState extends State<SpiralZumaPage>
   late final void Function() _removeAutoSpawnListener;
   final MotionPathEngine _engine = MotionPathEngine();
   final List<Offset> _spiral = <Offset>[];
+  double _spawnInterval = 1.25;
   double _spawnClock = 0;
   int _nextId = 0;
 
@@ -62,13 +64,43 @@ class _SpiralZumaPageState extends State<SpiralZumaPage>
 
   void _buildSpiral() {
     const Offset centre = Offset(180, 180);
-    const int segments = 240;
-    for (int index = 0; index <= segments; index++) {
-      final double t = index / segments;
-      final double radius = 150 - t * 118;
-      final double angle = t * math.pi * 7 - math.pi / 2;
-      _spiral.add(centre + Offset(math.cos(angle) * radius, math.sin(angle) * radius));
+    const double outerRadius = 150;
+    const double innerRadius = 32;
+    const double turns = 3.5;
+    final List<Offset> raw = <Offset>[];
+    for (int index = 0; index <= _rawSegments; index++) {
+      final double p = index / _rawSegments;
+      final double theta = p * turns * 2 * math.pi;
+      final double radius = outerRadius - (outerRadius - innerRadius) * p;
+      raw.add(centre + Offset(
+        radius * math.cos(theta - math.pi / 2),
+        radius * math.sin(theta - math.pi / 2),
+      ));
     }
+
+    final List<double> distances = <double>[0];
+    double totalLength = 0;
+    for (int index = 1; index < raw.length; index++) {
+      totalLength += (raw[index] - raw[index - 1]).distance;
+      distances.add(totalLength);
+    }
+    _spiral.clear();
+    final double step = totalLength / _pathSegments;
+    for (int index = 0; index <= _pathSegments; index++) {
+      final double target = index * step;
+      int cursor = 0;
+      while (cursor < distances.length - 1 && distances[cursor + 1] < target) {
+        cursor++;
+      }
+      final double startDistance = distances[cursor];
+      final double endDistance = distances[cursor + 1];
+      final double span = endDistance - startDistance;
+      final double ratio = span == 0 ? 0 : (target - startDistance) / span;
+      _spiral.add(Offset.lerp(raw[cursor], raw[cursor + 1], ratio)!);
+    }
+
+    final double ballSpeed = totalLength / _ballDuration;
+    _spawnInterval = (_ballRadius * 2) / ballSpeed;
   }
 
   void _autoSpawn(double delta) {
