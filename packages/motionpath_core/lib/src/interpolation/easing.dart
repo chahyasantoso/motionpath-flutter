@@ -28,11 +28,9 @@ double _power(double t, int exponent) {
 ///
 /// Names follow the GSAP convention: a family plus an optional direction, for
 /// example `power2.inOut`. A bare family resolves to its `.out` variant.
-/// Unknown names fall back to [linear] rather than throwing, so an authored
-/// project never fails to animate because of a typo in a cosmetic field.
+/// Unknown names fall back to [linear] rather than throwing, so a typo in a
+/// cosmetic field never stops a project from animating.
 class MotionPathEasing {
-  const MotionPathEasing._();
-
   /// No easing.
   static double linear(double t) => _clamp01(t);
 
@@ -87,10 +85,8 @@ class MotionPathEasing {
       return linear;
     }
     final int dot = normalized.indexOf('.');
-    final String family =
-        dot == -1 ? normalized : normalized.substring(0, dot);
-    final String direction =
-        dot == -1 ? 'out' : normalized.substring(dot + 1);
+    final String family = dot == -1 ? normalized : normalized.substring(0, dot);
+    final String direction = dot == -1 ? 'out' : normalized.substring(dot + 1);
     final Easing? base = _families[family];
     if (base == null) {
       return linear;

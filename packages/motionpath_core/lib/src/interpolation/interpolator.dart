@@ -2,8 +2,6 @@ import 'easing.dart';
 
 /// Value interpolation primitives shared by every track.
 class MotionPathInterpolators {
-  const MotionPathInterpolators._();
-
   /// No easing, retained as a stable public entry point.
   static double linear(double t) => MotionPathEasing.linear(t);
 
@@ -16,7 +14,7 @@ class MotionPathInterpolators {
   /// Interpolates any two authored values.
   ///
   /// Numbers blend, identical values pass through, and everything else snaps at
-  /// the end of the segment so the core never invents a value it cannot
+  /// the end of the segment. The core never invents a value it cannot
   /// meaningfully blend.
   static Object? value(Object? from, Object? to, double t) {
     if (from is num && to is num) {
@@ -64,8 +62,7 @@ Object? interpolateStops(List<MotionPathStop> stops, double progress) {
     final MotionPathStop left = stops[index - 1];
     if (progress <= right.progress) {
       final double span = right.progress - left.progress;
-      final double local =
-          span == 0 ? 1.0 : (progress - left.progress) / span;
+      final double local = span == 0 ? 1.0 : (progress - left.progress) / span;
       return MotionPathInterpolators.value(
         left.value,
         right.value,
