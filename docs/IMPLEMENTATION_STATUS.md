@@ -30,17 +30,19 @@ Audited against merged pull requests and remote branches, not against memory.
 - Phase 32 (#37): package metadata, changelog, and release checklist.
 - Phase 33 (#38): runnable pinned viewport plus dynamic spawn example.
 - Phase 34 (#40): canonical v4 integration fixture and trust-boundary compatibility test. PR #39 was a duplicate branch and is closed as superseded.
-- Phase 35: first publishable API subset is explicitly classified as stable or experimental, with package-level READMEs.
+- Phase 35 (#41): first publishable API subset is explicitly classified as stable or experimental, with package-level READMEs.
+- Phase 36 (#42): fixed spawn visibility and added the Spiral/Zuma example.
+- Phase 37: the example now uses the ticker listener disposer correctly, and CI analyzes and tests the example package instead of silently skipping it.
 
 ## Branch audit
 
-Phases 10 and 22 had slices pushed straight to `main`; phase `phase-23-status-and-branch-audit` never carried a commit. Every phase branch through `phase-34-fixture-compatibility` is merged and safe to delete. Closed superseded viewport and fixture iterations remain available for audit.
+Phases 10 and 22 had slices pushed straight to `main`; phase `phase-23-status-and-branch-audit` never carried a commit. Every phase branch through `phase-36-spiral-zuma-demo` is merged and safe to delete. Closed superseded viewport, fixture, and duplicate iterations remain available for audit.
 
 ## Next
 
-- Add public dartdoc and generated API documentation for the stable subset.
+- Add generated API docs for the stable subset.
 - Decide whether to remove `publish_to: none` in a dedicated release PR after the checklist passes.
 
 ## Honest status
 
-The canonical fixture now proves schema and trust-boundary compatibility, while the first publishable surface is documented separately from experimental scene and plugin APIs. The packages remain unpublished until generated docs, fixture review, and release checks are complete.
+The example is now covered by the same analyzer and test gate as the packages, so demo-only compile errors cannot hide behind green package CI. The ticker listener API returns an idempotent disposer; callers should retain and invoke it rather than inventing a missing remove method. Packages remain unpublished until generated docs, fixture review, and release checks are complete.

@@ -29,6 +29,7 @@ class _SpiralZumaPageState extends State<SpiralZumaPage>
   late final MotionPathTickerDriver _ticker;
   late final MotionPathSpawnController _spawns;
   late final MotionPathSpawnTickerBinding _tickerBinding;
+  late final void Function() _removeAutoSpawn;
   final MotionPathEngine _engine = MotionPathEngine();
   double _spawnClock = 0;
   int _nextId = 0;
@@ -48,7 +49,7 @@ class _SpiralZumaPageState extends State<SpiralZumaPage>
       driver: _ticker,
       controller: _spawns,
     );
-    _ticker.addTickListener(_autoSpawn);
+    _removeAutoSpawn = _ticker.addTickListener(_autoSpawn);
     _ticker.start();
   }
 
@@ -79,7 +80,7 @@ class _SpiralZumaPageState extends State<SpiralZumaPage>
 
   @override
   void dispose() {
-    _ticker.removeTickListener(_autoSpawn);
+    _removeAutoSpawn();
     _tickerBinding.dispose();
     _spawns.dispose();
     _ticker.dispose();

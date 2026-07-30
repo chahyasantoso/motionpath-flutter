@@ -20,51 +20,9 @@ jobs:
       - name: Pub get
         run: dart pub get
       - name: Analyze
-        run: |
-          status=0
-          dart analyze > out.log 2>&1 || status=$?
-          cat out.log
-          {
-            echo '### dart analyze'
-            echo '```text'
-            cat out.log
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-          if [ "$status" -ne 0 ]; then
-            grep -E '^[[:space:]]+(error|warning|info)' out.log | head -n 9 > issues.log || true
-            if [ ! -s issues.log ]; then
-              tail -n 9 out.log > issues.log
-            fi
-            while IFS= read -r line; do
-              echo "::error title=dart-analyze::${line}"
-            done < issues.log
-            rm -f issues.log
-          fi
-          rm -f out.log
-          exit $status
+        run: dart analyze
       - name: Test
-        run: |
-          status=0
-          dart test > out.log 2>&1 || status=$?
-          cat out.log
-          {
-            echo '### dart test'
-            echo '```text'
-            tail -n 200 out.log
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-          if [ "$status" -ne 0 ]; then
-            grep -E '(\[E\]|Expected:|Actual:|Which:|Error:|error •)' out.log | head -n 9 > issues.log || true
-            if [ ! -s issues.log ]; then
-              tail -n 9 out.log > issues.log
-            fi
-            while IFS= read -r line; do
-              echo "::error title=dart-test::${line}"
-            done < issues.log
-            rm -f issues.log
-          fi
-          rm -f out.log
-          exit $status
+        run: dart test
 
   flutter-adapter:
     runs-on: ubuntu-latest
@@ -79,68 +37,27 @@ jobs:
           channel: stable
           cache: true
       - name: Pub get
-        run: |
-          status=0
-          flutter pub get > out.log 2>&1 || status=$?
-          cat out.log
-          {
-            echo '### flutter pub get'
-            echo '```text'
-            tail -n 100 out.log
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-          if [ "$status" -ne 0 ]; then
-            tail -n 9 out.log > issues.log
-            while IFS= read -r line; do
-              echo "::error title=flutter-pub-get::${line}"
-            done < issues.log
-            rm -f issues.log
-          fi
-          rm -f out.log
-          exit $status
+        run: flutter pub get
       - name: Analyze
-        run: |
-          status=0
-          flutter analyze > out.log 2>&1 || status=$?
-          cat out.log
-          {
-            echo '### flutter analyze'
-            echo '```text'
-            cat out.log
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-          if [ "$status" -ne 0 ]; then
-            grep -E '^[[:space:]]*(error|warning|info)' out.log | head -n 9 > issues.log || true
-            if [ ! -s issues.log ]; then
-              tail -n 9 out.log > issues.log
-            fi
-            while IFS= read -r line; do
-              echo "::error title=flutter-analyze::${line}"
-            done < issues.log
-            rm -f issues.log
-          fi
-          rm -f out.log
-          exit $status
+        run: flutter analyze
       - name: Test
-        run: |
-          status=0
-          flutter test > out.log 2>&1 || status=$?
-          cat out.log
-          {
-            echo '### flutter test'
-            echo '```text'
-            tail -n 200 out.log
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-          if [ "$status" -ne 0 ]; then
-            grep -E '(\[E\]|Expected:|Actual:|Which:|Error:|error •|failed)' out.log | head -n 9 > issues.log || true
-            if [ ! -s issues.log ]; then
-              tail -n 9 out.log > issues.log
-            fi
-            while IFS= read -r line; do
-              echo "::error title=flutter-test::${line}"
-            done < issues.log
-            rm -f issues.log
-          fi
-          rm -f out.log
-          exit $status
+        run: flutter test
+
+  flutter-example:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: example
+    steps:
+      - uses: actions/checkout@v5
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Pub get
+        run: flutter pub get
+      - name: Analyze
+        run: flutter analyze
+      - name: Test
+        run: flutter test
