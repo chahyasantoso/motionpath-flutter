@@ -17,7 +17,7 @@ class MotionPathMotionRuntime {
   void pause() => playing = false;
   void reverse() => seek(1 - progress);
   void seek(double value) {
-    progress = value.clamp(0.0, 1.0);
+    progress = value.clamp(0.0, 1.0).toDouble();
     for (final track in tracks) track.seek(progress);
   }
 

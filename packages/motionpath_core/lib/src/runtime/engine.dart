@@ -10,7 +10,15 @@ class MotionPathEngine {
   void loadProject(MotionPathProject nextProject) => project = nextProject;
 
   MotionPathMotionRuntime mountMotion(String id) {
-    final source = project?.motions.firstWhere((motion) => motion.id == id);
+    final loadedProject = project;
+    if (loadedProject == null) throw StateError('No project loaded.');
+    MotionPathMotion? source;
+    for (final motion in loadedProject.motions) {
+      if (motion.id == id) {
+        source = motion;
+        break;
+      }
+    }
     if (source == null) throw StateError('Motion not found: $id');
     final runtimeTracks = source.tracks.map((track) => MotionPathTrackRuntime(track.id, stops: stopsFromTrack(track))).toList();
     final runtime = MotionPathMotionRuntime(id: id, tracks: runtimeTracks);
