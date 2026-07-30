@@ -2,29 +2,56 @@ name: CI
 
 on:
   push:
-    branches: [main, phase-0-ci-and-contract]
+    branches: [main]
   pull_request:
 
 jobs:
   dart-core:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: packages/motionpath_core
     steps:
       - uses: actions/checkout@v4
       - uses: dart-lang/setup-dart@v1
         with:
           sdk: stable
       - name: Pub get
-        working-directory: packages/motionpath_core
         run: dart pub get
       - name: Analyze
-        working-directory: packages/motionpath_core
-        run: dart analyze
+        run: |
+          {
+            echo '### dart analyze'
+            echo '```text'
+          } >> "$GITHUB_STEP_SUMMARY"
+          status=0
+          dart analyze > analyze.log 2>&1 || status=$?
+          cat analyze.log
+          cat analyze.log >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          rm -f analyze.log
+          exit $status
       - name: Test
-        working-directory: packages/motionpath_core
-        run: dart test
+        run: |
+          {
+            echo '### dart test'
+            echo '```text'
+          } >> "$GITHUB_STEP_SUMMARY"
+          status=0
+          dart test > test.log 2>&1 || status=$?
+          cat test.log
+          tail -n 200 test.log >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          rm -f test.log
+          exit $status
 
   flutter-adapter:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: packages/motionpath_flutter
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
@@ -32,11 +59,41 @@ jobs:
           channel: stable
           cache: true
       - name: Pub get
-        working-directory: packages/motionpath_flutter
-        run: flutter pub get
+        run: |
+          {
+            echo '### flutter pub get'
+            echo '```text'
+          } >> "$GITHUB_STEP_SUMMARY"
+          status=0
+          flutter pub get > pub.log 2>&1 || status=$?
+          cat pub.log
+          tail -n 100 pub.log >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          rm -f pub.log
+          exit $status
       - name: Analyze
-        working-directory: packages/motionpath_flutter
-        run: flutter analyze
+        run: |
+          {
+            echo '### flutter analyze'
+            echo '```text'
+          } >> "$GITHUB_STEP_SUMMARY"
+          status=0
+          flutter analyze > analyze.log 2>&1 || status=$?
+          cat analyze.log
+          cat analyze.log >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          rm -f analyze.log
+          exit $status
       - name: Test
-        working-directory: packages/motionpath_flutter
-        run: flutter test
+        run: |
+          {
+            echo '### flutter test'
+            echo '```text'
+          } >> "$GITHUB_STEP_SUMMARY"
+          status=0
+          flutter test > test.log 2>&1 || status=$?
+          cat test.log
+          tail -n 200 test.log >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          rm -f test.log
+          exit $status
