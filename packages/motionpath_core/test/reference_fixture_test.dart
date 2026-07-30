@@ -4,18 +4,18 @@ import 'dart:io';
 import 'package:motionpath_core/motionpath_core.dart';
 import 'package:test/test.dart';
 
+File _fixtureFile() => File('../../fixtures/v4-project.json');
+
 void main() {
   late MotionPathProject project;
 
   setUpAll(() {
-    final File fixture = File('../../fixtures/v4-project.json');
-    project = MotionPathProject.fromJsonString(fixture.readAsStringSync());
+    project = MotionPathProject.fromJsonString(_fixtureFile().readAsStringSync());
   });
 
   test('canonical reference fixture has no fatal diagnostics', () {
-    final String source = File('../../fixtures/v4-project.json').readAsStringSync();
     final Map<String, Object?> json =
-        jsonDecode(source) as Map<String, Object?>;
+        asStringKeyedMap(jsonDecode(_fixtureFile().readAsStringSync()));
     final List<MotionPathDiagnostic> diagnostics = validateProject(json);
     expect(diagnostics.where((MotionPathDiagnostic d) => d.isFatal), isEmpty);
   });
@@ -27,13 +27,16 @@ void main() {
     expect(project.templates, hasLength(1));
     expect(project.motions, hasLength(5));
     expect(project.tracks, hasLength(1));
-    expect(project.motions.map((MotionPathMotion m) => m.id), <String>[
-      'scroll-scrub',
-      'time-loop',
-      'time-paused',
-      'manual-scrubber',
-      'sequence',
-    ]);
+    expect(
+      project.motions.map((MotionPathMotion m) => m.id).toList(),
+      <String>[
+        'scroll-scrub',
+        'time-loop',
+        'time-paused',
+        'manual-scrubber',
+        'sequence',
+      ],
+    );
   });
 
   test('resolves templates and authored plugin payloads', () {
