@@ -1,3 +1,4 @@
+import '../contract/motionpath_types.dart';
 import '../math/fk_math.dart';
 import 'motionpath_plugin.dart';
 
