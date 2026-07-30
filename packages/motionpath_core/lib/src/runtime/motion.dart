@@ -25,7 +25,9 @@ class MotionPathMotionRuntime {
   Map<String, Map<String, Object?>> _patches = const <String, Map<String, Object?>>{};
 
   Map<String, Map<String, Object?>> get patches => _patches;
-  List<String> get graphOrder => graph == null ? const <String>[] : List<String>.unmodifiable(graph!.order);
+  List<String> get graphOrder => graph == null
+      ? const <String>[]
+      : List<String>.unmodifiable(graph!.order);
 
   void prepare(ObservationGraph nextGraph) {
     graph = nextGraph;
@@ -35,7 +37,9 @@ class MotionPathMotionRuntime {
     for (final ObservationEdge edge in nextGraph.edges) {
       final MotionPathTrackRuntime? target = byId[edge.target];
       final MotionPathTrackRuntime? source = byId[edge.source];
-      if (target == null || source == null) continue;
+      if (target == null || source == null) {
+        continue;
+      }
       target.observe(source, role: edge.role, input: edge.input);
     }
   }
@@ -61,7 +65,9 @@ class MotionPathMotionRuntime {
     };
     for (final MotionPathTrackRuntime track in tracks) {
       final double delay = stagger > 0 ? (indexById[track.id] ?? 0) * stagger : 0;
-      final double span = track.duration > 0 ? track.duration : (duration <= 0 ? 1 : duration);
+      final double span = track.duration > 0
+          ? track.duration
+          : (duration <= 0 ? 1 : duration);
       final double local = (elapsed - delay) / span;
       track.seek(local.clamp(0.0, 1.0).toDouble());
     }
@@ -69,7 +75,9 @@ class MotionPathMotionRuntime {
 
   Map<String, Map<String, Object?>> composeGraph() {
     final ObservationGraph? current = graph;
-    if (current == null) return const <String, Map<String, Object?>>{};
+    if (current == null) {
+      return const <String, Map<String, Object?>>{};
+    }
     final Map<String, MotionPathTrackRuntime> byId = <String, MotionPathTrackRuntime>{
       for (final MotionPathTrackRuntime track in tracks) track.id: track,
     };
@@ -77,7 +85,9 @@ class MotionPathMotionRuntime {
     final Map<String, Map<String, Object?>> composed = <String, Map<String, Object?>>{};
     for (final String trackId in current.order) {
       final MotionPathTrackRuntime? track = byId[trackId];
-      if (track == null) continue;
+      if (track == null) {
+        continue;
+      }
       composed[trackId] = track.compose(context: context);
     }
     _patches = composed;
@@ -108,7 +118,8 @@ class MotionPathMotionRuntime {
       }
     }
     publish();
-    if (progress >= 1 && (currentTrigger == null || currentTrigger.isFinished(_elapsed, span))) {
+    if (progress >= 1 &&
+        (currentTrigger == null || currentTrigger.isFinished(_elapsed, span))) {
       pause();
     }
   }
@@ -121,7 +132,9 @@ class MotionPathMotionRuntime {
 
   void dispose() {
     onPatches = null;
-    for (final MotionPathTrackRuntime track in tracks) track.dispose();
+    for (final MotionPathTrackRuntime track in tracks) {
+      track.dispose();
+    }
     tracks.clear();
     graph = null;
     playing = false;
