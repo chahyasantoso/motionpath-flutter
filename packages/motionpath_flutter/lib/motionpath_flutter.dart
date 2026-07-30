@@ -5,6 +5,11 @@
 /// behaviour and never creates a second frame source.
 library motionpath_flutter;
 
+/// Re-exports the renderer-neutral engine contract for Flutter examples and
+/// applications that use both packages together. The implementation remains in
+/// `motionpath_core`; this is only a convenient, stable import boundary.
+export 'package:motionpath_core/motionpath_core.dart';
+
 export 'src/bindings/motion_path_scroll_binding.dart';
 export 'src/bindings/motion_path_viewport_binding.dart';
 export 'src/consumers/motion_path_patch_consumers.dart';
