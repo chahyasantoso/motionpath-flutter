@@ -1,19 +1,25 @@
-# MotionPath Flutter example
+# MotionPath Flutter examples
 
-Run from this directory:
+## Pinned viewport and dynamic spawn
 
 ```sh
 flutter pub get
 flutter run
 ```
 
-The example intentionally exercises both adapter boundaries in one scene:
+This is a diagnostic scene for viewport pin state and manual dynamic spawning.
+The Spawn dot button now keeps children mounted, so the visible count grows and
+can be inspected directly.
 
-- scroll sampling drives `MotionPathViewportBinding`, which reports visibility,
-  progress, paint offset, and pin state without creating a clock or mutating
-  layout;
-- the Spawn button adds dynamic children to `MotionPathSpawnController`, and
-  `MotionPathSpawnTickerBinding` advances them from the same ticker as the time
-  motion.
+## Zuma / Spiral
 
-The host widget owns the actual painting and disposes every route-owned binding.
+```sh
+flutter run -t lib/spiral_main.dart
+```
+
+This is the Flutter port's closest equivalent to the JavaScript MotionPath
+Spiral/Zuma demo. Balls auto-spawn every 700ms from the shared ticker, travel
+along a rendered spiral guide, and drain after eight seconds. Tap a ball to pop
+it; the spawn controller reflows the remaining chain through its layout policy.
+The demo is intentionally renderer-neutral in its engine state and owns only
+painting and hit testing in the host widget.
