@@ -22,7 +22,8 @@ void main() {
     final motion = engine.mountMotion('hero')..play();
     engine.tick(0.5);
     expect(motion.progress, 0.5);
-    expect(motion.tracks.single.compose()['value'], 50);
+    final composed = motion.tracks.single.compose();
+    expect(composed['opacity'], 50);
     engine.destroy();
     expect(engine.project, isNull);
   });

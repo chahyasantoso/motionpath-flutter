@@ -20,7 +20,7 @@ class MotionPathEngine {
       }
     }
     if (source == null) throw StateError('Motion not found: $id');
-    final runtimeTracks = source.tracks.map((track) => MotionPathTrackRuntime(track.id, stops: stopsFromTrack(track))).toList();
+    final runtimeTracks = source.tracks.map((track) => MotionPathTrackRuntime(track.id, properties: propertiesFromTrack(track))).toList();
     final runtime = MotionPathMotionRuntime(id: id, tracks: runtimeTracks);
     runtime.prepare(normalizeObservationGraph(source));
     _mounted[id] = runtime;
