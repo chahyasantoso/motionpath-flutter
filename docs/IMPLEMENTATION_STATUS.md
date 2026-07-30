@@ -33,21 +33,22 @@ Audited against merged pull requests and remote branches, not against memory.
 - Phase 35 (#41): first publishable API subset is explicitly classified as stable or experimental, with package-level READMEs.
 - Phase 36 (#42): fixed spawn visibility and added the Spiral/Zuma example.
 - Phase 37: the example now uses the ticker listener disposer correctly, and CI analyzes and tests the example package instead of silently skipping it.
+- Phase 38 (#49): JS-compatible path node controls, z coordinates, cubic elevation, and approximate arc-length sampling.
 
 ## Active
 
-- Phase 38: JS path parity. Branch `phase-38-path-parity` is implementing curved control points, z coordinates, and arc-length sampling. See [PATH_PARITY_PLAN.md](PATH_PARITY_PLAN.md).
+- Phase 39: JS-compatible Spiral geometry and speed calibration. Branch `phase-39-spiral-geometry` is porting cumulative-length resampling and physical-speed-derived spawning. See [PATH_PARITY_PLAN.md](PATH_PARITY_PLAN.md).
 
 ## Branch audit
 
-Phases 10 and 22 had slices pushed straight to `main`; phase `phase-23-status-and-branch-audit` never carried a commit. Every phase branch through `phase-37-example-ci-and-ticker-disposer` is merged and safe to delete. Closed superseded viewport, fixture, and duplicate iterations remain available for audit.
+Phases 10 and 22 had slices pushed straight to `main`; phase `phase-23-status-and-branch-audit` never carried a commit. Every phase branch through Phase 38 is merged and safe to delete. Closed superseded viewport, fixture, and duplicate iterations remain available for audit.
 
 ## Next
 
-- Complete Phases 38-41 in order, merging each phase before starting the next.
+- Complete Phases 39-41 in order, merging each phase before starting the next.
 - Add generated API docs for the stable subset.
 - Decide whether to remove `publish_to: none` in a dedicated release PR after the checklist passes.
 
 ## Honest status
 
-The example is covered by the same analyzer and test gate as the packages. The current Flutter path plugin is still a normalized polyline sampler and does not yet match the JavaScript control-point or arc-length implementation; Phase 38 addresses that gap first. Packages remain unpublished until generated docs, fixture review, and release checks are complete.
+The example is covered by the same analyzer and test gate as the packages. Phase 38 closes the core path-model gap; the example still needs the JS spiral's cumulative-length geometry and the lifecycle fix in Phases 39-40. Packages remain unpublished until generated docs, fixture review, and release checks are complete.
