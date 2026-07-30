@@ -18,6 +18,7 @@ export 'src/plugins/filter_plugin.dart';
 export 'src/plugins/image_sequence_plugin.dart';
 export 'src/plugins/motionpath_plugin.dart';
 export 'src/plugins/path_plugin.dart';
+export 'src/plugins/scene_plugin.dart';
 export 'src/runtime/engine.dart';
 export 'src/runtime/motion.dart';
 export 'src/runtime/scroll_binding.dart';
