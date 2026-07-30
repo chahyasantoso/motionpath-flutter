@@ -194,13 +194,28 @@ class _SpiralPainter extends CustomPainter {
     for (final MotionPathSpawnInstance instance in instances) {
       final Offset point = positionOf(instance);
       final double opacity = instance.hasStarted ? 1 : 0.35;
-      final Paint ball = Paint()
-        ..color = Color.lerp(const Color(0xFFFF6BCA), const Color(0xFF00E5FF), instance.progress)!.withOpacity(opacity);
+      final Color base = Color.lerp(
+        const Color(0xFFFF6BCA),
+        const Color(0xFF00E5FF),
+        instance.progress,
+      )!;
+      final Paint ball = Paint()..color = _withOpacity(base, opacity);
       canvas.drawCircle(point, _SpiralZumaPageState._ballRadius, ball);
-      canvas.drawCircle(point + const Offset(-6, -6), 5, Paint()..color = const Color(0xCCFFFFFF));
+      canvas.drawCircle(
+        point + const Offset(-6, -6),
+        5,
+        Paint()..color = const Color(0xCCFFFFFF),
+      );
     }
   }
 
   @override
   bool shouldRepaint(covariant _SpiralPainter oldDelegate) => oldDelegate.instances != instances;
 }
+
+Color _withOpacity(Color color, double opacity) => Color.fromARGB(
+      (color.alpha * opacity).round().clamp(0, 255),
+      color.red,
+      color.green,
+      color.blue,
+    );
