@@ -7,33 +7,21 @@ import 'track.dart';
 import 'trigger.dart';
 
 /// Owns a loaded project and every runtime object created from it.
-///
-/// Loading validates and prepares data. Mounting is what creates runtime
-/// objects, so a malformed project can never reach a renderer.
 class MotionPathEngine {
-  /// Creates an engine with an isolated plugin registry.
   MotionPathEngine({MotionPathPluginRegistry? registry})
       : registry = registry ?? MotionPathPluginRegistry();
 
-  /// Plugin registry used when resolving authored keys.
   final MotionPathPluginRegistry registry;
-
-  /// Currently loaded project.
   MotionPathProject? project;
-
   final Map<String, MotionPathMotionRuntime> _mounted =
       <String, MotionPathMotionRuntime>{};
 
-  /// Every mounted motion.
   Iterable<MotionPathMotionRuntime> get mounted => _mounted.values;
 
-  /// Loads a validated project without creating runtime objects.
   void loadProject(MotionPathProject nextProject) => project = nextProject;
 
-  /// Finds a mounted motion by id.
   MotionPathMotionRuntime? motionById(String id) => _mounted[id];
 
-  /// Mounts a motion and compiles its observation graph once.
   MotionPathMotionRuntime mountMotion(String id) {
     final MotionPathProject? loaded = project;
     if (loaded == null) {
@@ -47,7 +35,6 @@ class MotionPathEngine {
     if (!graph.isValid) {
       throw MotionPathValidationException(graph.errors);
     }
-
     final List<MotionPathTrackRuntime> runtimeTracks =
         <MotionPathTrackRuntime>[];
     double longest = 0;
@@ -67,14 +54,13 @@ class MotionPathEngine {
         duration: trackDuration,
       ));
     }
-
-    final MotionPathTrigger trigger =
-        MotionPathTrigger.fromJson(source.trigger);
+    final MotionPathTrigger trigger = MotionPathTrigger.fromJson(source.trigger);
     final MotionPathMotionRuntime runtime = MotionPathMotionRuntime(
       id: id,
       tracks: runtimeTracks,
       trigger: trigger,
       duration: longest > 0 ? longest : 1,
+      stagger: source.stagger,
     );
     runtime.prepare(graph);
     runtime.playing = trigger.autoplay;
@@ -82,9 +68,6 @@ class MotionPathEngine {
     return runtime;
   }
 
-  /// Advances every playing motion by [delta] seconds.
-  ///
-  /// There is exactly one frame source per engine. The adapter owns it.
   void tick(double delta) {
     for (final MotionPathMotionRuntime runtime
         in List<MotionPathMotionRuntime>.of(_mounted.values)) {
@@ -95,7 +78,6 @@ class MotionPathEngine {
     }
   }
 
-  /// Unmounts one runtime object. Idempotent.
   void unmount(MotionPathMotionRuntime runtime) {
     if (_mounted[runtime.id] != runtime) {
       return;
@@ -104,7 +86,6 @@ class MotionPathEngine {
     _mounted.remove(runtime.id);
   }
 
-  /// Releases every mounted object and the loaded project. Idempotent.
   void destroy() {
     for (final MotionPathMotionRuntime runtime in _mounted.values) {
       runtime.dispose();
