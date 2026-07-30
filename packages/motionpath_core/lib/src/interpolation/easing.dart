@@ -1,109 +1,224 @@
 import 'dart:math' as math;
 
-/// Normalized easing function over `[0, 1]`.
-typedef Easing = double Function(double t);
+import 'interpolator.dart';
 
-double _clamp01(double value) {
-  if (value.isNaN) {
-    return 0.0;
-  }
-  if (value < 0) {
-    return 0.0;
-  }
-  if (value > 1) {
-    return 1.0;
-  }
-  return value;
+/// Overshoot used by the `back` family, matching the reference runtime default.
+const double kMotionPathBackOvershoot = 1.70158;
+
+/// Period used by `elastic.in` and `elastic.out`.
+const double kMotionPathElasticPeriod = 0.3;
+
+/// Period used by `elastic.inOut`.
+const double kMotionPathElasticInOutPeriod = 0.45;
+
+double _clamp01(double t) {
+  if (t.isNaN) return 0;
+  if (t < 0) return 0;
+  if (t > 1) return 1;
+  return t;
 }
 
-double _power(double t, int exponent) {
-  double result = t;
-  for (int i = 1; i < exponent; i++) {
-    result *= t;
-  }
-  return result;
+double _pow(double base, num exponent) => math.pow(base, exponent).toDouble();
+
+double _powerIn(double raw, int power) {
+  final double t = _clamp01(raw);
+  return _pow(t, power + 1);
 }
 
-/// Named easing curves that accept the JavaScript reference ease names.
-///
-/// Names follow the GSAP convention: a family plus an optional direction, for
-/// example `power2.inOut`. A bare family resolves to its `.out` variant.
-/// Unknown names fall back to [linear] rather than throwing, so a typo in a
-/// cosmetic field never stops a project from animating.
-class MotionPathEasing {
-  /// No easing.
-  static double linear(double t) => _clamp01(t);
+double _powerOut(double raw, int power) {
+  final double t = _clamp01(raw);
+  return 1 - _pow(1 - t, power + 1);
+}
 
-  static const double _backOvershoot = 1.70158;
+double _powerInOut(double raw, int power) {
+  final double t = _clamp01(raw);
+  return t < 0.5
+      ? _pow(2.0, power) * _pow(t, power + 1)
+      : 1 - _pow(2.0, power) * _pow(1 - t, power + 1);
+}
 
-  static double _power1(double t) => _power(t, 2);
+double _sineIn(double raw) => 1 - math.cos(_clamp01(raw) * math.pi / 2);
 
-  static double _power2(double t) => _power(t, 3);
+double _sineOut(double raw) => math.sin(_clamp01(raw) * math.pi / 2);
 
-  static double _power3(double t) => _power(t, 4);
+double _sineInOut(double raw) => -(math.cos(math.pi * _clamp01(raw)) - 1) / 2;
 
-  static double _power4(double t) => _power(t, 5);
+double _circIn(double raw) {
+  final double t = _clamp01(raw);
+  return 1 - math.sqrt(1 - t * t);
+}
 
-  static double _sine(double t) => 1.0 - math.cos(t * math.pi / 2);
+double _circOut(double raw) {
+  final double t = _clamp01(raw) - 1;
+  return math.sqrt(1 - t * t);
+}
 
-  static double _expo(double t) =>
-      t == 0 ? 0.0 : math.pow(2, 10 * t - 10).toDouble();
+double _circInOut(double raw) {
+  final double t = _clamp01(raw);
+  if (t < 0.5) return (1 - math.sqrt(1 - 4 * t * t)) / 2;
+  final double shifted = -2 * t + 2;
+  return (math.sqrt(1 - shifted * shifted) + 1) / 2;
+}
 
-  static double _circ(double t) => 1.0 - math.sqrt(1 - t * t);
+double _expoIn(double raw) {
+  final double t = _clamp01(raw);
+  return t == 0 ? 0 : _pow(2.0, 10 * t - 10);
+}
 
-  static double _back(double t) =>
-      (_backOvershoot + 1) * t * t * t - _backOvershoot * t * t;
+double _expoOut(double raw) {
+  final double t = _clamp01(raw);
+  return t == 1 ? 1 : 1 - _pow(2.0, -10 * t);
+}
 
-  static const Map<String, Easing> _families = <String, Easing>{
-    'power1': _power1,
-    'power2': _power2,
-    'power3': _power3,
-    'power4': _power4,
-    'quad': _power1,
-    'cubic': _power2,
-    'quart': _power3,
-    'quint': _power4,
-    'sine': _sine,
-    'expo': _expo,
-    'circ': _circ,
-    'back': _back,
+double _expoInOut(double raw) {
+  final double t = _clamp01(raw);
+  if (t == 0) return 0;
+  if (t == 1) return 1;
+  return t < 0.5 ? _pow(2.0, 20 * t - 10) / 2 : (2 - _pow(2.0, -20 * t + 10)) / 2;
+}
+
+double _backIn(double raw) {
+  final double t = _clamp01(raw);
+  return (kMotionPathBackOvershoot + 1) * t * t * t - kMotionPathBackOvershoot * t * t;
+}
+
+double _backOut(double raw) {
+  final double t = _clamp01(raw) - 1;
+  return 1 + (kMotionPathBackOvershoot + 1) * t * t * t + kMotionPathBackOvershoot * t * t;
+}
+
+double _backInOut(double raw) {
+  const double overshoot = kMotionPathBackOvershoot * 1.525;
+  final double t = _clamp01(raw);
+  if (t < 0.5) {
+    final double scaled = 2 * t;
+    return scaled * scaled * ((overshoot + 1) * scaled - overshoot) / 2;
+  }
+  final double scaled = 2 * t - 2;
+  return (scaled * scaled * ((overshoot + 1) * scaled + overshoot) + 2) / 2;
+}
+
+double _elasticIn(double raw) {
+  final double t = _clamp01(raw);
+  if (t == 0 || t == 1) return t;
+  const double angular = 2 * math.pi / kMotionPathElasticPeriod;
+  return -_pow(2.0, 10 * t - 10) *
+      math.sin((t - 1 - kMotionPathElasticPeriod / 4) * angular);
+}
+
+double _elasticOut(double raw) {
+  final double t = _clamp01(raw);
+  if (t == 0 || t == 1) return t;
+  const double angular = 2 * math.pi / kMotionPathElasticPeriod;
+  return _pow(2.0, -10 * t) * math.sin((t - kMotionPathElasticPeriod / 4) * angular) + 1;
+}
+
+double _elasticInOut(double raw) {
+  final double t = _clamp01(raw);
+  if (t == 0 || t == 1) return t;
+  const double angular = 2 * math.pi / kMotionPathElasticInOutPeriod;
+  final double phase = math.sin((20 * t - 11.125) * angular);
+  return t < 0.5
+      ? -(_pow(2.0, 20 * t - 10) * phase) / 2
+      : (_pow(2.0, -20 * t + 10) * phase) / 2 + 1;
+}
+
+double _bounceOut(double raw) {
+  const double amplitude = 7.5625;
+  const double divisor = 2.75;
+  final double t = _clamp01(raw);
+  if (t < 1 / divisor) return amplitude * t * t;
+  if (t < 2 / divisor) {
+    final double shifted = t - 1.5 / divisor;
+    return amplitude * shifted * shifted + 0.75;
+  }
+  if (t < 2.5 / divisor) {
+    final double shifted = t - 2.25 / divisor;
+    return amplitude * shifted * shifted + 0.9375;
+  }
+  final double shifted = t - 2.625 / divisor;
+  return amplitude * shifted * shifted + 0.984375;
+}
+
+double _bounceIn(double raw) => 1 - _bounceOut(1 - _clamp01(raw));
+
+double _bounceInOut(double raw) {
+  final double t = _clamp01(raw);
+  return t < 0.5 ? (1 - _bounceOut(1 - 2 * t)) / 2 : (1 + _bounceOut(2 * t - 1)) / 2;
+}
+
+/// Suffixes an authored ease name may carry, normalized to lower case.
+const List<String> _suffixes = <String>['', '.in', '.out', '.inout'];
+
+/// Reference aliases: `quad` is `power1`, `cubic` is `power2`, and so on.
+const Map<String, String> _aliases = <String, String>{
+  'quad': 'power1',
+  'cubic': 'power2',
+  'quart': 'power3',
+  'quint': 'power4',
+  'strong': 'power4',
+};
+
+Map<String, Easing> _buildEasings() {
+  final Map<String, Easing> table = <String, Easing>{
+    'none': MotionPathInterpolators.linear,
+    'linear': MotionPathInterpolators.linear,
+    'linear.none': MotionPathInterpolators.linear,
   };
 
-  /// Every supported ease family name.
-  static Iterable<String> get families => _families.keys;
+  void addFamily(String name, Easing easeIn, Easing easeOut, Easing easeInOut) {
+    table['$name.in'] = easeIn;
+    table['$name.out'] = easeOut;
+    table['$name.inout'] = easeInOut;
+    // A bare family name means `.out` in the reference runtime.
+    table[name] = easeOut;
+  }
 
-  /// Resolves an authored ease name into an easing function.
-  static Easing resolve(String? name) {
-    if (name == null) {
-      return linear;
-    }
-    final String normalized = name.trim();
-    if (normalized.isEmpty ||
-        normalized == 'none' ||
-        normalized == 'linear' ||
-        normalized == 'linear.none') {
-      return linear;
-    }
-    final int dot = normalized.indexOf('.');
-    final String family = dot == -1 ? normalized : normalized.substring(0, dot);
-    final String direction = dot == -1 ? 'out' : normalized.substring(dot + 1);
-    final Easing? base = _families[family];
-    if (base == null) {
-      return linear;
-    }
-    switch (direction) {
-      case 'in':
-        return (double t) => _clamp01(base(_clamp01(t)));
-      case 'inOut':
-        return (double t) {
-          final double clamped = _clamp01(t);
-          if (clamped < 0.5) {
-            return _clamp01(base(clamped * 2) / 2);
-          }
-          return _clamp01(1 - base(2 - clamped * 2) / 2);
-        };
-      default:
-        return (double t) => _clamp01(1 - base(1 - _clamp01(t)));
+  for (var power = 1; power <= 4; power++) {
+    final int exponent = power;
+    addFamily(
+      'power$exponent',
+      (double t) => _powerIn(t, exponent),
+      (double t) => _powerOut(t, exponent),
+      (double t) => _powerInOut(t, exponent),
+    );
+  }
+  for (final MapEntry<String, String> alias in _aliases.entries) {
+    for (final String suffix in _suffixes) {
+      table['${alias.key}$suffix'] = table['${alias.value}$suffix']!;
     }
   }
+
+  addFamily('sine', _sineIn, _sineOut, _sineInOut);
+  addFamily('circ', _circIn, _circOut, _circInOut);
+  addFamily('expo', _expoIn, _expoOut, _expoInOut);
+  addFamily('back', _backIn, _backOut, _backInOut);
+  addFamily('elastic', _elasticIn, _elasticOut, _elasticInOut);
+  addFamily('bounce', _bounceIn, _bounceOut, _bounceInOut);
+
+  return Map<String, Easing>.unmodifiable(table);
+}
+
+final Map<String, Easing> _easings = _buildEasings();
+
+/// Every ease name this build understands, lower cased.
+///
+/// Useful for asserting authored projects only reference curves that exist
+/// instead of silently degrading to linear at runtime.
+Iterable<String> get motionPathEasingNames => _easings.keys;
+
+/// True when [name] resolves to a real curve rather than the linear fallback.
+bool isKnownEasing(String name) => _easings.containsKey(name.trim().toLowerCase());
+
+/// Resolves an authored `stops[].ease` value into an [Easing] curve.
+///
+/// Names are matched case-insensitively, `power1` style bare families resolve to
+/// their `.out` variant, and anything unknown falls back to linear so a typo
+/// degrades the motion instead of crashing the runtime.
+Easing resolveEasing(Object? authored) {
+  if (authored is Easing) return authored;
+  if (authored is! String) return MotionPathInterpolators.linear;
+  final String key = authored.trim().toLowerCase();
+  if (key.isEmpty) return MotionPathInterpolators.linear;
+  return _easings[key] ?? MotionPathInterpolators.linear;
 }

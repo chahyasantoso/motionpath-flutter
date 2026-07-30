@@ -14,10 +14,6 @@ const int kMotionPathDefaultArgb = 0xFF2196F3;
 /// A patch is plain Dart data produced by `motionpath_core`. This type is the
 /// only place that decides how those keys map onto Flutter painting concepts,
 /// which keeps the pure Dart core free of any rendering knowledge.
-///
-/// Patch rotation is authored and composed in degrees, matching the JavaScript
-/// reference runtime and the forward-kinematics math. This type converts once,
-/// at the boundary.
 @immutable
 class MotionPathPatchTransform {
   /// Creates a resolved transform.
@@ -43,7 +39,7 @@ class MotionPathPatchTransform {
     return MotionPathPatchTransform(
       translateX: _read(patch, const <String>['x', 'translateX'], 0.0),
       translateY: _read(patch, const <String>['y', 'translateY'], 0.0),
-      rotation: _readRotationRadians(patch),
+      rotation: _read(patch, const <String>['rotation', 'rotate'], 0.0),
       scaleX: _read(patch, const <String>['scaleX'], scale),
       scaleY: _read(patch, const <String>['scaleY'], scale),
       opacity: _clamp01(_read(patch, const <String>['opacity'], 1.0)),
@@ -57,7 +53,11 @@ class MotionPathPatchTransform {
   /// Vertical translation in logical pixels.
   final double translateY;
 
-  /// Rotation around the origin in radians.
+  /// Rotation in DEGREES, which is the authored v4 unit.
+  ///
+  /// The pure Dart core composes forward kinematics in degrees to stay
+  /// byte-compatible with the JavaScript reference, so the conversion to radians
+  /// belongs here at the renderer boundary and nowhere else.
   final double rotation;
 
   /// Horizontal scale factor.
@@ -71,6 +71,9 @@ class MotionPathPatchTransform {
 
   /// Fill colour as packed ARGB data.
   final int argb;
+
+  /// [rotation] converted into the radians Flutter's canvas expects.
+  double get rotationRadians => rotation * math.pi / 180;
 
   /// Fill colour with [opacity] folded into the alpha channel.
   Color get color {
@@ -93,8 +96,9 @@ class MotionPathPatchTransform {
   ///
   /// Exposed so transform math can be asserted without a canvas.
   Float64List toMatrix4Storage() {
-    final double cos = math.cos(rotation);
-    final double sin = math.sin(rotation);
+    final double radians = rotationRadians;
+    final double cos = math.cos(radians);
+    final double sin = math.sin(radians);
     final Float64List storage = Float64List(16);
     storage[0] = cos * scaleX;
     storage[1] = sin * scaleX;
@@ -118,16 +122,6 @@ class MotionPathPatchTransform {
       return 1;
     }
     return value;
-  }
-
-  static double _readRotationRadians(Map<String, Object?> patch) {
-    final Object? radians = patch['rotationRadians'];
-    if (radians is num) {
-      return radians.toDouble();
-    }
-    final double degrees =
-        _read(patch, const <String>['rotation', 'rotate'], 0.0);
-    return degrees * math.pi / 180;
   }
 
   static double _read(
@@ -171,13 +165,17 @@ class MotionPathPatchTransform {
 ///
 /// This is intentionally a focused renderer boundary: it draws one diagnostic
 /// square so transform, opacity, and invalidation behaviour can be verified
-/// independently of the rig renderer.
+/// independently of any particular scene.
 class MotionPathPatchPainter extends CustomPainter {
   /// Creates a painter for a single composed [patch].
+  ///
+  /// Pass `repaint` to drive invalidation straight from a patch source instead
+  /// of rebuilding the widget that owns this painter.
   MotionPathPatchPainter({
     required this.patch,
     this.fallbackArgb = kMotionPathDefaultArgb,
     this.extent = 80,
+    super.repaint,
   });
 
   /// The composed, renderer-neutral patch to draw.
