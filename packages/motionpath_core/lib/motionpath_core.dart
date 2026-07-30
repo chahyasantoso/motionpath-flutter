@@ -1,7 +1,4 @@
 /// Public entrypoint for the pure Dart MotionPath v4 animation engine.
-///
-/// This library never imports Flutter, touches a platform API, or schedules a
-/// frame. Rendering and scheduling belong to the adapter.
 library motionpath_core;
 
 export 'src/composition/compose_patch.dart';
@@ -25,4 +22,5 @@ export 'src/runtime/motion.dart';
 export 'src/runtime/scroll_binding.dart';
 export 'src/runtime/track.dart';
 export 'src/runtime/trigger.dart';
+export 'src/runtime/viewport_binding.dart';
 export 'src/validation/validate_project.dart';
