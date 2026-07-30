@@ -1,5 +1,8 @@
 typedef Easing = double Function(double t);
 
+/// Blends two authored stop values across a normalized segment position.
+typedef ValueBlend = Object? Function(Object? from, Object? to, double t);
+
 class MotionPathInterpolators {
   static double linear(double t) => t.clamp(0.0, 1.0);
 
@@ -19,7 +22,16 @@ class MotionPathStop {
   final Easing ease;
 }
 
-Object? interpolateStops(List<MotionPathStop> stops, double progress) {
+/// Samples [stops] at [progress], easing each segment by its right-hand stop.
+///
+/// [blend] decides how two authored values combine. Numeric properties use the
+/// default; colour properties pass a channel-wise blend so packed ARGB data
+/// does not bleed between channels.
+Object? interpolateStops(
+  List<MotionPathStop> stops,
+  double progress, {
+  ValueBlend blend = MotionPathInterpolators.value,
+}) {
   if (stops.isEmpty) return null;
   if (progress <= stops.first.progress) return stops.first.value;
   if (progress >= stops.last.progress) return stops.last.value;
@@ -29,7 +41,7 @@ Object? interpolateStops(List<MotionPathStop> stops, double progress) {
     if (progress <= right.progress) {
       final span = right.progress - left.progress;
       final local = span == 0 ? 1.0 : (progress - left.progress) / span;
-      return MotionPathInterpolators.value(left.value, right.value, right.ease(local));
+      return blend(left.value, right.value, right.ease(local));
     }
   }
   return stops.last.value;

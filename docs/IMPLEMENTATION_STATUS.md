@@ -19,11 +19,23 @@
   - Renderer-neutral scroll progress and scrub smoothing in the core, with a Flutter `ScrollController` driver on top.
   - Composed patches reach painter invalidation through `MotionPathPatchSource`, a `ChangeNotifier` fed by `Motion.onPatches`.
   - Walker FK rig fixtures ported from the demo, asserting bone-length invariants, knee bend, head bob, and forward travel.
+- Phase 9:
+  - Named easing registry: `none`/`linear`, `power1`-`power4`, the `quad`/`cubic`/`quart`/`quint`/`strong` aliases, `sine`, `circ`, `expo`, `back`, `elastic`, and `bounce`, each with `.in`, `.out`, and `.inOut`. A bare family name resolves to `.out` like the reference, an unknown name degrades to linear.
+  - Authored `ease` is now honoured per stop, with a keyframe-level `ease` as the fallback. It was parsed and discarded before.
+  - Colour properties (`color`, `backgroundColor`, `borderColor`) parse `#rgb`, `#rgba`, `#rrggbb`, `#rrggbbaa`, `rgb()`, `rgba()`, and common keywords into packed ARGB, then interpolate channel by channel.
+  - Renderer boundary fix: composed `rotation` is authored DEGREES, and the painter was feeding it to `cos`/`sin` as radians. Conversion now happens once, in `MotionPathPatchTransform.rotationRadians`.
+  - Walker scene renderer: bone table, joint dots, tones, ground, shadow, and head, driven straight off composed patches. The painter subscribes to the patch source, so a scrubbing rig repaints with no widget rebuild and no per-frame `setState`.
+  - CI checkout action bumped to clear the Node 20 runner deprecation warning.
+
+## Two real bugs fixed in Phase 9
+
+1. Every authored `ease` was silently dropped. That was safe only because the Walker scene authors `"none"` on every stop; any other demo scene would have animated linearly and looked wrong with no error anywhere.
+2. The renderer treated composed `rotation` as radians while the core composes degrees. A 90 degree joint rotated by roughly 5157 degrees. No existing test caught it because nothing asserted rotated geometry.
 
 ## Next
 
-Port the Walker scene renderer (bones, joints, and tones) on top of the composed patches, add golden tests for it, then port the remaining property plugins: path sampling, image sequences, filters, and colour interpolation. After that, wire trigger delegates (scroll pinning, viewport observation) and the Spawner/Overlay use cases.
+Port the remaining property plugins: path sampling, image sequences, filter groups, and CSS-variable output. Then wire the trigger delegates (scroll pinning and viewport observation) and the Spawner/Overlay use cases.
 
 ## Honest status
 
-The engine now composes a real FK rig end to end and paints it, but the only renderer is still one diagnostic square per track. Property coverage is numeric interpolation only: no path sampling, no colour interpolation between authored colours, no per-segment easing (authored `ease` values are parsed and ignored, which is safe while the demo scenes author `"none"`). Trigger delegates are math, not bindings: nothing yet observes a viewport or pins a scroll section.
+The engine composes a real FK rig end to end and now paints it as an actual skeleton rather than one diagnostic square per track. Scene coverage is asserted through resolved segment geometry, not image goldens: a committed pixel baseline is not worth maintaining until the scene stops changing every phase. The `elastic` and `bounce` curves are ported formulas with matching endpoints and shape, not byte-identical GSAP output. Property coverage is still numbers and colours only: no path sampling, no image sequences, no filter groups. Trigger delegates remain math, not bindings: nothing observes a viewport or pins a scroll section yet.

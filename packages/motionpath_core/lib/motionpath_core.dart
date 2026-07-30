@@ -5,6 +5,8 @@ export 'src/composition/graph_publisher.dart';
 export 'src/composition/patch_composition.dart';
 export 'src/contract/motionpath_types.dart';
 export 'src/graph/observation_graph.dart';
+export 'src/interpolation/color_value.dart';
+export 'src/interpolation/easing.dart';
 export 'src/interpolation/interpolator.dart';
 export 'src/math/fk_math.dart';
 export 'src/runtime/engine.dart';
