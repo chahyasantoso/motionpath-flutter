@@ -22,7 +22,9 @@ class MotionPathMotionRuntime {
   final MotionPathTrigger? trigger;
 
   /// Motion duration in seconds.
-  final double duration;
+  ///
+  /// Mutable so an adapter can retime a mounted motion without remounting it.
+  double duration;
 
   /// Normalized playhead in `[0, 1]`.
   double progress = 0;
@@ -33,7 +35,20 @@ class MotionPathMotionRuntime {
   /// Compiled observation graph.
   ObservationGraph? graph;
 
+  /// Called with renderer-facing patches after each composed tick.
+  ///
+  /// This is the only hook a renderer needs, and the core never learns who
+  /// listens: a `ChangeNotifier` on the Flutter side binds to it without the
+  /// engine importing anything from Flutter.
+  void Function(Map<String, Map<String, Object?>> patches)? onPatches;
+
   double _elapsed = 0;
+
+  Map<String, Map<String, Object?>> _patches =
+      const <String, Map<String, Object?>>{};
+
+  /// The most recently composed renderer-facing patches, keyed by track id.
+  Map<String, Map<String, Object?>> get patches => _patches;
 
   /// Compiled parent-before-child track ids.
   List<String> get graphOrder => graph == null
@@ -90,19 +105,31 @@ class MotionPathMotionRuntime {
     };
     final Map<MotionPathTrackRuntime, Map<String, Object?>?> context =
         <MotionPathTrackRuntime, Map<String, Object?>?>{};
-    final Map<String, Map<String, Object?>> patches =
+    final Map<String, Map<String, Object?>> composed =
         <String, Map<String, Object?>>{};
     for (final String trackId in current.order) {
       final MotionPathTrackRuntime? track = byId[trackId];
       if (track == null) {
         continue;
       }
-      patches[trackId] = track.compose(context: context);
+      composed[trackId] = track.compose(context: context);
     }
-    return patches;
+    _patches = composed;
+    return composed;
   }
 
-  /// Advances the playhead by [delta] seconds.
+  /// Recomposes the graph and hands the patches to [onPatches].
+  Map<String, Map<String, Object?>> publish() {
+    final Map<String, Map<String, Object?>> composed = composeGraph();
+    final void Function(Map<String, Map<String, Object?>>)? listener =
+        onPatches;
+    if (listener != null) {
+      listener(composed);
+    }
+    return composed;
+  }
+
+  /// Advances the playhead by [delta] seconds and publishes the result.
   void tick(double delta) {
     final MotionPathTrigger? currentTrigger = trigger;
     final double span = duration <= 0 ? 1 : duration;
@@ -112,6 +139,7 @@ class MotionPathMotionRuntime {
       _elapsed += delta;
       seek(currentTrigger.progressAt(_elapsed, span));
     }
+    publish();
     if (progress < 1) {
       return;
     }
@@ -128,11 +156,13 @@ class MotionPathMotionRuntime {
 
   /// Releases every track and subscription.
   void dispose() {
+    onPatches = null;
     for (final MotionPathTrackRuntime track in tracks) {
       track.dispose();
     }
     tracks.clear();
     graph = null;
     playing = false;
+    _patches = const <String, Map<String, Object?>>{};
   }
 }

@@ -6,12 +6,16 @@ import 'package:motionpath_core/motionpath_core.dart';
 /// Scroll-driven motions are sampled through scroll notifications and mapped to
 /// `seek`. This binding never starts a ticker, so a scrubbed motion and a
 /// time-driven motion can share one engine without competing frame sources.
-class MotionPathScrollBinding {
+///
+/// Named for the motion it drives rather than for scrolling, because the core
+/// already owns a renderer-neutral `MotionPathScrollBinding` that holds the
+/// offset-window and scrub math. This is the Flutter plumbing on top of it.
+class MotionPathMotionScrollBinding {
   /// Creates a binding for [motion].
   ///
   /// [start] and [end] are scroll offsets in logical pixels. When [end] is null
   /// the scrollable's own `maxScrollExtent` is used.
-  MotionPathScrollBinding({
+  MotionPathMotionScrollBinding({
     required this.motion,
     this.start = 0,
     this.end,
