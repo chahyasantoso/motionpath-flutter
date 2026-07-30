@@ -58,6 +58,13 @@ jobs:
       - name: Pub get
         run: flutter pub get
       - name: Analyze
-        run: flutter analyze --no-fatal-warnings --no-fatal-infos
+        run: |
+          status=0
+          flutter analyze --machine > analyze.log 2>&1 || status=$?
+          cat analyze.log
+          while IFS= read -r line; do
+            echo "::error::$line"
+          done < analyze.log
+          exit "$status"
       - name: Test
         run: flutter test
