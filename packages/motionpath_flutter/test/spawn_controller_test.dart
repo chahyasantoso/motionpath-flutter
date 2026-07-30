@@ -2,8 +2,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:motionpath_core/motionpath_core.dart';
 import 'package:motionpath_flutter/motionpath_flutter.dart';
 
-MotionPathTrackRuntime _child(String id) => MotionPathTrackRuntime(
+MotionPathTrackRuntime _child(String id, {double duration = 0}) =>
+    MotionPathTrackRuntime(
       id,
+      duration: duration,
       properties: <String, List<MotionPathStop>>{
         'x': const <MotionPathStop>[
           MotionPathStop(progress: 0, value: 0),
@@ -26,6 +28,21 @@ MotionPathSpawnController _controller({
       drainOnComplete: drainOnComplete,
     );
 
+/// A chain whose first child outlives its siblings, so the child that finishes
+/// first sits in the middle of the chain and its removal has to reflow.
+MotionPathSpawnController _midChainDrainRig({
+  MotionPathLayoutDelegate? layoutDelegate,
+}) {
+  final MotionPathSpawnController controller = _controller(
+    drainOnComplete: true,
+    layoutDelegate: layoutDelegate,
+  );
+  controller.spawn(_child('slow', duration: 100));
+  controller.spawn(_child('quick'), stagger: 10);
+  controller.spawn(_child('trailing'), stagger: 10);
+  return controller;
+}
+
 void main() {
   test('children are reported in offset order with their settled offsets', () {
     final MotionPathSpawnController controller = _controller();
@@ -34,9 +51,7 @@ void main() {
     controller.spawn(_child('c'), stagger: 2);
 
     expect(
-      controller.instances
-          .map((MotionPathSpawnInstance i) => i.id)
-          .toList(),
+      controller.instances.map((MotionPathSpawnInstance i) => i.id).toList(),
       <String>['a', 'b', 'c'],
     );
     expect(
@@ -61,8 +76,9 @@ void main() {
     controller.dispose();
   });
 
-  test('an unstarted child is distinguishable from one sitting at its first '
-      'stop', () {
+  test(
+      'an unstarted child is distinguishable from one sitting at its first stop',
+      () {
     final MotionPathSpawnController controller = _controller();
     controller.spawn(_child('a'), stagger: 5);
     controller.spawn(_child('b'), stagger: 5);
@@ -85,6 +101,16 @@ void main() {
     controller.advanceTo(5);
 
     expect(controller.instances.single.patch['x'], closeTo(50, 1e-9));
+    controller.dispose();
+  });
+
+  test('an authored child duration wins over the fallback span', () {
+    final MotionPathSpawnController controller = _controller();
+    controller.spawn(_child('quick', duration: 2));
+
+    controller.advanceTo(1);
+
+    expect(controller.instances.single.progress, closeTo(0.5, 1e-9));
     controller.dispose();
   });
 
@@ -115,75 +141,61 @@ void main() {
 
     expect(controller.liveCount, 2);
     expect(
-      controller.instances
-          .map((MotionPathSpawnInstance i) => i.id)
-          .toList(),
+      controller.instances.map((MotionPathSpawnInstance i) => i.id).toList(),
       <String>['b', 'c'],
     );
     controller.dispose();
   });
 
-  test('draining the frontmost child never avalanches the survivors', () {
+  test('draining the front of a uniform chain never avalanches survivors', () {
     final MotionPathSpawnController controller =
         _controller(drainOnComplete: true);
     for (final String id in <String>['a', 'b', 'c']) {
       controller.spawn(_child(id), stagger: 10);
     }
 
-    controller.advanceTo(10);
+    // Every completion here is the leading edge, so no gap is ever created and
+    // nothing shifts earlier.
+    controller.advanceTo(20);
 
-    // A rank-0 removal leaves no gap, so nothing shifts earlier and nothing
-    // else completes in the same frame.
-    expect(controller.instances[0].offset, 10);
-    expect(controller.instances[0].progress, 0);
-    expect(controller.instances[1].offset, 20);
-    expect(controller.instances[1].progress, 0);
+    expect(controller.liveCount, 1);
+    expect(controller.instances.single.id, 'c');
+    expect(controller.instances.single.offset, 20);
+    expect(controller.instances.single.progress, 0);
     controller.dispose();
   });
 
   test('a reflow-induced completion waits for the next advance', () {
-    final MotionPathSpawnController controller =
-        _controller(drainOnComplete: true);
-    for (final String id in <String>['a', 'b', 'c']) {
-      controller.spawn(_child(id), stagger: 10);
-    }
+    final MotionPathSpawnController controller = _midChainDrainRig();
+
     controller.advanceTo(20);
 
-    // `a` and `b` both finished, so both drain. `c` reflows down to offset 10
-    // and is instantly complete at elapsed 20, but this pass already ran.
-    expect(controller.liveCount, 1);
-    expect(controller.instances.single.id, 'c');
-    expect(controller.instances.single.progress, closeTo(1, 1e-9));
+    // `quick` finished at offset 10 and drained. `trailing` reflowed down into
+    // that slot and is instantly complete, but this pass already ran.
+    expect(controller.liveCount, 2);
+    expect(controller.instances[1].id, 'trailing');
+    expect(controller.instances[1].offset, 10);
+    expect(controller.instances[1].progress, closeTo(1, 1e-9));
 
     controller.advanceBy(0);
 
-    expect(controller.liveCount, 0);
+    expect(controller.liveCount, 1);
+    expect(controller.instances.single.id, 'slow');
     controller.dispose();
   });
 
   test('the static policy leaves the drained gap open', () {
-    final MotionPathSpawnController controller = _controller(
-      drainOnComplete: true,
-      layoutDelegate: kStaticLayoutDelegate,
-    );
-    for (final String id in <String>['a', 'b', 'c']) {
-      controller.spawn(_child(id), stagger: 10);
-    }
+    final MotionPathSpawnController controller =
+        _midChainDrainRig(layoutDelegate: kStaticLayoutDelegate);
 
     controller.advanceTo(20);
 
-    expect(controller.liveCount, 1);
-    expect(controller.instances.single.offset, 20);
-    controller.dispose();
-  });
-
-  test('an authored child duration wins over the fallback span', () {
-    final MotionPathSpawnController controller = _controller();
-    controller.spawn(MotionPathTrackRuntime('quick', duration: 2));
-
-    controller.advanceTo(1);
-
-    expect(controller.instances.single.progress, closeTo(0.5, 1e-9));
+    // Same drain, no reflow: `trailing` keeps its offset and stays unstarted
+    // instead of sliding forward into completion.
+    expect(controller.liveCount, 2);
+    expect(controller.instances[1].id, 'trailing');
+    expect(controller.instances[1].offset, 20);
+    expect(controller.instances[1].progress, 0);
     controller.dispose();
   });
 
@@ -192,10 +204,7 @@ void main() {
     final MotionPathSpawnController first =
         MotionPathSpawnController(parent: parent);
 
-    expect(
-      () => MotionPathSpawnController(parent: parent),
-      throwsStateError,
-    );
+    expect(() => MotionPathSpawnController(parent: parent), throwsStateError);
 
     first.dispose();
     final MotionPathSpawnController second =
