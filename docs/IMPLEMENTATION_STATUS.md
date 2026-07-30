@@ -9,21 +9,39 @@
 - Phase 4: delay/repeat/yoyo trigger math, dirty-track GraphPublisher, and a single-source Flutter Ticker driver boundary.
 - Phase 5: Engine tick propagation, authored keyframe stop extraction, and ticker-driven runtime progress.
 - Phase 6: per-property interpolation patches and parent-first graph composition scaffolding.
-- Phase 7: renderer-neutral Flutter patch painter supporting opacity, translation, rotation, scale, and colour.
-- Phase 8:
-  - `composeWorld` ported from the JavaScript `fkMath` boundary, with degrees kept as the authored unit.
-  - Forward kinematics folding: `parentWorld` plus `boneLength`/`boneRotation` become flat world `x`/`y`/`rotation`, and internal keys never reach a renderer.
-  - Observation edges now carry the authored `target` key, so an input edge lands under `parentWorld` instead of the source id.
-  - v4 JSON parsing for motion tracks, keyframes, `duration`, and `observes`, plus project-level track libraries.
-  - `GraphPublisher` composes the full graph parent-first and publishes only dirty tracks, matching the reference runtime.
-  - Renderer-neutral scroll progress and scrub smoothing in the core, with a Flutter `ScrollController` driver on top.
-  - Composed patches reach painter invalidation through `MotionPathPatchSource`, a `ChangeNotifier` fed by `Motion.onPatches`.
-  - Walker FK rig fixtures ported from the demo, asserting bone-length invariants, knee bend, head bob, and forward travel.
+- Phase 7: renderer-neutral Flutter patch painter supporting opacity, translation, rotation, scale, and basic colour handling.
+- Phase 8: schema fidelity, plugin composition, forward kinematics, and Flutter scroll and rig bindings.
+
+## Phase 8 detail
+
+### Contract and validation
+
+- Motion `tracks` and track `keyframes`, `stops`, `observes`, `use`, and `duration` are parsed instead of silently dropped. Before this, every mounted motion had zero tracks.
+- Track templates resolve at parse time, so the runtime never sees a `use` reference.
+- Diagnostics carry the reference rule ids (`schema-version`, `motion-structure`, `trigger-shape`, `stop-count`, `stop-shape`, `stop-sequence`, `track-observations*`) plus a severity, so an authoring warning no longer blocks loading.
+- Forbidden v2/v3 fields (`motionId`, `driver`, `timelineId`, `primary`, `lifecycle`, `playback`) each produce their own error.
+- Trigger validation covers `time`, `manual`, and `scroll`, including scrub requirements and the repeat/yoyo/repeatDelay/delay/duration incompatibilities.
+
+### Graph and composition
+
+- `input` observations preserve their authored `target`, so a source patch is wrapped as `{ parentWorld: sourcePatch }` before the child's plugins compose. That key was previously dropped, which made forward kinematics impossible.
+- `input` edges now require a non-empty target and `output` edges reject one, matching the reference IR.
+- Composition uses a per-call context with a composing sentinel, so cycles degrade to a local compose and diamonds resolve once per flush.
+- A minimal plugin layer resolves authored keys into ordered plugins, strips internal keys from patches, and rejects output collisions at mount time.
+- Forward-kinematics math accumulates world transforms in degrees, matching the reference runtime.
+- Easing accepts GSAP style names such as `power2.inOut`, per stop or per property.
+
+### Flutter adapter
+
+- Scroll bindings map a scroll offset or an explicit window onto `Motion.seek` without creating a second frame source.
+- `MotionPathPatchController` publishes composed patches through a `ChangeNotifier`, so painters repaint without per-property `setState`.
+- `MotionPathRigPainter` draws an FK rig straight from composed patches.
+- Patch rotation is interpreted as degrees at the renderer boundary and converted to radians once.
 
 ## Next
 
-Port the Walker scene renderer (bones, joints, and tones) on top of the composed patches, add golden tests for it, then port the remaining property plugins: path sampling, image sequences, filters, and colour interpolation. After that, wire trigger delegates (scroll pinning, viewport observation) and the Spawner/Overlay use cases.
+Port the Walker gait fixtures from the reference repository into a shared `fixtures/` directory with sampled expected output, add golden image tests for the rig renderer, add lifecycle leak tests for route changes, and benchmark 14, 50, and 250-track rigs.
 
 ## Honest status
 
-The engine now composes a real FK rig end to end and paints it, but the only renderer is still one diagnostic square per track. Property coverage is numeric interpolation only: no path sampling, no colour interpolation between authored colours, no per-segment easing (authored `ease` values are parsed and ignored, which is safe while the demo scenes author `"none"`). Trigger delegates are math, not bindings: nothing yet observes a viewport or pins a scroll section.
+The plugin layer is deliberately small: forward kinematics plus a passthrough for every other authored property. Path, image-sequence, CSS-variable, and 3D-projection plugins from the reference runtime are not ported, and neither are `Spawner` and `Overlay`. Stagger is parsed but not yet applied to track offsets, and colour values interpolate numerically rather than per channel.

@@ -1,9 +1,9 @@
-import 'package:test/test.dart';
 import 'package:motionpath_core/motionpath_core.dart';
+import 'package:test/test.dart';
 
 void main() {
   test('interpolates numeric stops', () {
-    final value = interpolateStops(const <MotionPathStop>[
+    final Object? value = interpolateStops(const <MotionPathStop>[
       MotionPathStop(progress: 0, value: 0),
       MotionPathStop(progress: 1, value: 100),
     ], 0.25);
@@ -11,20 +11,80 @@ void main() {
   });
 
   test('mounts, ticks, and destroys a motion', () {
-    final project = MotionPathProject(
+    const MotionPathProject project = MotionPathProject(
       schemaVersion: 4,
       projectId: 'runtime',
-      motions: const <MotionPathMotion>[
-        MotionPathMotion(id: 'hero', trigger: <String, Object?>{'type': 'manual'}, tracks: <MotionPathTrack>[MotionPathTrack(id: 'opacity', keyframes: <String, Object?>{'opacity': <String, Object?>{'stops': <Object?>[<String, Object?>{'p': 0, 'v': 0}, <String, Object?>{'p': 1, 'v': 100}]}})]),
+      motions: <MotionPathMotion>[
+        MotionPathMotion(
+          id: 'hero',
+          trigger: <String, Object?>{'type': 'manual'},
+          tracks: <MotionPathTrack>[
+            MotionPathTrack(
+              id: 'opacity',
+              keyframes: <String, Object?>{
+                'opacity': <String, Object?>{
+                  'stops': <Object?>[
+                    <String, Object?>{'p': 0, 'v': 0},
+                    <String, Object?>{'p': 1, 'v': 100},
+                  ],
+                },
+              },
+            ),
+          ],
+        ),
       ],
     );
-    final engine = MotionPathEngine()..loadProject(project);
-    final motion = engine.mountMotion('hero')..play();
+    final MotionPathEngine engine = MotionPathEngine()..loadProject(project);
+    final MotionPathMotionRuntime motion = engine.mountMotion('hero')..play();
     engine.tick(0.5);
     expect(motion.progress, 0.5);
-    final composed = motion.tracks.single.compose();
-    expect(composed['opacity'], 50);
+    expect(motion.tracks.single.compose()['opacity'], 50);
     engine.destroy();
     expect(engine.project, isNull);
+    expect(engine.mounted, isEmpty);
+  });
+
+  test('autoplay is owned by the trigger, not the caller', () {
+    const MotionPathProject project = MotionPathProject(
+      schemaVersion: 4,
+      projectId: 'autoplay',
+      motions: <MotionPathMotion>[
+        MotionPathMotion(
+          id: 'auto',
+          trigger: <String, Object?>{'type': 'time', 'autoplay': true},
+          tracks: <MotionPathTrack>[MotionPathTrack(id: 'a')],
+        ),
+        MotionPathMotion(
+          id: 'idle',
+          trigger: <String, Object?>{'type': 'manual'},
+          tracks: <MotionPathTrack>[MotionPathTrack(id: 'b')],
+        ),
+      ],
+    );
+    final MotionPathEngine engine = MotionPathEngine()..loadProject(project);
+    expect(engine.mountMotion('auto').playing, isTrue);
+    expect(engine.mountMotion('idle').playing, isFalse);
+    engine.destroy();
+  });
+
+  test('unmount and destroy are idempotent', () {
+    const MotionPathProject project = MotionPathProject(
+      schemaVersion: 4,
+      projectId: 'lifecycle',
+      motions: <MotionPathMotion>[
+        MotionPathMotion(
+          id: 'hero',
+          trigger: <String, Object?>{'type': 'manual'},
+          tracks: <MotionPathTrack>[MotionPathTrack(id: 'a')],
+        ),
+      ],
+    );
+    final MotionPathEngine engine = MotionPathEngine()..loadProject(project);
+    final MotionPathMotionRuntime motion = engine.mountMotion('hero');
+    engine.unmount(motion);
+    engine.unmount(motion);
+    expect(engine.mounted, isEmpty);
+    engine.destroy();
+    engine.destroy();
   });
 }
