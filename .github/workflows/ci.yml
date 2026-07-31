@@ -20,7 +20,7 @@ jobs:
       - name: Pub get
         run: dart pub get
       - name: Analyze
-        run: dart analyze
+        run: dart analyze --format machine
       - name: Test
         run: dart test --reporter expanded
 
@@ -39,7 +39,7 @@ jobs:
       - name: Pub get
         run: flutter pub get
       - name: Analyze
-        run: flutter analyze
+        run: flutter analyze --machine
       - name: Test
         run: flutter test --reporter expanded
 
@@ -58,4 +58,4 @@ jobs:
       - name: Pub get
         run: flutter pub get
       - name: Analyze
-        run: flutter analyze
+        run: flutter analyze --machine
