@@ -1,3 +1,4 @@
+import '../contract/motionpath_types.dart';
 import '../graph/observation_graph.dart';
 import 'track.dart';
 import 'trigger.dart';
@@ -19,7 +20,7 @@ class MotionPathMotionRuntime {
     final Set<String> ids = <String>{};
     for (final MotionPathTrackRuntime track in tracks) {
       if (!ids.add(track.id)) {
-        throw StateError('Motion "$track" contains duplicate track id.');
+        throw StateError('Motion "${track.id}" contains duplicate track id.');
       }
     }
     return List<MotionPathTrackRuntime>.unmodifiable(tracks);
