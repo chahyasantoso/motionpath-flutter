@@ -1,3 +1,4 @@
+import '../contract/motionpath_types.dart';
 import '../graph/observation_graph.dart';
 import 'track.dart';
 import 'trigger.dart';
@@ -8,22 +9,53 @@ class MotionPathMotionRuntime {
     required this.id,
     required List<MotionPathTrackRuntime> tracks,
     this.trigger,
-    this.duration = 1,
+    double duration = 1,
     this.stagger = 0,
-  }) : tracks = List<MotionPathTrackRuntime>.unmodifiable(tracks);
+  })  : tracks = _immutableUniqueTracks(tracks),
+        _duration = _finiteNonNegative(duration, 'duration');
+
+  static List<MotionPathTrackRuntime> _immutableUniqueTracks(
+    List<MotionPathTrackRuntime> tracks,
+  ) {
+    final Set<String> ids = <String>{};
+    for (final MotionPathTrackRuntime track in tracks) {
+      if (!ids.add(track.id)) {
+        throw StateError('Motion "${track.id}" contains duplicate track id.');
+      }
+    }
+    return List<MotionPathTrackRuntime>.unmodifiable(tracks);
+  }
+
+  static double _finiteNonNegative(double value, String name) {
+    if (!value.isFinite || value < 0) {
+      throw ArgumentError.value(value, name, 'must be finite and non-negative');
+    }
+    return value;
+  }
 
   final String id;
   final List<MotionPathTrackRuntime> tracks;
   final MotionPathTrigger? trigger;
-  double duration;
   final double stagger;
-  double progress = 0;
+  double _duration;
+  double _progress = 0;
   bool playing = false;
   ObservationGraph? graph;
   void Function(Map<String, Map<String, Object?>> patches)? onPatches;
   double _elapsed = 0;
   Map<String, Map<String, Object?>> _patches =
       const <String, Map<String, Object?>>{};
+
+  double get duration => _duration;
+  set duration(double value) => _duration = _finiteNonNegative(value, 'duration');
+
+  double get progress => _progress;
+  set progress(double value) {
+    if (!value.isFinite) {
+      throw ArgumentError.value(value, 'progress', 'must be finite');
+    }
+    _progress = value.clamp(0.0, 1.0).toDouble();
+  }
 
   Map<String, Map<String, Object?>> get patches => _patches;
   List<String> get graphOrder => graph == null
@@ -34,7 +66,9 @@ class MotionPathMotionRuntime {
     if (graph != null) {
       throw StateError('Motion "$id" is already prepared.');
     }
-    graph = nextGraph;
+    if (!nextGraph.isValid) {
+      throw MotionPathValidationException(nextGraph.errors);
+    }
     final Map<String, MotionPathTrackRuntime> byId =
         <String, MotionPathTrackRuntime>{
           for (final MotionPathTrackRuntime track in tracks) track.id: track,
@@ -43,10 +77,14 @@ class MotionPathMotionRuntime {
       final MotionPathTrackRuntime? target = byId[edge.target];
       final MotionPathTrackRuntime? source = byId[edge.source];
       if (target == null || source == null) {
-        continue;
+        throw StateError(
+          'Observation edge references an unknown runtime track: '
+          '${edge.source} -> ${edge.target}.',
+        );
       }
       target.observe(source, role: edge.role, input: edge.input);
     }
+    graph = nextGraph;
   }
 
   void play() => playing = true;
@@ -54,7 +92,10 @@ class MotionPathMotionRuntime {
   void reverse() => seek(1 - progress);
 
   void seek(double value) {
-    progress = value.clamp(0.0, 1.0).toDouble();
+    if (!value.isFinite) {
+      throw ArgumentError.value(value, 'value', 'must be finite');
+    }
+    progress = value;
     _elapsed = progress * (duration <= 0 ? 1 : duration);
     _seekTracks(_elapsed);
   }
@@ -89,7 +130,7 @@ class MotionPathMotionRuntime {
     for (final String trackId in order) {
       final MotionPathTrackRuntime? track = byId[trackId];
       if (track == null) {
-        continue;
+        throw StateError('Graph order references unknown track "$trackId".');
       }
       composed[trackId] = track.compose(context: context);
     }
@@ -104,6 +145,13 @@ class MotionPathMotionRuntime {
   }
 
   void tick(double delta) {
+    if (!delta.isFinite || delta < 0) {
+      throw ArgumentError.value(
+        delta,
+        'delta',
+        'must be finite and non-negative',
+      );
+    }
     final MotionPathTrigger? currentTrigger = trigger;
     final double span = duration <= 0 ? 1 : duration;
     _elapsed += delta;
