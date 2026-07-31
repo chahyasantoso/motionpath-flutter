@@ -1,4 +1,4 @@
-import 'dart:ui' show ImageFilter, Offset;
+import 'dart:ui' show BlendMode, ColorFilter, ImageFilter, Offset;
 
 import 'package:flutter/widgets.dart';
 
@@ -6,20 +6,15 @@ import '../consumers/motion_path_patch_consumers.dart';
 import '../painters/motion_path_patch_painter.dart';
 import 'motion_path_patch_source.dart';
 
-/// Builds a widget for a resolved image-frame payload.
 typedef MotionPathImageFrameBuilder = Widget Function(
   BuildContext context,
   Object frame,
 );
-
-/// Observes typed CSS custom-property data at the host boundary.
 typedef MotionPathCssVariablesBuilder = Widget Function(
   BuildContext context,
   Map<String, Object?> variables,
   Widget child,
 );
-
-/// Observes normalized spawned-instance payloads at the host boundary.
 typedef MotionPathInstancesBuilder = Widget Function(
   BuildContext context,
   List<Map<String, Object?>> instances,
@@ -27,13 +22,7 @@ typedef MotionPathInstancesBuilder = Widget Function(
 );
 
 /// Applies one track's composed patch to a reusable Flutter child.
-///
-/// The child is built once and reused by [AnimatedBuilder.child]. The wrapper
-/// hierarchy stays stable across patch updates, so changing visual values does
-/// not remount the child element. Resource resolution remains host-owned via
-/// the optional image, CSS, and instance builders.
 class MotionPathPatchView extends StatelessWidget {
-  /// Creates a view bound to [trackId] inside [source].
   const MotionPathPatchView({
     required this.source,
     required this.trackId,
@@ -76,14 +65,12 @@ class MotionPathPatchView extends StatelessWidget {
             ),
           );
         }
-
         final MotionPathPatchTransform transform =
             MotionPathPatchTransform.fromPatch(
           patch,
           fallbackArgb: fallbackArgb,
         );
         Widget result = stableChild;
-
         final Object? frame = MotionPathPatchConsumers.imageFrame(patch);
         if (frame != null && imageFrameBuilder != null) {
           result = imageFrameBuilder!(context, frame);
@@ -102,9 +89,7 @@ class MotionPathPatchView extends StatelessWidget {
             result,
           );
         }
-
-        final ImageFilter? blur =
-            MotionPathPatchConsumers.blurFilter(patch);
+        final ImageFilter? blur = MotionPathPatchConsumers.blurFilter(patch);
         if (blur != null) {
           result = ImageFiltered(imageFilter: blur, child: result);
         }
