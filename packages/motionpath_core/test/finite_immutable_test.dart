@@ -10,10 +10,7 @@ void main() {
         <String, Object?>{
           'id': 'hero',
           'stagger': double.nan,
-          'trigger': <String, Object?>{
-            'type': 'time',
-            'delay': double.infinity,
-          },
+          'trigger': <String, Object?>{'type': 'time', 'delay': double.infinity},
           'tracks': <Object?>[
             <String, Object?>{
               'id': 'track',
@@ -33,8 +30,7 @@ void main() {
     });
 
     expect(
-      diagnostics.where((MotionPathDiagnostic diagnostic) =>
-          diagnostic.code == 'finite-number'),
+      diagnostics.where((MotionPathDiagnostic diagnostic) => diagnostic.code == 'finite-number'),
       hasLength(6),
     );
   });
@@ -64,9 +60,9 @@ void main() {
         <String, Object?>{'x': 1},
       ],
     });
-    final Object? instances = patch['instances'];
-    expect(() => (instances as List<Object?>).add(<String, Object?>{}), throwsUnsupportedError);
+    final List<Object?> instances = patch['instances']! as List<Object?>;
+    expect(() => instances.add(<String, Object?>{}), throwsUnsupportedError);
     final Object? instance = instances.first;
-    expect(() => (instance as Map<Object?, Object?>)['x'] = 2, throwsUnsupportedError);
+    expect(() => (instance! as Map<Object?, Object?>)['x'] = 2, throwsUnsupportedError);
   });
 }
