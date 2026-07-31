@@ -29,10 +29,18 @@ void main() {
       ],
     });
 
-    expect(
-      diagnostics.where((MotionPathDiagnostic diagnostic) => diagnostic.code == 'finite-number'),
-      hasLength(6),
-    );
+    final List<MotionPathDiagnostic> finite = diagnostics
+        .where((MotionPathDiagnostic diagnostic) => diagnostic.code == 'finite-number')
+        .toList(growable: false);
+    expect(finite, isNotEmpty);
+    expect(finite.map((MotionPathDiagnostic diagnostic) => diagnostic.path), containsAll(<String>[
+      r'$.perspective',
+      'motions[0].stagger',
+      'motions[0].trigger.delay',
+      'motions[0].tracks[0].duration',
+      'motions[0].tracks[0].keyframes.x.stops[0].p',
+      'motions[0].tracks[0].keyframes.x.stops[1].v',
+    ]));
   });
 
   test('composed nested patches are recursively immutable', () {
@@ -56,9 +64,7 @@ void main() {
 
   test('immutablePatch freezes nested lists and maps', () {
     final Map<String, Object?> patch = immutablePatch(<String, Object?>{
-      'instances': <Object?>[
-        <String, Object?>{'x': 1},
-      ],
+      'instances': <Object?>[<String, Object?>{'x': 1}],
     });
     final List<Object?> instances = patch['instances']! as List<Object?>;
     expect(() => instances.add(<String, Object?>{}), throwsUnsupportedError);
