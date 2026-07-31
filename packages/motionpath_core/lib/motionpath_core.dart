@@ -6,6 +6,7 @@ library motionpath_core;
 
 export 'src/composition/compose_patch.dart';
 export 'src/composition/graph_publisher.dart';
+export 'src/composition/immutable_patch.dart';
 export 'src/composition/layout_delegate.dart';
 export 'src/composition/patch_composition.dart';
 export 'src/contract/motionpath_types.dart';
