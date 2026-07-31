@@ -18,5 +18,6 @@ export 'src/scene/motion_path_patch_source.dart';
 export 'src/scene/motion_path_patch_view.dart';
 export 'src/scene/motion_path_spawn_view.dart';
 export 'src/scene/motion_path_walker_scene.dart';
+export 'src/scroll/motion_path_pinned_header.dart';
 export 'src/scroll/motion_path_scroll_driver.dart';
 export 'src/ticker/motion_path_ticker_driver.dart';
