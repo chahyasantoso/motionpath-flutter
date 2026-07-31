@@ -1,0 +1,34 @@
+name: Phase 0 format fix
+
+on:
+  push:
+    branches: [phase-0-ci-verification]
+
+permissions:
+  contents: write
+
+jobs:
+  format-and-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: phase-0-ci-verification
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Apply Dart formatting
+        run: dart format packages/motionpath_core packages/motionpath_flutter example
+      - name: Commit formatted sources and remove this one-shot workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add packages/motionpath_core packages/motionpath_flutter example
+          git rm .github/workflows/phase-0-format-fix.yml
+          if git diff --cached --quiet; then
+            echo "No formatting changes needed."
+            exit 0
+          fi
+          git commit -m "style: apply dart format"
+          git push origin HEAD:phase-0-ci-verification
