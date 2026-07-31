@@ -155,7 +155,15 @@ class MotionPathMotionRuntime {
     return composed;
   }
 
-  void tick(double delta) {
+  /// Advances the playhead by [delta] seconds.
+  ///
+  /// Composition is a separate concern from advancement. Pass
+  /// `publishPatches: false` when the caller owns composition scope, for
+  /// example an interest-scoped renderer that composes only watched tracks;
+  /// that caller is then responsible for composing exactly once. Completion
+  /// still settles the playhead either way, so skipping publication never
+  /// changes lifecycle behaviour.
+  void advance(double delta, {bool publishPatches = true}) {
     if (!delta.isFinite || delta < 0) {
       throw ArgumentError.value(
         delta,
@@ -179,12 +187,17 @@ class MotionPathMotionRuntime {
         }
       }
     }
-    publish();
+    if (publishPatches) {
+      publish();
+    }
     if (progress >= 1 &&
         (currentTrigger == null || currentTrigger.isFinished(_elapsed, span))) {
       pause();
     }
   }
+
+  /// Advances the playhead by [delta] seconds and publishes the full graph.
+  void tick(double delta) => advance(delta);
 
   void restart() {
     _elapsed = 0;
