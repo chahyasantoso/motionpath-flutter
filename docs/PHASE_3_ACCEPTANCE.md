@@ -33,12 +33,20 @@ blocked.
 | Interest-scoped per-track consumers | Done | `MotionPathPatchController.trackPatch()`, whole-graph fallback, notifier pruning. |
 | One composition per update | Done | `MotionPathMotionRuntime.advance(delta, publishPatches: false)` separates advancement from composition; the controller no longer recomposes after `tick()`. |
 | Zero-listener tick gating | Done | Frame-driven composition is gated; the playhead still advances and imperative `seek()`/`publish()` stay explicit. |
+| Bounded filter composition and invalid-sigma tests | Done | Blur ignores non-finite and non-positive sigma, and clamps finite sigma to `kMotionPathMaxBlurSigma`. |
 | z, perspective, and 3D in the shared transform resolver | **Open** | The resolver is 2D only. No z, perspective, or 3D key is read. |
-| Explicit unsupported-key behavior | **Open** | Unknown keys are silently ignored with no documented policy for renderer-claimed keys. |
+| Explicit unsupported-key behavior | **Open** | Unknown keys are ignored, while claimed-but-unsupported renderer keys still need a surfaced policy. |
 | Image resolution cache and disposal strategy | **Open** | The host receives a raw frame payload. No cache, no disposal contract. |
-| Bounded filter composition and invalid-sigma tests | **Open** | Only blur is consumed, and negative or non-finite sigma has no dedicated coverage. |
 | Performance tests | **Open** | No renderer benchmark covering rebuilds, allocations, or paint invalidations. |
 | Demo migration off local engine math | **Open** | The Spiral example still recomputes path position, color, visibility, and reflow locally. |
+
+## Renderer key policy
+
+Unknown patch keys are ignored at the Flutter boundary. Keys claimed by a
+renderer contract must either be consumed or be listed as explicitly
+unsupported in the contract and covered by tests. This prevents silent
+per-demo reinterpretation while allowing plugin-owned payloads to pass to
+host builders.
 
 ## Exit rule
 
