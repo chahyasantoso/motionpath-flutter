@@ -29,12 +29,21 @@ class MotionPathSpawnController extends ChangeNotifier {
     required this.parent,
     this.childDuration = 1,
     this.drainOnComplete = false,
+    this.reflowDuration = 0,
+    this.reflowEase = MotionPathInterpolators.linear,
   }) {
     if (parent.onChildSpawned != null ||
         parent.onChildRemoved != null ||
         parent.onChildReflowed != null) {
       throw StateError(
         'Track "${parent.id}" already has composition hooks wired.',
+      );
+    }
+    if (!reflowDuration.isFinite || reflowDuration < 0) {
+      throw ArgumentError.value(
+        reflowDuration,
+        'reflowDuration',
+        'must be finite and non-negative',
       );
     }
     parent.onChildSpawned = _handleSpawned;
@@ -46,10 +55,14 @@ class MotionPathSpawnController extends ChangeNotifier {
   final MotionPathTrackRuntime parent;
   final double childDuration;
   final bool drainOnComplete;
+  final double reflowDuration;
+  final Easing reflowEase;
 
   double _elapsed = 0;
   bool _disposed = false;
   List<MotionPathSpawnInstance> _instances = const <MotionPathSpawnInstance>[];
+  final Map<MotionPathTrackRuntime, MotionPathValueTweener> _reflows =
+      <MotionPathTrackRuntime, MotionPathValueTweener>{};
 
   double get elapsed => _elapsed;
   List<MotionPathSpawnInstance> get instances => _instances;
@@ -71,27 +84,57 @@ class MotionPathSpawnController extends ChangeNotifier {
   void restartEmptyWave() {
     if (_disposed || parent.childCount != 0) return;
     _elapsed = 0;
+    _reflows.clear();
     _settle();
   }
 
   void advanceTo(double elapsedSeconds) {
     if (_disposed) return;
-    _elapsed = elapsedSeconds < 0 ? 0 : elapsedSeconds;
+    final double nextElapsed = elapsedSeconds < 0 ? 0 : elapsedSeconds;
+    final double delta = nextElapsed - _elapsed;
+    _elapsed = nextElapsed;
+    _advanceReflows(delta);
     _settle(drain: drainOnComplete);
   }
 
   void advanceBy(double delta) => advanceTo(_elapsed + delta);
 
   void _handleSpawned(MotionPathTrackRuntime child, double offset) {
+    _reflows.remove(child);
     child.seek(_localProgress(child));
   }
 
   void _handleRemoved(MotionPathTrackRuntime child) {
+    _reflows.remove(child);
     child.seek(0);
   }
 
   void _handleReflowed(MotionPathTrackRuntime child, double offset) {
+    final double current = _reflows[child]?.value ?? child.currentOffset;
+    if (reflowDuration <= 0 || current == offset) {
+      _reflows.remove(child);
+    } else {
+      _reflows[child] = MotionPathValueTweener(
+        initial: current,
+        target: offset,
+        duration: reflowDuration,
+        ease: reflowEase,
+      );
+    }
     child.seek(_localProgress(child));
+  }
+
+  void _advanceReflows(double delta) {
+    if (delta <= 0 || _reflows.isEmpty) return;
+    final List<MotionPathTrackRuntime> complete = <MotionPathTrackRuntime>[];
+    for (final MapEntry<MotionPathTrackRuntime, MotionPathValueTweener> entry
+        in _reflows.entries) {
+      entry.value.advance(delta);
+      if (entry.value.isComplete) complete.add(entry.key);
+    }
+    for (final MotionPathTrackRuntime child in complete) {
+      _reflows.remove(child);
+    }
   }
 
   void _settle({bool drain = false}) {
@@ -110,14 +153,10 @@ class MotionPathSpawnController extends ChangeNotifier {
   void _drain() {
     final List<String> completed = <String>[];
     for (final MotionPathTrackRuntime child in parent.children) {
-      if (_localProgress(child) >= 1) {
-        completed.add(child.id);
-      }
+      if (_localProgress(child) >= 1) completed.add(child.id);
     }
     if (completed.isEmpty) return;
-    for (final String childId in completed) {
-      parent.removeChild(childId);
-    }
+    for (final String childId in completed) parent.removeChild(childId);
     _seekChildren();
   }
 
@@ -126,7 +165,7 @@ class MotionPathSpawnController extends ChangeNotifier {
     for (final MotionPathTrackRuntime child in parent.children) {
       int slot = ordered.length;
       while (slot > 0 &&
-          ordered[slot - 1].currentOffset > child.currentOffset) {
+          _effectiveOffset(ordered[slot - 1]) > _effectiveOffset(child)) {
         slot--;
       }
       ordered.insert(slot, child);
@@ -136,14 +175,17 @@ class MotionPathSpawnController extends ChangeNotifier {
         for (final MotionPathTrackRuntime child in ordered)
           MotionPathSpawnInstance(
             id: child.id,
-            offset: child.currentOffset,
+            offset: _effectiveOffset(child),
             progress: child.progress,
-            hasStarted: _elapsed >= child.currentOffset,
+            hasStarted: _elapsed >= _effectiveOffset(child),
             patch: child.compose(),
           ),
       ],
     );
   }
+
+  double _effectiveOffset(MotionPathTrackRuntime child) =>
+      _reflows[child]?.value ?? child.currentOffset;
 
   double _spanOf(MotionPathTrackRuntime child) =>
       child.duration > 0
@@ -151,7 +193,7 @@ class MotionPathSpawnController extends ChangeNotifier {
           : (childDuration > 0 ? childDuration : 1);
 
   double _localProgress(MotionPathTrackRuntime child) =>
-      ((_elapsed - child.currentOffset) / _spanOf(child))
+      ((_elapsed - _effectiveOffset(child)) / _spanOf(child))
           .clamp(0.0, 1.0)
           .toDouble();
 
@@ -162,6 +204,7 @@ class MotionPathSpawnController extends ChangeNotifier {
     parent.onChildSpawned = null;
     parent.onChildRemoved = null;
     parent.onChildReflowed = null;
+    _reflows.clear();
     _instances = const <MotionPathSpawnInstance>[];
     super.dispose();
   }
