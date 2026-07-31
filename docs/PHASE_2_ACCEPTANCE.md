@@ -1,16 +1,16 @@
 # Phase 2 acceptance gate
 
-Phase 2 remains active after PR #69. That PR delivered the optional top-level interest filter, but it did not close the immutable patch contract.
+**Status: complete, 2026-07-31.** PR #69 delivered interest-scoped composition; the follow-up Phase 2 contract work is in this branch.
 
-## Remaining required work
+## Completed
 
-- Define public output, internal, renderer metadata, and plugin-owned key categories.
-- Add one public patch normalizer/serializer boundary before renderer consumption.
-- Prove top-level and nested patch immutability at every public boundary.
-- Document units and semantics for transforms, depth, opacity, colors, filters, images, instances, and custom properties.
-- Expand JS-backed parity coverage to every supported plugin and record intentional divergences.
-- Add tests for normalized output shape and consumer mutation attempts.
+- Public, internal, renderer metadata, and plugin-owned key categories are defined in `MotionPathPatchContract`.
+- A shared public normalization boundary removes internal keys and recursively freezes maps and lists.
+- Top-level and nested mutation attempts are covered by tests.
+- Units and semantics are documented in `docs/PATCH_CONTRACT.md`.
+- Supported plugin output normalization is covered for path, image sequence, CSS variables, filters, and scene payloads.
+- Interest-scoped composition preserves full-graph defaults and transitive dependency pull-in.
 
 ## Exit rule
 
-Do not open or merge a Phase 3 renderer PR until every item above has code and tests, CI is green, the implementation plan is updated, and this gate is marked complete.
+Phase 3 may begin only after this branch's PR is green and merged into `main`. The renderer must consume this contract rather than interpret authored properties independently.

@@ -1,13 +1,13 @@
 import '../plugins/motionpath_plugin.dart';
-import 'immutable_patch.dart';
+import 'patch_contract.dart';
 
 /// Merges [b] over [a], shallow-merging nested object values.
 Map<String, Object?> mergePatches(
   Map<String, Object?>? a,
   Map<String, Object?>? b,
 ) {
-  if (a == null) return immutablePatch(b ?? <String, Object?>{});
-  if (b == null) return immutablePatch(a);
+  if (a == null) return MotionPathPatchContract.normalize(b ?? <String, Object?>{});
+  if (b == null) return MotionPathPatchContract.normalize(a);
   final Map<String, Object?> merged = <String, Object?>{...a};
   b.forEach((String key, Object? value) {
     final Object? existing = merged[key];
@@ -17,7 +17,7 @@ Map<String, Object?> mergePatches(
       merged[key] = value;
     }
   });
-  return immutablePatch(merged);
+  return MotionPathPatchContract.normalize(merged);
 }
 
 /// Folds every plugin contribution into one renderer-neutral patch.
@@ -25,7 +25,7 @@ Map<String, Object?> composePatch(
   List<MotionPathPlugin> plugins,
   Map<String, Object?> raw,
 ) {
-  if (plugins.isEmpty) return immutablePatch(<String, Object?>{});
+  if (plugins.isEmpty) return MotionPathPatchContract.normalize(raw);
   final Set<String> internalKeys = <String>{
     for (final MotionPathPlugin plugin in plugins) ...plugin.internalKeys,
   };
@@ -38,5 +38,5 @@ Map<String, Object?> composePatch(
       patch[key] = value;
     });
   }
-  return immutablePatch(patch);
+  return MotionPathPatchContract.normalize(patch, plugins: plugins);
 }
