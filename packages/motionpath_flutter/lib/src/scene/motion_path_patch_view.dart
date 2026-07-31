@@ -8,9 +8,9 @@ import 'motion_path_patch_source.dart';
 
 /// Applies one track's composed patch to a reusable Flutter child.
 ///
-/// The child is built once and reused by [AnimatedBuilder.child]. Patch updates
-/// only rebuild the small transform/opacity wrapper, so expensive scene content
-/// does not rebuild on every engine tick.
+/// The child is built once and reused by [AnimatedBuilder.child]. The wrapper
+/// hierarchy stays stable across patch updates, so changing visual values does
+/// not remount the child element.
 class MotionPathPatchView extends StatelessWidget {
   /// Creates a view bound to [trackId] inside [source].
   const MotionPathPatchView({
@@ -49,24 +49,30 @@ class MotionPathPatchView extends StatelessWidget {
             ),
           );
         }
-        final MotionPathPatchTransform transform = MotionPathPatchTransform.fromPatch(
+        final MotionPathPatchTransform transform =
+            MotionPathPatchTransform.fromPatch(
           patch,
           fallbackArgb: fallbackArgb,
         );
-        Widget result = stableChild;
-        if (transform.opacity != 1) result = Opacity(opacity: transform.opacity, child: result);
-        if (transform.scaleX != 1 || transform.scaleY != 1) {
-          result = Transform.scale(scaleX: transform.scaleX, scaleY: transform.scaleY, child: result);
-        }
-        if (transform.rotationRadians != 0) {
-          result = Transform.rotate(angle: transform.rotationRadians, child: result);
-        }
-        if (transform.translateX != 0 || transform.translateY != 0) {
-          result = Transform.translate(offset: Offset(transform.translateX, transform.translateY), child: result);
-        }
-        final ImageFilter? filter = MotionPathPatchConsumers.blurFilter(patch);
-        if (filter != null) result = ImageFiltered(imageFilter: filter, child: result);
-        return result;
+        final ImageFilter filter = MotionPathPatchConsumers.blurFilter(patch) ??
+            ImageFilter.blur(sigmaX: 0, sigmaY: 0);
+        return Opacity(
+          opacity: transform.opacity,
+          child: Transform.translate(
+            offset: Offset(transform.translateX, transform.translateY),
+            child: Transform.rotate(
+              angle: transform.rotationRadians,
+              child: Transform.scale(
+                scaleX: transform.scaleX,
+                scaleY: transform.scaleY,
+                child: ImageFiltered(
+                  imageFilter: filter,
+                  child: stableChild,
+                ),
+              ),
+            ),
+          ),
+        );
       },
     );
   }
