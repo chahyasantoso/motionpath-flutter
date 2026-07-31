@@ -29,7 +29,8 @@ class MotionPathSpawnInstance {
   final Map<String, Object?> patch;
 
   @override
-  String toString() => 'MotionPathSpawnInstance($id, offset: $offset, progress: $progress)';
+  String toString() =>
+      'MotionPathSpawnInstance($id, offset: $offset, progress: $progress)';
 }
 
 /// Mounts a track's children at their settled offsets and drains them.
@@ -40,8 +41,12 @@ class MotionPathSpawnController extends ChangeNotifier {
     this.childDuration = 1,
     this.drainOnComplete = false,
   }) {
-    if (parent.onChildSpawned != null || parent.onChildRemoved != null || parent.onChildReflowed != null) {
-      throw StateError('Track "${parent.id}" already has composition hooks wired.');
+    if (parent.onChildSpawned != null ||
+        parent.onChildRemoved != null ||
+        parent.onChildReflowed != null) {
+      throw StateError(
+        'Track "${parent.id}" already has composition hooks wired.',
+      );
     }
     parent.onChildSpawned = _handleSpawned;
     parent.onChildRemoved = _handleRemoved;
@@ -105,9 +110,17 @@ class MotionPathSpawnController extends ChangeNotifier {
   /// Advances by [delta] seconds and republishes.
   void advanceBy(double delta) => advanceTo(_elapsed + delta);
 
-  void _handleSpawned(MotionPathTrackRuntime child, double offset) => child.seek(_localProgress(child));
-  void _handleRemoved(MotionPathTrackRuntime child) => child.seek(0);
-  void _handleReflowed(MotionPathTrackRuntime child, double offset) => child.seek(_localProgress(child));
+  void _handleSpawned(MotionPathTrackRuntime child, double offset) {
+    child.seek(_localProgress(child));
+  }
+
+  void _handleRemoved(MotionPathTrackRuntime child) {
+    child.seek(0);
+  }
+
+  void _handleReflowed(MotionPathTrackRuntime child, double offset) {
+    child.seek(_localProgress(child));
+  }
 
   void _settle({bool drain = false}) {
     _seekChildren();
@@ -117,15 +130,23 @@ class MotionPathSpawnController extends ChangeNotifier {
   }
 
   void _seekChildren() {
-    for (final MotionPathTrackRuntime child in parent.children) child.seek(_localProgress(child));
+    for (final MotionPathTrackRuntime child in parent.children) {
+      child.seek(_localProgress(child));
+    }
   }
 
   void _drain() {
     final List<String> completed = <String>[
-      for (final MotionPathTrackRuntime child in parent.children) if (_localProgress(child) >= 1) child.id,
+      for (final MotionPathTrackRuntime child in parent.children) {
+        if (_localProgress(child) >= 1) {
+          completed.add(child.id);
+        }
+      }
     ];
     if (completed.isEmpty) return;
-    for (final String childId in completed) parent.removeChild(childId);
+    for (final String childId in completed) {
+      parent.removeChild(childId);
+    }
     _seekChildren();
   }
 
@@ -133,23 +154,35 @@ class MotionPathSpawnController extends ChangeNotifier {
     final List<MotionPathTrackRuntime> ordered = <MotionPathTrackRuntime>[];
     for (final MotionPathTrackRuntime child in parent.children) {
       int slot = ordered.length;
-      while (slot > 0 && ordered[slot - 1].currentOffset > child.currentOffset) slot--;
+      while (slot > 0 &&
+          ordered[slot - 1].currentOffset > child.currentOffset) {
+        slot--;
+      }
       ordered.insert(slot, child);
     }
-    _instances = List<MotionPathSpawnInstance>.unmodifiable(<MotionPathSpawnInstance>[
-      for (final MotionPathTrackRuntime child in ordered)
-        MotionPathSpawnInstance(
-          id: child.id,
-          offset: child.currentOffset,
-          progress: child.progress,
-          hasStarted: _elapsed >= child.currentOffset,
-          patch: child.compose(),
-        ),
-    ]);
+    _instances = List<MotionPathSpawnInstance>.unmodifiable(
+      <MotionPathSpawnInstance>[
+        for (final MotionPathTrackRuntime child in ordered)
+          MotionPathSpawnInstance(
+            id: child.id,
+            offset: child.currentOffset,
+            progress: child.progress,
+            hasStarted: _elapsed >= child.currentOffset,
+            patch: child.compose(),
+          ),
+      ],
+    );
   }
 
-  double _spanOf(MotionPathTrackRuntime child) => child.duration > 0 ? child.duration : (childDuration > 0 ? childDuration : 1);
-  double _localProgress(MotionPathTrackRuntime child) => ((_elapsed - child.currentOffset) / _spanOf(child)).clamp(0.0, 1.0).toDouble();
+  double _spanOf(MotionPathTrackRuntime child) =>
+      child.duration > 0
+          ? child.duration
+          : (childDuration > 0 ? childDuration : 1);
+
+  double _localProgress(MotionPathTrackRuntime child) =>
+      ((_elapsed - child.currentOffset) / _spanOf(child))
+          .clamp(0.0, 1.0)
+          .toDouble();
 
   @override
   void dispose() {
