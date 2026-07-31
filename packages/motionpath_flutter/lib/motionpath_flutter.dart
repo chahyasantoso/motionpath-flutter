@@ -1,8 +1,4 @@
 /// Public entrypoint for Flutter scheduling and rendering adapters.
-///
-/// The adapter converts Flutter time or scroll input into engine ticks and
-/// seeks, then hands renderer-neutral patches to painters. It never owns engine
-/// behaviour and never creates a second frame source.
 library motionpath_flutter;
 
 export 'src/bindings/motion_path_scroll_binding.dart';
@@ -20,6 +16,7 @@ export 'src/scene/motion_path_patch_source.dart';
 export 'src/scene/motion_path_patch_view.dart';
 export 'src/scene/motion_path_spawn_view.dart';
 export 'src/scene/motion_path_walker_scene.dart';
+export 'src/scroll/motion_path_arbitrary_pin.dart';
 export 'src/scroll/motion_path_pinned_header.dart';
 export 'src/scroll/motion_path_scroll_driver.dart';
 export 'src/ticker/motion_path_ticker_driver.dart';
