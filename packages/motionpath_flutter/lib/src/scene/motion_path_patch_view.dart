@@ -1,7 +1,9 @@
+import 'dart:ui' show ImageFilter, Offset;
+
 import 'package:flutter/widgets.dart';
 
-import '../painters/motion_path_patch_painter.dart';
 import '../consumers/motion_path_patch_consumers.dart';
+import '../painters/motion_path_patch_painter.dart';
 import 'motion_path_patch_source.dart';
 
 /// Applies one track's composed patch to a reusable Flutter child.
@@ -22,25 +24,12 @@ class MotionPathPatchView extends StatelessWidget {
     super.key,
   });
 
-  /// Publishes composed patches.
   final MotionPathPatchSource source;
-
-  /// Track whose patch drives this view.
   final String trackId;
-
-  /// Expensive content to keep alive across patch updates.
   final Widget? child;
-
-  /// Canvas size used by diagnostic fallback mode.
   final Size size;
-
-  /// Diagnostic square side length.
   final double extent;
-
-  /// Diagnostic fallback colour.
   final int fallbackArgb;
-
-  /// Whether to render the diagnostic square instead of [child].
   final bool useDiagnosticPainter;
 
   @override
@@ -60,38 +49,23 @@ class MotionPathPatchView extends StatelessWidget {
             ),
           );
         }
-        final MotionPathPatchTransform transform =
-            MotionPathPatchTransform.fromPatch(
+        final MotionPathPatchTransform transform = MotionPathPatchTransform.fromPatch(
           patch,
           fallbackArgb: fallbackArgb,
         );
         Widget result = stableChild;
-        if (transform.opacity != 1) {
-          result = Opacity(opacity: transform.opacity, child: result);
-        }
+        if (transform.opacity != 1) result = Opacity(opacity: transform.opacity, child: result);
         if (transform.scaleX != 1 || transform.scaleY != 1) {
-          result = Transform.scale(
-            scaleX: transform.scaleX,
-            scaleY: transform.scaleY,
-            child: result,
-          );
+          result = Transform.scale(scaleX: transform.scaleX, scaleY: transform.scaleY, child: result);
         }
         if (transform.rotationRadians != 0) {
-          result = Transform.rotate(
-            angle: transform.rotationRadians,
-            child: result,
-          );
+          result = Transform.rotate(angle: transform.rotationRadians, child: result);
         }
         if (transform.translateX != 0 || transform.translateY != 0) {
-          result = Transform.translate(
-            offset: Offset(transform.translateX, transform.translateY),
-            child: result,
-          );
+          result = Transform.translate(offset: Offset(transform.translateX, transform.translateY), child: result);
         }
         final ImageFilter? filter = MotionPathPatchConsumers.blurFilter(patch);
-        if (filter != null) {
-          result = ImageFiltered(imageFilter: filter, child: result);
-        }
+        if (filter != null) result = ImageFiltered(imageFilter: filter, child: result);
         return result;
       },
     );
