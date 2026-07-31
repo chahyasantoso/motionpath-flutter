@@ -2,8 +2,7 @@
 
 Phase 3 is active after the green Phase 2 merge.
 
-**Gate state: OPEN. Phase 3 is not complete.** Carousel and Helix remain
-blocked.
+**Gate state: OPEN. Phase 3 is not complete.** Carousel and Helix remain blocked.
 
 ## Required implementation
 
@@ -11,7 +10,7 @@ blocked.
 - Keep child subtrees stable with `AnimatedBuilder.child` or a repaint-driven painter path.
 - Define unsupported-key behavior and a shared transform resolver for translation, rotation, scale, z, perspective, and supported 3D values.
 - Keep image loading, caching, and disposal outside core.
-- Add dirty checking for unchanged patches.
+- Add dirty checking so unchanged patches do not trigger unnecessary paint work.
 - Add widget, painter, consumer, and performance tests.
 
 ## Compatibility constraints
@@ -26,27 +25,23 @@ blocked.
 | Item | State | Evidence |
 |---|---|---|
 | Transform, opacity, blur consumption | Done | `MotionPathPatchView`, `MotionPathPatchTransform`, renderer tests. |
-| Color and visibility consumption | Done | PR #73. Both wrappers are unconditional and identity-safe, and `Offstage` sits closest to the child so the effect chain stays observable. |
-| Image frame, CSS variable, and instance payloads | Done | PR #73 host-owned builders plus `MotionPathPatchConsumers`. |
-| Stable child subtree | Done | `AnimatedBuilder.child` with a fixed wrapper chain; no conditional wrapper remounts the child. |
-| Dirty checking | Done | `motionPathPatchEquals` deep comparison drives per-track notification and `shouldRepaint`, replacing shallow `mapEquals`. |
-| Interest-scoped per-track consumers | Done | `MotionPathPatchController.trackPatch()`, whole-graph fallback, notifier pruning. |
-| One composition per update | Done | `MotionPathMotionRuntime.advance(delta, publishPatches: false)` separates advancement from composition; the controller no longer recomposes after `tick()`. |
-| Zero-listener tick gating | Done | Frame-driven composition is gated; the playhead still advances and imperative `seek()`/`publish()` stay explicit. |
-| Bounded filter composition and invalid-sigma tests | Done | Blur ignores non-finite and non-positive sigma, and clamps finite sigma to `kMotionPathMaxBlurSigma`. |
-| z, perspective, and 3D in the shared transform resolver | **Open** | The resolver is 2D only. No z, perspective, or 3D key is read. |
-| Explicit unsupported-key behavior | **Open** | Unknown keys are ignored, while claimed-but-unsupported renderer keys still need a surfaced policy. |
-| Image resolution cache and disposal strategy | **Open** | The host receives a raw frame payload. No cache, no disposal contract. |
+| Color and visibility consumption | Done | PR #73; unconditional identity-safe wrappers. |
+| Image frame, CSS variable, and instance payloads | Done | PR #73 host-owned builders and consumers. |
+| Stable child subtree | Done | `AnimatedBuilder.child` and fixed wrapper chain. |
+| Dirty checking | Done | Deep patch equality in controller and painter. |
+| Interest-scoped per-track consumers | Done | PR #74 `trackPatch()` and whole-graph fallback. |
+| One composition per update | Done | PR #74 separates advancement from composition. |
+| Zero-listener tick gating | Done | PR #74 gates frame-driven composition. |
+| Bounded filters and invalid-sigma tests | Done | PR #75 bounded blur consumer and tests. |
+| z, perspective, and 3D transform resolver | Done | This slice resolves z, perspective, scaleZ, rotateX, rotateY, and rotation into one matrix for both widget and painter paths. |
+| Explicit unsupported-key behavior | Partial | Unknown keys are ignored and renderer policy is documented; claimed-but-unsupported reporting is still open. |
+| Image resolution cache and disposal strategy | **Open** | The host receives a raw frame payload. No cache or disposal contract. |
 | Performance tests | **Open** | No renderer benchmark covering rebuilds, allocations, or paint invalidations. |
-| Demo migration off local engine math | **Open** | The Spiral example still recomputes path position, color, visibility, and reflow locally. |
+| Demo migration off local engine math | **Open** | Spiral still recomputes path position, color, visibility, and reflow locally. |
 
 ## Renderer key policy
 
-Unknown patch keys are ignored at the Flutter boundary. Keys claimed by a
-renderer contract must either be consumed or be listed as explicitly
-unsupported in the contract and covered by tests. This prevents silent
-per-demo reinterpretation while allowing plugin-owned payloads to pass to
-host builders.
+Unknown patch keys are ignored at the Flutter boundary. Keys claimed by a renderer contract must either be consumed or listed as explicitly unsupported and covered by tests. Plugin-owned payloads pass to host builders.
 
 ## Exit rule
 
