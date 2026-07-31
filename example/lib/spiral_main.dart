@@ -114,7 +114,6 @@ class _SpiralZumaPageState extends State<SpiralZumaPage>
       _spawnClock = 0;
       _spawn();
     }
-    if (mounted) setState(() {});
   }
 
   void _publishInstancePatches() {
