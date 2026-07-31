@@ -130,7 +130,9 @@ class MotionPathSpawnController extends ChangeNotifier {
     for (final MapEntry<MotionPathTrackRuntime, MotionPathValueTweener> entry
         in _reflows.entries) {
       entry.value.advance(delta);
-      if (entry.value.isComplete) complete.add(entry.key);
+      if (entry.value.isComplete) {
+        complete.add(entry.key);
+      }
     }
     for (final MotionPathTrackRuntime child in complete) {
       _reflows.remove(child);
@@ -153,10 +155,14 @@ class MotionPathSpawnController extends ChangeNotifier {
   void _drain() {
     final List<String> completed = <String>[];
     for (final MotionPathTrackRuntime child in parent.children) {
-      if (_localProgress(child) >= 1) completed.add(child.id);
+      if (_localProgress(child) >= 1) {
+        completed.add(child.id);
+      }
     }
     if (completed.isEmpty) return;
-    for (final String childId in completed) parent.removeChild(childId);
+    for (final String childId in completed) {
+      parent.removeChild(childId);
+    }
     _seekChildren();
   }
 
