@@ -1,7 +1,6 @@
 import 'dart:ui' show BlendMode, Color, ColorFilter, ImageFilter;
 
 import 'package:flutter/widgets.dart';
-import 'package:vector_math/vector_math_64.dart' show Matrix4;
 
 import '../consumers/motion_path_patch_consumers.dart';
 import '../painters/motion_path_patch_painter.dart';
