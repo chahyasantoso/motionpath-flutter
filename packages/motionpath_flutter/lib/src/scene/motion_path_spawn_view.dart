@@ -89,11 +89,16 @@ class _MotionPathSpawnItem extends StatelessWidget {
     if (filter != null) {
       result = ImageFiltered(imageFilter: filter, child: result);
     }
-    result = Transform(
-      alignment: Alignment.center,
-      transform: transform.toMatrix4Storage().toMatrix4(),
-      child: result,
-    );
+    if (transform.scaleX != 1 || transform.scaleY != 1) {
+      result = Transform.scale(
+        scaleX: transform.scaleX,
+        scaleY: transform.scaleY,
+        child: result,
+      );
+    }
+    if (transform.rotationRadians != 0) {
+      result = Transform.rotate(angle: transform.rotationRadians, child: result);
+    }
     if (transform.translateX != 0 || transform.translateY != 0) {
       result = Transform.translate(
         offset: Offset(transform.translateX, transform.translateY),
@@ -102,8 +107,4 @@ class _MotionPathSpawnItem extends StatelessWidget {
     }
     return result;
   }
-}
-
-extension on List<double> {
-  Matrix4 toMatrix4() => Matrix4.fromList(this);
 }
