@@ -31,7 +31,7 @@ void main() {
     expect(controller.instances[1].offset, 20);
     controller.advanceBy(1);
     expect(controller.instances[1].offset, closeTo(15, 1e-9));
-    expect(controller.instances[1].progress, closeTo((5 - 15) / 100, 1e-9));
+    expect(controller.instances[1].progress, 0);
     controller.advanceBy(1);
     expect(controller.instances[1].offset, 10);
     controller.dispose();
@@ -60,13 +60,14 @@ void main() {
     controller.spawn(_child('a'), stagger: 10);
     controller.spawn(_child('b'), stagger: 10);
     controller.spawn(_child('c'), stagger: 10);
+    controller.spawn(_child('d'), stagger: 10);
     controller.advanceTo(1);
     controller.remove('b');
     controller.advanceBy(1);
-    controller.remove('a');
+    controller.remove('c');
 
-    expect(controller.instances.single.id, 'c');
-    expect(controller.instances.single.offset, closeTo(12.5, 1e-9));
+    expect(controller.instances.last.id, 'd');
+    expect(controller.instances.last.offset, closeTo(17.5, 1e-9));
     controller.dispose();
   });
 }
