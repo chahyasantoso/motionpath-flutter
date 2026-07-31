@@ -117,7 +117,13 @@ class MotionPathMotionRuntime {
     }
   }
 
-  Map<String, Map<String, Object?>> composeGraph() {
+  /// Composes the graph, optionally restricting top-level output to [only].
+  ///
+  /// Recursive dependency resolution remains inside each track's `compose()`
+  /// call. A filtered composition therefore still pulls in observed ancestors
+  /// needed by the requested tracks, while leaving the last full snapshot in
+  /// [patches] untouched.
+  Map<String, Map<String, Object?>> composeGraph({Set<String>? only}) {
     final List<String> order = graphOrder;
     final Map<String, MotionPathTrackRuntime> byId =
         <String, MotionPathTrackRuntime>{
@@ -128,13 +134,18 @@ class MotionPathMotionRuntime {
     final Map<String, Map<String, Object?>> composed =
         <String, Map<String, Object?>>{};
     for (final String trackId in order) {
+      if (only != null && !only.contains(trackId)) {
+        continue;
+      }
       final MotionPathTrackRuntime? track = byId[trackId];
       if (track == null) {
         throw StateError('Graph order references unknown track "$trackId".');
       }
       composed[trackId] = track.compose(context: context);
     }
-    _patches = composed;
+    if (only == null) {
+      _patches = composed;
+    }
     return composed;
   }
 
