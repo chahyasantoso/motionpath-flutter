@@ -1,4 +1,3 @@
-import '../interpolation/easing.dart';
 import '../interpolation/interpolator.dart';
 
 /// Samples one numeric value toward a fixed target over a finite duration.
@@ -12,7 +11,7 @@ class MotionPathValueTweener {
     required double initial,
     required double target,
     required double duration,
-    Easing ease = MotionPathInterpolators.linear,
+    required Easing ease,
   })  : _start = initial,
         _value = initial,
         _target = target,
