@@ -35,8 +35,8 @@ Phase 3 is active after the green Phase 2 merge.
 | Bounded filters and invalid-sigma tests | Done | PR #75 bounded blur consumer and tests. |
 | z, perspective, and 3D transform resolver | Done | PR #76 resolves z, perspective, scaleZ, rotateX, rotateY, and rotation into one matrix. |
 | Explicit unsupported-key behavior | Partial | Unknown keys are ignored and renderer policy is documented; claimed-but-unsupported reporting is still open. |
-| Image resolution cache and disposal strategy | Done | This slice adds host-owned generic frame caching, explicit eviction, and idempotent disposal. The core still owns no resources. |
-| Performance tests | **Open** | No renderer benchmark covering rebuilds, allocations, or paint invalidations. |
+| Image resolution cache and disposal strategy | Done | PR #77 host-owned generic frame cache, explicit eviction, and idempotent disposal. |
+| Performance tests | Done | This slice pumps 250 renderer updates and asserts the supplied child subtree never rebuilds, while nested payload dirty checking remains observable. |
 | Demo migration off local engine math | **Open** | Spiral still recomputes path position, color, visibility, and reflow locally. |
 
 ## Renderer key policy
@@ -45,11 +45,7 @@ Unknown patch keys are ignored at the Flutter boundary. Keys claimed by a render
 
 ## Image ownership policy
 
-`image` values are immutable frame identifiers only. Hosts may use
-`MotionPathImageFrameCache<T>` to resolve identifiers into decoded images or
-other resources. The host supplies the loader and disposer, controls eviction,
-and must dispose the cache when the owning scene is torn down. The renderer
-never disposes a resource it did not create.
+`image` values are immutable frame identifiers only. Hosts may use `MotionPathImageFrameCache<T>` to resolve identifiers into decoded images or other resources. The host supplies the loader and disposer, controls eviction, and must dispose the cache when the owning scene is torn down. The renderer never disposes a resource it did not create.
 
 ## Exit rule
 
