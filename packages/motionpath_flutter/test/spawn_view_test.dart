@@ -60,10 +60,13 @@ void main() {
     controller.spawn(_child('second'), stagger: 10);
 
     await tester.pumpWidget(
-      MotionPathSpawnView(
-        controller: controller,
-        itemBuilder: (BuildContext context, MotionPathSpawnInstance instance) =>
-            Text(instance.id),
+      Directionality(
+        textDirection: TextDirection.ltr,
+        child: MotionPathSpawnView(
+          controller: controller,
+          itemBuilder: (BuildContext context, MotionPathSpawnInstance instance) =>
+              Text(instance.id),
+        ),
       ),
     );
     expect(find.text('first'), findsOneWidget);
@@ -75,6 +78,7 @@ void main() {
     expect(find.text('first'), findsNothing);
     expect(find.text('second'), findsOneWidget);
     expect(controller.instances.single.id, 'second');
+    expect(tester.takeException(), isNull);
     controller.dispose();
   });
 }
