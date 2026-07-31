@@ -9,6 +9,7 @@ export 'src/composition/graph_publisher.dart';
 export 'src/composition/immutable_patch.dart';
 export 'src/composition/layout_delegate.dart';
 export 'src/composition/patch_composition.dart';
+export 'src/composition/value_tweener.dart';
 export 'src/contract/motionpath_types.dart';
 export 'src/graph/observation_graph.dart';
 export 'src/interpolation/color_value.dart';
