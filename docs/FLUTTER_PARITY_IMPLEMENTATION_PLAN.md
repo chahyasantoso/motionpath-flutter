@@ -255,6 +255,39 @@ This is a source and documentation audit against the repository contents, curren
 - Demos and release controls: `example/lib/main.dart`, `example/lib/spiral_main.dart`, `example/lib/spiral_project.dart`, `.github/workflows/ci.yml`, both package manifests, and the existing docs/status reports.
 - History: current `main` includes the lifecycle hardening, immutable patch, shared renderer, spawn/reflow, scroll/pinning, and JS fixture batches through commits `#54` to `#65`; the audit baseline is the current tip `502d657`.
 
+### 2026-07-31: Interest-scoped composition finding
+
+- Finding: the current `MotionPathMotionRuntime.composeGraph()` eagerly composes every graph track, while `MotionPathPatchController` publishes a single whole-motion `ChangeNotifier`. A per-track `ValueListenable` surface can reduce composition and rebuild scope for multi-track scenes such as Carousel.
+- Assessment: good P0-adjacent addition, not a new phase. It belongs in Phase 2 for the optional core composition filter and Phase 3 for the Flutter per-track consumer.
+- Current evidence: the core method has no `only` filter; the controller's `tick()` calls `motion.tick()` and then recomposes in `publish()`, while `motion.tick()` already publishes internally. The controller is not currently wired into `MotionPathTickerDriver` or the shipped examples, so end-to-end savings should be measured once a real caller uses it.
+- Compatibility rule: whole-graph consumers such as Walker must retain full-map semantics. If any whole-graph controller listener exists, compose and publish the full graph even when per-track listeners also exist.
+- Design correction: gate frame-driven `tick()` when no listener exists, but do not silently make imperative `seek()` or `publish()` no-ops without an explicit API decision. Also avoid the current double-composition path by separating advancement from composition or otherwise ensuring one composition per update.
+- Cleanup: per-track notifiers must be pruned or disposed when dynamic track ids disappear. The current patch controller has no direct child-removal hook, so the implementation must use an available lifecycle signal or prune against the active track set rather than assuming the spawn controller hook is always present.
+
+### Interest-scoped composition implementation slice, planned
+
+**Phase 2 core tasks:**
+
+- Add `composeGraph({Set<String>? only})`; with `only == null`, preserve today's full-map behavior and update `motion.patches`. With `only != null`, return only requested top-level ids and leave `motion.patches` unchanged.
+- Keep recursive dependency resolution inside `MotionPathTrackRuntime.compose()` untouched. An interested descendant must still pull in its observed input/output dependencies.
+- Add core regression coverage for full composition, filtered composition, transitive FK/input dependencies, and excluded unrelated tracks.
+
+**Phase 3 Flutter tasks:**
+
+- Add `trackPatch(String trackId)` backed by a `ValueNotifier<Map<String, Object?>>` for `ValueListenableBuilder` consumers.
+- If there are no per-track listeners, preserve full-graph composition for Walker-style consumers. If any whole-graph controller listener exists, also preserve full-graph composition even when per-track listeners are present.
+- If only per-track listeners exist, compose only the interested ids and update only their notifiers.
+- Stop frame-driven controller ticks when there are no listeners anywhere, but keep imperative behavior explicit and covered by tests.
+- Add controller tests for per-track isolation, whole-graph fallback, zero-listener gating, and notifier cleanup across dynamic removal.
+
+**Exit criteria:**
+
+- A partially watched multi-track motion composes only watched top-level tracks plus their transitive dependencies.
+- Whole-graph consumers receive the same full patch map as before.
+- A controller with no listeners does not perform frame-driven composition.
+- Controller updates do not compose the same frame twice.
+- No notifier leak remains after repeated dynamic spawn/remove cycles.
+
 ### 2026-07-31: Fresh full code-backed plan audit
 
 - Changed: refreshed the phase table and progress report against `main` at `502d657`, from Phase 0 through Phase 9, and added file-level audit evidence.
@@ -299,6 +332,8 @@ This is a source and documentation audit against the repository contents, curren
 
 ### 2026-07-31
 
+- Added interest-scoped composition as a P0-adjacent Phase 2/3 addition, with full-graph compatibility and dependency-pull-in constraints.
+- Recorded current-source caveats: the patch controller is not on the shipped ticker path, controller tick currently double-composes, and whole-graph plus per-track listeners require full composition.
 - Refreshed the plan against the current `main` tip `502d657`, with file-level evidence for finished work and remaining gaps from Phase 0 through Phase 9.
 - Marked release hardening as partial rather than not started because package metadata, docs, benchmark instructions, and CI checks exist, while publish/security evidence is still missing.
 - Recorded the remaining generic renderer gaps: color, visibility, image frames, CSS values, instances, 3D/depth, cache disposal, and deep dirty checking.
