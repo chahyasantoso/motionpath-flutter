@@ -1,0 +1,112 @@
+Resolving dependencies...
+Downloading packages...
++ async 2.13.1
++ boolean_selector 2.1.2
++ characters 1.4.1
++ clock 1.1.2
++ collection 1.19.1
++ fake_async 1.3.3
++ flutter 0.0.0 from sdk flutter
++ flutter_lints 4.0.0 (6.0.0 available)
++ flutter_test 0.0.0 from sdk flutter
++ leak_tracker 11.0.2
++ leak_tracker_flutter_testing 3.0.10
++ leak_tracker_testing 3.0.2
++ lints 4.0.0 (6.1.0 available)
++ matcher 0.12.19 (0.12.20 available)
++ material_color_utilities 0.13.0
++ meta 1.18.0 (1.19.0 available)
++ motionpath_core 0.1.0 from path ../motionpath_core
++ path 1.9.1
++ sky_engine 0.0.0 from sdk flutter
++ source_span 1.10.2
++ stack_trace 1.12.1
++ stream_channel 2.1.4
++ string_scanner 1.4.1
++ term_glyph 1.2.2
++ test_api 0.7.11 (0.7.13 available)
++ vector_math 2.2.0 (2.4.2 available)
++ vm_service 15.2.0
+Changed 27 dependencies!
+6 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+00:00 +0: loading /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/walker_scene_test.dart
+00:00 +0: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/controller_test.dart: publishes composed patches on seek
+00:00 +1: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/walker_scene_test.dart: renderer boundary units reads patch rotation as authored degrees
+00:00 +2: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/walker_scene_test.dart: renderer boundary units reads patch rotation as authored degrees
+00:00 +3: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/walker_scene_test.dart: renderer boundary units builds a rotation matrix from degrees, not radians
+00:00 +4: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/walker_scene_test.dart: walker segments aims a bone along its composed world rotation
+00:00 +5: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/walker_scene_test.dart: walker segments skips pure joints and missing patches
+00:00 +6: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/walker_scene_test.dart: walker segments paints every drawn bone of the default rig once
+00:00 +7: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/walker_scene_test.dart: walker scene an engine tick drives the rig without a rebuild
+00:00 +8: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/walker_scene_test.dart: walker scene paints an empty source without throwing
+00:00 +9: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/walker_scene_test.dart: walker scene repaints only when the rig description changes
+00:00 +10: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/viewport_binding_test.dart: samples visibility, progress, and local geometry
+00:00 +11: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/viewport_binding_test.dart: pins only inside the authored scroll window
+00:00 +12: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/viewport_binding_test.dart: binding seeks without starting a clock and resets on detach
+00:00 +13: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/reflow_tween_test.dart: reflow uses the authored duration instead of jumping immediately
+00:00 +14: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/reflow_tween_test.dart: zero reflow duration preserves immediate settled behavior
+00:00 +15: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/reflow_tween_test.dart: reflow retargets from the current animated offset
+00:00 +16: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/reflow_tween_test.dart: children adopted at construction still reflow over time
+00:01 +17: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/walker_geometry_golden_test.dart: walker tone styles and ground remain stable
+00:01 +18: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/walker_geometry_golden_test.dart: walker segment length is preserved at a right angle
+00:01 +19: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/scroll_binding_test.dart: maps a scroll offset onto normalized progress
+00:01 +20: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/scroll_binding_test.dart: honours an explicit scroll window
+00:01 +21: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/scroll_binding_test.dart: seeks the motion without starting a second clock
+00:01 +22: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/scroll_binding_test.dart: applies scrub smoothing only when the caller supplies elapsed time
+00:01 +23: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/scroll_binding_test.dart: detach resets progress so a reused position starts clean
+00:01 +24: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/adapter_test.dart: constructs the Flutter adapter boundary
+00:02 +25: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/lifecycle_driver_test.dart: scroll driver detach and dispose are idempotent
+00:02 +26: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/lifecycle_driver_test.dart: ticker driver can stop and dispose repeatedly
+00:02 +27: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/lifecycle_driver_test.dart: ticker driver can stop and dispose repeatedly
+00:02 +28: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/lifecycle_driver_test.dart: ticker driver can stop and dispose repeatedly
+00:02 +29: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/lifecycle_driver_test.dart: ticker driver can stop and dispose repeatedly
+00:02 +30: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/spawn_controller_test.dart: children are reported in offset order with their settled offsets
+00:02 +31: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/spawn_controller_test.dart: a playhead is driven from the settled offset, not the motion start
+00:02 +32: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/spawn_controller_test.dart: an unstarted child is distinguishable from one sitting at its first stop
+00:02 +33: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/spawn_controller_test.dart: patches arrive composed, not raw
+00:02 +34: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/spawn_controller_test.dart: an authored child duration wins over the fallback span
+00:02 +35: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/spawn_controller_test.dart: a mid-chain removal slides the survivor into the freed slot
+00:02 +36: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/spawn_controller_test.dart: draining removes completed children
+00:02 +37: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/spawn_controller_test.dart: draining the front of a uniform chain never avalanches survivors
+00:02 +38: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/spawn_controller_test.dart: a reflow-induced completion waits for the next advance
+00:02 +39: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/spawn_controller_test.dart: the static policy leaves the drained gap open
+00:02 +40: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/spawn_controller_test.dart: a second controller on the same parent fails fast
+00:02 +41: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/spawn_controller_test.dart: dispose unwires the hooks, is idempotent, and blocks later work
+00:02 +42: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/spawn_controller_test.dart: notifications fire once per settle
+00:02 +43: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/scroll_reattach_test.dart: reattaching a reused position seeds instead of replaying
+00:03 +44: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/scroll_reattach_test.dart: disposing mid-scroll stops sampling for good
+00:03 +45: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/patch_view_renderer_test.dart: reuses the supplied child without rebuilding it on patch updates
+00:03 +46: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/patch_view_renderer_test.dart: applies rotation and blur from the patch
+00:03 +47: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/patch_view_renderer_test.dart: keeps diagnostic painter opt-in
+00:03 +48: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/viewport_lifecycle_test.dart: scroll driver can detach and dispose repeatedly
+00:03 +49: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/viewport_lifecycle_test.dart: viewport disposal is terminal and blocks later sampling
+00:03 +50: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/viewport_lifecycle_test.dart: ticker driver does not report active after disposal
+00:04 +51: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/scene_test.dart: maps scroll offsets onto normalized progress
+00:04 +52: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/scene_test.dart: eases toward the target only when scrub is authored
+00:04 +53: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/scene_test.dart: a scroll driver reports progress from a controller
+00:04 +54: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/scene_test.dart: a scroll driver reports progress from a controller
+00:04 +55: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/scene_test.dart: a scroll driver reports progress from a controller
+00:04 +56: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/scene_test.dart: publishing a patch repaints the bound view
+00:04 +57: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/scene_test.dart: an engine tick drives composed FK patches into the painter
+00:04 +58: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/viewport_toggle_test.dart: reports window crossings without replaying the first sample
+00:04 +59: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/viewport_toggle_test.dart: a crossing handler reads the sample that caused it
+00:04 +60: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/viewport_toggle_test.dart: detach re-seeds so a reused viewport does not replay a crossing
+00:04 +61: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/viewport_toggle_test.dart: an inverted authored window fails fast at construction
+00:05 +62: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/rig_painter_test.dart: reads joint positions out of composed patches
+00:05 +63: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/rig_painter_test.dart: repaints only when rig geometry changes
+00:05 +64: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/rig_painter_test.dart: paints a rig without throwing
+00:05 +65: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/route_lifecycle_test.dart: route teardown detaches and permanently disposes viewport state
+00:06 +66: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/spawn_view_test.dart: renders live instances with stable ids and composed patches
+00:06 +67: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/spawn_view_test.dart: removes a drained instance without affecting survivors
+00:06 +68: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/painter_test.dart: reads renderer-neutral transform keys from a patch
+00:06 +69: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/painter_test.dart: falls back to identity values and the fallback colour
+00:06 +70: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/painter_test.dart: builds column-major scale, rotate, translate storage
+00:06 +71: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/painter_test.dart: repaints only when the patch content changes
+00:06 +72: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/painter_test.dart: paints a composed patch without throwing
+00:06 +73: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/pinned_header_test.dart: pin progress normalizes the sliver shrink offset
+00:06 +74: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/pinned_header_test.dart: a zero runway reports binary progress instead of dividing by zero
+00:06 +75: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/pinned_header_test.dart: an unusable extent fails fast
+00:06 +76: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/pinned_header_test.dart: the runway is the authored extent plus the pin distance
+00:06 +77: /home/runner/work/motionpath-flutter/motionpath-flutter/packages/motionpath_flutter/test/pinned_header_test.dart: the section stays at the leading edge across its runway
+00:07 +78: All tests passed!
