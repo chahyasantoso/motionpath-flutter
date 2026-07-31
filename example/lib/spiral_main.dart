@@ -10,7 +10,6 @@ void main() => runApp(const SpiralZumaApp());
 
 class SpiralZumaApp extends StatelessWidget {
   const SpiralZumaApp({super.key});
-
   @override
   Widget build(BuildContext context) => MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -21,7 +20,6 @@ class SpiralZumaApp extends StatelessWidget {
 
 class SpiralZumaPage extends StatefulWidget {
   const SpiralZumaPage({super.key});
-
   @override
   State<SpiralZumaPage> createState() => _SpiralZumaPageState();
 }
@@ -159,6 +157,21 @@ class _SpiralZumaPageState extends State<SpiralZumaPage>
     super.dispose();
   }
 
+  Widget _balls(BuildContext context) => Stack(
+        clipBehavior: Clip.none,
+        children: <Widget>[
+          for (final MotionPathSpawnInstance instance in _spawns.instances)
+            KeyedSubtree(
+              key: ValueKey<String>(instance.id),
+              child: MotionPathPatchView(
+                source: _patchSources[instance.id] ?? MotionPathPatchSource(),
+                trackId: instance.id,
+                child: const _SpiralBall(),
+              ),
+            ),
+        ],
+      );
+
   @override
   Widget build(BuildContext context) => Scaffold(
         backgroundColor: const Color(0xFF08070D),
@@ -210,20 +223,7 @@ class _SpiralZumaPageState extends State<SpiralZumaPage>
                       size: const Size(360, 360),
                       painter: _SpiralGuidePainter(_guide),
                     ),
-                    MotionPathSpawnView(
-                      controller: _spawns,
-                      itemBuilder: (BuildContext context,
-                          MotionPathSpawnInstance instance) {
-                        final MotionPathPatchSource? source =
-                            _patchSources[instance.id];
-                        if (source == null) return const SizedBox.shrink();
-                        return MotionPathPatchView(
-                          source: source,
-                          trackId: instance.id,
-                          child: const _SpiralBall(),
-                        );
-                      },
-                    ),
+                    _balls(context),
                   ],
                 ),
               ),
@@ -235,7 +235,6 @@ class _SpiralZumaPageState extends State<SpiralZumaPage>
 
 class _SpiralBall extends StatelessWidget {
   const _SpiralBall();
-
   @override
   Widget build(BuildContext context) => SizedBox(
         width: 42,
@@ -266,7 +265,6 @@ class _SpiralBall extends StatelessWidget {
 class _SpiralGuidePainter extends CustomPainter {
   const _SpiralGuidePainter(this.path);
   final List<Offset> path;
-
   @override
   void paint(Canvas canvas, Size size) {
     canvas.drawRect(Offset.zero & size, Paint()..color = const Color(0xFF08070D));
@@ -277,16 +275,13 @@ class _SpiralGuidePainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
     if (path.isEmpty) return;
     final Path spiral = Path()..moveTo(path.first.dx, path.first.dy);
-    for (final Offset point in path.skip(1)) {
-      spiral.lineTo(point.dx, point.dy);
-    }
+    for (final Offset point in path.skip(1)) spiral.lineTo(point.dx, point.dy);
     canvas.drawPath(spiral, guide);
     final Offset centre = path.last;
     canvas.drawCircle(centre, 44, Paint()..color = const Color(0xFF160A25));
     canvas.drawCircle(centre, 29, Paint()..color = const Color(0xFF05040A));
     canvas.drawCircle(centre, 10, Paint()..color = const Color(0xAA7C5CFF));
   }
-
   @override
   bool shouldRepaint(covariant _SpiralGuidePainter oldDelegate) =>
       !identical(oldDelegate.path, path);
