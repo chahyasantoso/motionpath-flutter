@@ -26,11 +26,16 @@ class MotionPathTrigger {
   /// Reads a trigger from validated JSON.
   factory MotionPathTrigger.fromJson(Map<String, Object?> json) {
     final Object? rawType = json['type'];
-    MotionPathTriggerType type = MotionPathTriggerType.time;
-    if (rawType == 'manual') {
-      type = MotionPathTriggerType.manual;
-    } else if (rawType == 'scroll') {
-      type = MotionPathTriggerType.scroll;
+    final MotionPathTriggerType type;
+    switch (rawType) {
+      case 'time':
+        type = MotionPathTriggerType.time;
+      case 'manual':
+        type = MotionPathTriggerType.manual;
+      case 'scroll':
+        type = MotionPathTriggerType.scroll;
+      default:
+        throw StateError('Unknown MotionPath trigger type: $rawType');
     }
     final Object? repeat = json['repeat'];
     final Object? repeatDelay = json['repeatDelay'];
@@ -74,32 +79,23 @@ class MotionPathTrigger {
 
   /// Normalized progress for [elapsed] seconds over a [duration].
   double progressAt(double elapsed, double duration) {
-    if (duration <= 0) {
-      return 1;
-    }
+    if (duration <= 0) return 1;
     final double shifted = elapsed - delay;
-    if (shifted <= 0) {
-      return 0;
-    }
+    if (shifted <= 0) return 0;
     final double cycle = duration + repeatDelay;
     final int index = (shifted / cycle).floor();
     if (repeat >= 0 && index > repeat) {
       return yoyo && repeat.isOdd ? 0 : 1;
     }
-    final double local =
-        (shifted - index * cycle).clamp(0.0, duration).toDouble();
+    final double local = (shifted - index * cycle).clamp(0.0, duration).toDouble();
     final double value = local / duration;
     return yoyo && index.isOdd ? 1 - value : value;
   }
 
   /// Whether the trigger has exhausted every cycle by [elapsed].
   bool isFinished(double elapsed, double duration) {
-    if (repeat < 0) {
-      return false;
-    }
-    if (duration <= 0) {
-      return true;
-    }
+    if (repeat < 0) return false;
+    if (duration <= 0) return true;
     final double cycle = duration + repeatDelay;
     return elapsed - delay >= cycle * repeat + duration;
   }
