@@ -2,6 +2,9 @@
 
 Phase 3 is active after the green Phase 2 merge.
 
+**Gate state: OPEN. Phase 3 is not complete.** Carousel and Helix remain
+blocked.
+
 ## Required implementation
 
 - Make `MotionPathPatchView` consume the shared patch contract for transform, opacity, color, visibility, filters, image frames, instances, CSS values, and supported 3D metadata.
@@ -17,6 +20,25 @@ Phase 3 is active after the green Phase 2 merge.
 - Do not make demos reinterpret authored keys independently.
 - Preserve the Walker whole-graph path.
 - Do not begin Carousel or Helix until this gate is complete.
+
+## Checklist
+
+| Item | State | Evidence |
+|---|---|---|
+| Transform, opacity, blur consumption | Done | `MotionPathPatchView`, `MotionPathPatchTransform`, renderer tests. |
+| Color and visibility consumption | Done | PR #73. Both wrappers are unconditional and identity-safe, and `Offstage` sits closest to the child so the effect chain stays observable. |
+| Image frame, CSS variable, and instance payloads | Done | PR #73 host-owned builders plus `MotionPathPatchConsumers`. |
+| Stable child subtree | Done | `AnimatedBuilder.child` with a fixed wrapper chain; no conditional wrapper remounts the child. |
+| Dirty checking | Done | `motionPathPatchEquals` deep comparison drives per-track notification and `shouldRepaint`, replacing shallow `mapEquals`. |
+| Interest-scoped per-track consumers | Done | `MotionPathPatchController.trackPatch()`, whole-graph fallback, notifier pruning. |
+| One composition per update | Done | `MotionPathMotionRuntime.advance(delta, publishPatches: false)` separates advancement from composition; the controller no longer recomposes after `tick()`. |
+| Zero-listener tick gating | Done | Frame-driven composition is gated; the playhead still advances and imperative `seek()`/`publish()` stay explicit. |
+| z, perspective, and 3D in the shared transform resolver | **Open** | The resolver is 2D only. No z, perspective, or 3D key is read. |
+| Explicit unsupported-key behavior | **Open** | Unknown keys are silently ignored with no documented policy for renderer-claimed keys. |
+| Image resolution cache and disposal strategy | **Open** | The host receives a raw frame payload. No cache, no disposal contract. |
+| Bounded filter composition and invalid-sigma tests | **Open** | Only blur is consumed, and negative or non-finite sigma has no dedicated coverage. |
+| Performance tests | **Open** | No renderer benchmark covering rebuilds, allocations, or paint invalidations. |
+| Demo migration off local engine math | **Open** | The Spiral example still recomputes path position, color, visibility, and reflow locally. |
 
 ## Exit rule
 
