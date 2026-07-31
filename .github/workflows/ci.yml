@@ -6,6 +6,13 @@ on:
   pull_request:
 
 jobs:
+  hygiene:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Verify generated-file hygiene
+        run: bash tool/verify_generated_files.sh
+
   dart-core:
     runs-on: ubuntu-latest
     defaults:
@@ -19,8 +26,9 @@ jobs:
           sdk: stable
       - name: Pub get
         run: dart pub get
+      - name: Format check
+        run: dart format --output=none --set-exit-if-changed .
       - name: Analyze
-        # Machine output preserves file, line, severity, and message in CI logs.
         run: dart analyze --format machine
       - name: Test
         run: dart test --reporter expanded
@@ -39,10 +47,21 @@ jobs:
           cache: true
       - name: Pub get
         run: flutter pub get
+      - name: Format check
+        run: dart format --output=none --set-exit-if-changed .
       - name: Analyze
         run: set -o pipefail; flutter analyze 2>&1 | tee flutter-analyze.log
       - name: Test
         run: set -o pipefail; flutter test --reporter expanded 2>&1 | tee flutter-test.log
+      - name: Upload adapter baseline logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-adapter-baseline-${{ github.sha }}
+          path: |
+            packages/motionpath_flutter/flutter-analyze.log
+            packages/motionpath_flutter/flutter-test.log
+          if-no-files-found: ignore
 
   flutter-example:
     runs-on: ubuntu-latest
@@ -58,5 +77,18 @@ jobs:
           cache: true
       - name: Pub get
         run: flutter pub get
+      - name: Format check
+        run: dart format --output=none --set-exit-if-changed .
       - name: Analyze
         run: set -o pipefail; flutter analyze 2>&1 | tee flutter-analyze.log
+      - name: Test
+        run: set -o pipefail; flutter test --reporter expanded 2>&1 | tee flutter-test.log
+      - name: Upload example baseline logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-example-baseline-${{ github.sha }}
+          path: |
+            example/flutter-analyze.log
+            example/flutter-test.log
+          if-no-files-found: ignore
