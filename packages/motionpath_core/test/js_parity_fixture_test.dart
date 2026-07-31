@@ -10,13 +10,17 @@ Map<String, Object?> _fixture() => jsonDecode(
 
 double _number(Object? value) => (value! as num).toDouble();
 
+String _progressKey(double progress) => progress == progress.roundToDouble()
+    ? progress.toInt().toString()
+    : progress.toString();
+
 Map<String, Object?> _case(
   Map<String, Object?> cases,
   String name,
   double progress,
 ) {
   final Map<String, Object?> samples = cases[name]! as Map<String, Object?>;
-  return samples['$progress']! as Map<String, Object?>;
+  return samples[_progressKey(progress)]! as Map<String, Object?>;
 }
 
 void _expectNumber(Object? actual, Object? expected) {
