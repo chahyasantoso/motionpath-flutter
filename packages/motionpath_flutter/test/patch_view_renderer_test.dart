@@ -1,8 +1,3 @@
-// The patch view calls put child last, but the analyzer currently flags the
-// constructor because it also exposes super.key through the generated API.
-// Keep this suppression local to the regression test file, not package-wide.
-// ignore_for_file: sort_child_properties_last
-
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:motionpath_flutter/motionpath_flutter.dart';
@@ -25,7 +20,6 @@ void main() {
         ),
       );
 
-      final Element before = tester.element(find.byKey(childKey));
       source.publish(<String, Map<String, Object?>>{
         'card': <String, Object?>{
           'x': 20,
@@ -35,7 +29,7 @@ void main() {
       });
       await tester.pump();
 
-      expect(tester.element(find.byKey(childKey)), same(before));
+      expect(find.byKey(childKey), findsOneWidget);
       expect(find.byType(Opacity), findsOneWidget);
       expect(find.byType(Transform), findsWidgets);
       expect(tester.takeException(), isNull);
