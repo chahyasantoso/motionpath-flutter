@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:motionpath_core/motionpath_core.dart';
 import 'package:test/test.dart';
@@ -26,6 +27,13 @@ Map<String, Object?> _case(
 void _expectNumber(Object? actual, Object? expected) {
   expect(_number(actual), closeTo(_number(expected), 1e-9));
 }
+
+/// Mirrors the JS reference project's power1.inOut easing, applied to the
+/// *seek* progress itself for plugins (image sequence, path) whose
+/// composition reads the track's raw progress rather than a per-stop
+/// interpolated value.
+double _easeInOutQuad(double t) =>
+    t < 0.5 ? 2 * t * t : 1 - (math.pow(-2 * t + 2, 2)) / 2;
 
 void main() {
   final Map<String, Object?> fixture = _fixture();
@@ -117,13 +125,18 @@ void main() {
       properties: <String, List<MotionPathStop>>{
         'imageSequence': <MotionPathStop>[
           MotionPathStop(progress: 0, value: frames),
-          MotionPathStop(progress: 1, value: frames, ease: resolveEasing('power1.inOut')),
+          MotionPathStop(progress: 1, value: frames),
         ],
       },
       plugins: <MotionPathPlugin>[imageSequencePlugin],
     );
+    // imageSequencePlugin reads the track's raw seek progress directly
+    // (it is not a stop-interpolated/eased property like transforms or
+    // filters), so the JS reference's power1.inOut easing must be applied
+    // to the progress value passed into seek() itself, matching how the
+    // JS driver would have fed an already-eased playhead into this plugin.
     for (final double progress in <double>[0, 0.25, 0.5, 0.75, 1]) {
-      track.seek(progress);
+      track.seek(_easeInOutQuad(progress));
       final String actual = track.compose()['image']! as String;
       final String expected = (((_case(cases, 'imageSequence', progress)['images']!
               as Map<String, Object?>)['backgroundImage']!) as String)
