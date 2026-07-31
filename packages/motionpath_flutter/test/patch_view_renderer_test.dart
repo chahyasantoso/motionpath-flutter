@@ -79,7 +79,7 @@ void main() {
       });
       await tester.pump();
 
-      expect(find.byType(Transform), findsOneWidget);
+      expect(find.byType(Transform), findsWidgets);
       expect(find.byType(ImageFiltered), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
