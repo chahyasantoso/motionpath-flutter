@@ -204,10 +204,10 @@ class _SpiralZumaPageState extends State<SpiralZumaPage>
                       in _spawns.instances) {
                     final MotionPathPatchTransform transform =
                         MotionPathPatchTransform.fromPatch(instance.patch);
-                    final double d = Offset(
+                    final double d = (Offset(
                       transform.translateX,
                       transform.translateY,
-                    ).distanceTo(details.localPosition);
+                    ) - details.localPosition).distance;
                     if (d < distance) {
                       distance = d;
                       nearest = instance;
