@@ -40,9 +40,9 @@ jobs:
       - name: Pub get
         run: flutter pub get
       - name: Analyze
-        run: flutter analyze
+        run: set -o pipefail; flutter analyze 2>&1 | tee flutter-analyze.log
       - name: Test
-        run: flutter test --reporter expanded
+        run: set -o pipefail; flutter test --reporter expanded 2>&1 | tee flutter-test.log
 
   flutter-example:
     runs-on: ubuntu-latest
@@ -59,4 +59,4 @@ jobs:
       - name: Pub get
         run: flutter pub get
       - name: Analyze
-        run: flutter analyze
+        run: set -o pipefail; flutter analyze 2>&1 | tee flutter-analyze.log
