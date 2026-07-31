@@ -16,13 +16,22 @@ class MotionPathEngine {
   final Map<String, MotionPathMotionRuntime> _mounted =
       <String, MotionPathMotionRuntime>{};
 
-  Iterable<MotionPathMotionRuntime> get mounted => _mounted.values;
+  Iterable<MotionPathMotionRuntime> get mounted =>
+      List<MotionPathMotionRuntime>.unmodifiable(_mounted.values);
 
-  void loadProject(MotionPathProject nextProject) => project = nextProject;
+  void loadProject(MotionPathProject nextProject) {
+    if (_mounted.isNotEmpty) {
+      throw StateError('Cannot replace a project while motions are mounted.');
+    }
+    project = nextProject;
+  }
 
   MotionPathMotionRuntime? motionById(String id) => _mounted[id];
 
   MotionPathMotionRuntime mountMotion(String id) {
+    if (_mounted.containsKey(id)) {
+      throw StateError('Motion "$id" is already mounted.');
+    }
     final MotionPathProject? loaded = project;
     if (loaded == null) {
       throw StateError('No project loaded.');
@@ -35,8 +44,7 @@ class MotionPathEngine {
     if (!graph.isValid) {
       throw MotionPathValidationException(graph.errors);
     }
-    final List<MotionPathTrackRuntime> runtimeTracks =
-        <MotionPathTrackRuntime>[];
+    final List<MotionPathTrackRuntime> runtimeTracks = <MotionPathTrackRuntime>[];
     double longest = 0;
     for (final MotionPathTrack track in source.tracks) {
       final Map<String, List<MotionPathStop>> properties =
