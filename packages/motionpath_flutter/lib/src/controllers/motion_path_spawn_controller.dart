@@ -24,6 +24,14 @@ class MotionPathSpawnInstance {
 }
 
 /// Mounts a track's children at their settled offsets and drains them.
+///
+/// A track publishes a settled offset the instant a layout delegate decides it.
+/// When [reflowDuration] is positive this controller keeps one
+/// [MotionPathValueTweener] per child holding the offset a host should render,
+/// so a survivor slides into a freed slot instead of teleporting into it. The
+/// tweener is also the only record of where a child was before a reflow,
+/// because the track has already overwritten `currentOffset` by the time the
+/// reflow callback runs.
 class MotionPathSpawnController extends ChangeNotifier {
   MotionPathSpawnController({
     required this.parent,
@@ -32,13 +40,6 @@ class MotionPathSpawnController extends ChangeNotifier {
     this.reflowDuration = 0,
     this.reflowEase = MotionPathInterpolators.linear,
   }) {
-    if (parent.onChildSpawned != null ||
-        parent.onChildRemoved != null ||
-        parent.onChildReflowed != null) {
-      throw StateError(
-        'Track "${parent.id}" already has composition hooks wired.',
-      );
-    }
     if (!reflowDuration.isFinite || reflowDuration < 0) {
       throw ArgumentError.value(
         reflowDuration,
@@ -46,28 +47,48 @@ class MotionPathSpawnController extends ChangeNotifier {
         'must be finite and non-negative',
       );
     }
+    if (parent.onChildSpawned != null ||
+        parent.onChildRemoved != null ||
+        parent.onChildReflowed != null) {
+      throw StateError(
+        'Track "${parent.id}" already has composition hooks wired.',
+      );
+    }
     parent.onChildSpawned = _handleSpawned;
     parent.onChildRemoved = _handleRemoved;
     parent.onChildReflowed = _handleReflowed;
+    // Children mounted before this controller existed never fired a spawn
+    // callback, so adopt them here or their first reflow has no origin.
+    for (final MotionPathTrackRuntime child in parent.children) {
+      _trackOffset(child, child.currentOffset);
+    }
     _rebuild();
   }
 
   final MotionPathTrackRuntime parent;
   final double childDuration;
   final bool drainOnComplete;
+
+  /// Seconds a survivor takes to reach a freed slot. Zero settles immediately.
   final double reflowDuration;
+
+  /// Easing sampled across [reflowDuration].
   final Easing reflowEase;
 
   double _elapsed = 0;
   bool _disposed = false;
   List<MotionPathSpawnInstance> _instances = const <MotionPathSpawnInstance>[];
-  final Map<MotionPathTrackRuntime, MotionPathValueTweener> _reflows =
+
+  /// Rendered offset per live child. Empty while reflow is instant.
+  final Map<MotionPathTrackRuntime, MotionPathValueTweener> _offsets =
       <MotionPathTrackRuntime, MotionPathValueTweener>{};
 
   double get elapsed => _elapsed;
   List<MotionPathSpawnInstance> get instances => _instances;
   int get liveCount => _instances.length;
   bool get isDisposed => _disposed;
+
+  bool get _animatesReflow => reflowDuration > 0;
 
   void spawn(MotionPathTrackRuntime child, {double stagger = 0}) {
     if (_disposed) return;
@@ -84,7 +105,7 @@ class MotionPathSpawnController extends ChangeNotifier {
   void restartEmptyWave() {
     if (_disposed || parent.childCount != 0) return;
     _elapsed = 0;
-    _reflows.clear();
+    _offsets.clear();
     _settle();
   }
 
@@ -93,50 +114,62 @@ class MotionPathSpawnController extends ChangeNotifier {
     final double nextElapsed = elapsedSeconds < 0 ? 0 : elapsedSeconds;
     final double delta = nextElapsed - _elapsed;
     _elapsed = nextElapsed;
-    _advanceReflows(delta);
+    _advanceOffsets(delta);
     _settle(drain: drainOnComplete);
   }
 
   void advanceBy(double delta) => advanceTo(_elapsed + delta);
 
   void _handleSpawned(MotionPathTrackRuntime child, double offset) {
-    _reflows.remove(child);
+    _trackOffset(child, offset);
     child.seek(_localProgress(child));
   }
 
   void _handleRemoved(MotionPathTrackRuntime child) {
-    _reflows.remove(child);
+    _offsets.remove(child);
     child.seek(0);
   }
 
   void _handleReflowed(MotionPathTrackRuntime child, double offset) {
-    final double current = _reflows[child]?.value ?? child.currentOffset;
-    if (reflowDuration <= 0 || current == offset) {
-      _reflows.remove(child);
+    // `child.currentOffset` is already the destination here, so it can never
+    // serve as the tween origin. Retargeting the live tweener also makes a
+    // reflow interrupted by another reflow continue from where the child
+    // currently sits rather than snapping back to a settled position.
+    final MotionPathValueTweener? animated = _offsets[child];
+    if (animated == null) {
+      _trackOffset(child, offset);
     } else {
-      _reflows[child] = MotionPathValueTweener(
-        initial: current,
-        target: offset,
-        duration: reflowDuration,
-        ease: reflowEase,
-      );
+      animated.retarget(offset);
     }
     child.seek(_localProgress(child));
   }
 
-  void _advanceReflows(double delta) {
-    if (delta <= 0 || _reflows.isEmpty) return;
-    final List<MotionPathTrackRuntime> complete = <MotionPathTrackRuntime>[];
-    for (final MapEntry<MotionPathTrackRuntime, MotionPathValueTweener> entry
-        in _reflows.entries) {
-      entry.value.advance(delta);
-      if (entry.value.isComplete) {
-        complete.add(entry.key);
-      }
+  /// Starts tracking [child] at [offset]. A no-op when reflow is instant.
+  void _trackOffset(MotionPathTrackRuntime child, double offset) {
+    if (!_animatesReflow) return;
+    _offsets[child] = MotionPathValueTweener(
+      initial: offset,
+      target: offset,
+      duration: reflowDuration,
+      ease: reflowEase,
+    );
+  }
+
+  void _advanceOffsets(double delta) {
+    if (delta <= 0 || _offsets.isEmpty) return;
+    for (final MotionPathValueTweener animated in _offsets.values) {
+      if (!animated.isComplete) animated.advance(delta);
     }
-    for (final MotionPathTrackRuntime child in complete) {
-      _reflows.remove(child);
-    }
+  }
+
+  /// Drops offsets for children detached without a removal callback, such as a
+  /// parent track disposed underneath this controller.
+  void _pruneOffsets() {
+    if (_offsets.length <= parent.childCount) return;
+    _offsets.removeWhere(
+      (MotionPathTrackRuntime child, MotionPathValueTweener animated) =>
+          !identical(child.parent, parent),
+    );
   }
 
   void _settle({bool drain = false}) {
@@ -167,6 +200,7 @@ class MotionPathSpawnController extends ChangeNotifier {
   }
 
   void _rebuild() {
+    _pruneOffsets();
     final List<MotionPathTrackRuntime> ordered = <MotionPathTrackRuntime>[];
     for (final MotionPathTrackRuntime child in parent.children) {
       int slot = ordered.length;
@@ -191,7 +225,7 @@ class MotionPathSpawnController extends ChangeNotifier {
   }
 
   double _effectiveOffset(MotionPathTrackRuntime child) =>
-      _reflows[child]?.value ?? child.currentOffset;
+      _offsets[child]?.value ?? child.currentOffset;
 
   double _spanOf(MotionPathTrackRuntime child) =>
       child.duration > 0
@@ -210,7 +244,7 @@ class MotionPathSpawnController extends ChangeNotifier {
     parent.onChildSpawned = null;
     parent.onChildRemoved = null;
     parent.onChildReflowed = null;
-    _reflows.clear();
+    _offsets.clear();
     _instances = const <MotionPathSpawnInstance>[];
     super.dispose();
   }

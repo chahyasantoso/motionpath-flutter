@@ -64,10 +64,40 @@ void main() {
     controller.advanceTo(1);
     controller.remove('b');
     controller.advanceBy(1);
+
+    // Half way through sliding 30 -> 20 when a second removal retargets it.
+    expect(controller.instances.last.id, 'd');
+    expect(controller.instances.last.offset, closeTo(25, 1e-9));
+
     controller.remove('c');
 
-    expect(controller.instances.last.id, 'd');
+    // The retarget continues from the current animated offset, with no jump,
+    // and takes the full authored duration to reach the new slot. This matches
+    // the JS reference, which kills the in-flight tween and starts a fresh one.
+    expect(controller.instances.last.offset, closeTo(25, 1e-9));
+    controller.advanceBy(1);
     expect(controller.instances.last.offset, closeTo(17.5, 1e-9));
+    controller.advanceBy(1);
+    expect(controller.instances.last.offset, 10);
+    controller.dispose();
+  });
+
+  test('children adopted at construction still reflow over time', () {
+    final MotionPathTrackRuntime parent = MotionPathTrackRuntime('parent');
+    parent.addChild(_child('a'), stagger: 10);
+    parent.addChild(_child('b'), stagger: 10);
+    parent.addChild(_child('c'), stagger: 10);
+
+    final MotionPathSpawnController controller = MotionPathSpawnController(
+      parent: parent,
+      childDuration: 100,
+      reflowDuration: 2,
+    );
+    controller.remove('b');
+
+    expect(controller.instances[1].offset, 20);
+    controller.advanceBy(1);
+    expect(controller.instances[1].offset, closeTo(15, 1e-9));
     controller.dispose();
   });
 }
