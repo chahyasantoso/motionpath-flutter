@@ -21,7 +21,11 @@ void main() {
 
     final Element before = tester.element(find.byKey(childKey));
     source.publish(<String, Map<String, Object?>>{
-      'card': <String, Object?>{'x': 20, 'opacity': 0.5},
+      'card': <String, Object?>{
+        'x': 20,
+        'scale': 1.2,
+        'opacity': 0.5,
+      },
     });
     await tester.pump();
 
