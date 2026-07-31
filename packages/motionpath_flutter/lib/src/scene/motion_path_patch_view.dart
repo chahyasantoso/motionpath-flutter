@@ -1,4 +1,4 @@
-import 'dart:ui' show BlendMode, ColorFilter, ImageFilter, Offset;
+import 'dart:ui' show BlendMode, Color, ColorFilter, ImageFilter, Offset;
 
 import 'package:flutter/widgets.dart';
 
@@ -65,6 +65,7 @@ class MotionPathPatchView extends StatelessWidget {
             ),
           );
         }
+
         final MotionPathPatchTransform transform =
             MotionPathPatchTransform.fromPatch(
           patch,
@@ -89,38 +90,35 @@ class MotionPathPatchView extends StatelessWidget {
             result,
           );
         }
-        final ImageFilter? blur = MotionPathPatchConsumers.blurFilter(patch);
-        if (blur != null) {
-          result = ImageFiltered(imageFilter: blur, child: result);
-        }
-        if (transform.argb != fallbackArgb) {
+
+        // Keep the transform/effect parent chain stable. Conditional wrappers
+        // remount the supplied child when a patch changes from identity to an
+        // animated value, defeating AnimatedBuilder.child reuse.
+        result = ImageFiltered(
+          imageFilter: MotionPathPatchConsumers.blurFilter(patch) ??
+              ImageFilter.blur(sigmaX: 0, sigmaY: 0),
+          child: result,
+        );
+        result = Opacity(opacity: transform.opacity, child: result);
+        result = Transform.scale(
+          scaleX: transform.scaleX,
+          scaleY: transform.scaleY,
+          child: result,
+        );
+        result = Transform.rotate(
+          angle: transform.rotationRadians,
+          child: result,
+        );
+        result = Transform.translate(
+          offset: Offset(transform.translateX, transform.translateY),
+          child: result,
+        );
+        if (patch.containsKey('color')) {
           result = ColorFiltered(
             colorFilter: ColorFilter.mode(
               Color(transform.argb),
               BlendMode.modulate,
             ),
-            child: result,
-          );
-        }
-        if (transform.opacity != 1) {
-          result = Opacity(opacity: transform.opacity, child: result);
-        }
-        if (transform.scaleX != 1 || transform.scaleY != 1) {
-          result = Transform.scale(
-            scaleX: transform.scaleX,
-            scaleY: transform.scaleY,
-            child: result,
-          );
-        }
-        if (transform.rotationRadians != 0) {
-          result = Transform.rotate(
-            angle: transform.rotationRadians,
-            child: result,
-          );
-        }
-        if (transform.translateX != 0 || transform.translateY != 0) {
-          result = Transform.translate(
-            offset: Offset(transform.translateX, transform.translateY),
             child: result,
           );
         }
