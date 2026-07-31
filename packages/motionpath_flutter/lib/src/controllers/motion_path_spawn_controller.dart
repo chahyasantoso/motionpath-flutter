@@ -181,10 +181,14 @@ class MotionPathSpawnController extends ChangeNotifier {
   void _drain() {
     final List<String> completed = <String>[];
     for (final MotionPathTrackRuntime child in parent.children) {
-      if (_localProgress(child) >= 1) completed.add(child.id);
+      if (_localProgress(child) >= 1) {
+        completed.add(child.id);
+      }
     }
     if (completed.isEmpty) return;
-    for (final String childId in completed) parent.removeChild(childId);
+    for (final String childId in completed) {
+      parent.removeChild(childId);
+    }
     _seekChildren();
   }
 
