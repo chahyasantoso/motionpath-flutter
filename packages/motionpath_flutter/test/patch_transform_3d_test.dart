@@ -4,7 +4,7 @@ import 'package:motionpath_flutter/motionpath_flutter.dart';
 void main() {
   test('resolves z, perspective, and XYZ rotations into one matrix', () {
     final MotionPathPatchTransform transform = MotionPathPatchTransform.fromPatch(
-      <String, Object?>{
+      const <String, Object?>{
         'x': 10,
         'y': 20,
         'z': 30,
@@ -26,7 +26,7 @@ void main() {
 
   test('invalid transform values fall back to identity components', () {
     final MotionPathPatchTransform transform = MotionPathPatchTransform.fromPatch(
-      <String, Object?>{'z': double.nan, 'perspective': double.infinity},
+      const <String, Object?>{'z': double.nan, 'perspective': double.infinity},
     );
     expect(transform.translateZ, 0);
     expect(transform.perspective, 0);
