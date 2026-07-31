@@ -27,6 +27,10 @@ class MotionPathViewportSample {
 /// While inside that window, [pin] keeps the element at the viewport's leading
 /// edge and reports the pinned state so a host can render it accordingly. This
 /// class does not mutate scroll position and never creates a ticker.
+///
+/// Scrub sampling, pin state, and boundary crossings stay separate
+/// capabilities: [sample] reports continuous geometry every frame, while
+/// [onToggle] reports only the discrete crossings of the authored window.
 class MotionPathViewportBinding {
   MotionPathViewportBinding({
     required this.motion,
@@ -37,7 +41,10 @@ class MotionPathViewportBinding {
     this.end = 1,
     this.pin = false,
     this.onSample,
-  });
+    this.onToggle,
+  }) {
+    MotionPathToggleStateMachine.validateWindow(start, end);
+  }
 
   final MotionPathMotionRuntime motion;
   final double itemStart;
@@ -48,9 +55,20 @@ class MotionPathViewportBinding {
   final bool pin;
   final void Function(MotionPathViewportSample sample)? onSample;
 
+  /// Called for each crossing of the `[start, end]` window, in travel order.
+  ///
+  /// Crossings fire before [onSample], so a handler always reads a [sample]
+  /// that already reflects the offset that caused the crossing.
+  final void Function(MotionPathToggleAction action)? onToggle;
+
+  final MotionPathToggleStateMachine _toggles = MotionPathToggleStateMachine();
+
   ScrollPosition? _position;
   bool _disposed = false;
-  MotionPathViewportSample _sample = const MotionPathViewportSample(
+  MotionPathViewportSample _sample = _zeroSample;
+
+  static const MotionPathViewportSample _zeroSample =
+      MotionPathViewportSample(
     scrollPixels: 0,
     localOffset: 0,
     progress: 0,
@@ -63,6 +81,10 @@ class MotionPathViewportBinding {
   bool get isDisposed => _disposed;
   MotionPathViewportSample get sample => _sample;
 
+  /// Current position relative to the authored window, or null before the
+  /// first sample.
+  MotionPathTriggerZone? get zone => _toggles.zone;
+
   static MotionPathViewportSample sampleAt({
     required double scrollPixels,
     required double itemStart,
@@ -72,6 +94,7 @@ class MotionPathViewportBinding {
     double end = 1,
     bool pin = false,
   }) {
+    MotionPathToggleStateMachine.validateWindow(start, end);
     final double span = end - start;
     final double progress = span <= 0
         ? (scrollPixels >= end ? 1 : 0)
@@ -107,17 +130,14 @@ class MotionPathViewportBinding {
   }
 
   /// Detaches and resets the last sample for safe route/viewport reuse.
+  ///
+  /// Crossing state resets too, so reattaching seeds silently instead of
+  /// replaying an entry the user never scrolled through.
   void detach() {
     _position?.removeListener(_onScroll);
     _position = null;
-    _sample = const MotionPathViewportSample(
-      scrollPixels: 0,
-      localOffset: 0,
-      progress: 0,
-      visible: false,
-      pinned: false,
-      paintOffset: 0,
-    );
+    _sample = _zeroSample;
+    _toggles.reset();
   }
 
   /// Samples an already-known scroll offset. The caller owns scheduling.
@@ -135,6 +155,17 @@ class MotionPathViewportBinding {
       pin: pin,
     );
     motion.seek(_sample.progress);
+    final List<MotionPathToggleAction> actions = _toggles.updateForValue(
+      value: scrollPixels,
+      start: start,
+      end: end,
+    );
+    final void Function(MotionPathToggleAction action)? toggle = onToggle;
+    if (toggle != null) {
+      for (final MotionPathToggleAction action in actions) {
+        toggle(action);
+      }
+    }
     onSample?.call(_sample);
   }
 
