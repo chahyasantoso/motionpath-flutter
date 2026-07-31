@@ -14,7 +14,10 @@ Map<String, Object?> _case(
   Map<String, Object?> cases,
   String name,
   double progress,
-) => (cases[name]! as Map<String, Object?>)['$progress']! as Map<String, Object?>;
+) {
+  final Map<String, Object?> samples = cases[name]! as Map<String, Object?>;
+  return samples['$progress']! as Map<String, Object?>;
+}
 
 void _expectNumber(Object? actual, Object? expected) {
   expect(_number(actual), closeTo(_number(expected), 1e-9));
@@ -29,16 +32,18 @@ void main() {
       'easing',
       properties: <String, List<MotionPathStop>>{
         'x': <MotionPathStop>[
-          MotionPathStop(progress: 0, value: 0, ease: resolveEasing('power2.in')),
-          MotionPathStop(progress: 1, value: 100),
+          const MotionPathStop(progress: 0, value: 0),
+          MotionPathStop(progress: 1, value: 100, ease: resolveEasing('power2.in')),
         ],
       },
     );
 
     for (final double progress in <double>[0, 0.25, 0.5, 0.75, 1]) {
       track.seek(progress);
-      _expectNumber(track.compose()['x'],
-          (_case(cases, 'easing', progress)['easing']! as Map<String, Object?>)['x']);
+      _expectNumber(
+        track.compose()['x'],
+        (_case(cases, 'easing', progress)['easing']! as Map<String, Object?>)['x'],
+      );
     }
   });
 
