@@ -17,7 +17,7 @@ void main() {
     );
     expect(
       MotionPathPatchContract.classify(
-        'blur',
+        'filter',
         plugins: <MotionPathPlugin>[filterPlugin],
       ),
       MotionPathPatchKeyKind.pluginPayload,
