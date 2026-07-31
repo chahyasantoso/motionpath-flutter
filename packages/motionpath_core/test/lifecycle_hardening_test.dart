@@ -16,8 +16,9 @@ MotionPathProject _project() => const MotionPathProject(
 void main() {
   test('track lifecycle callbacks reject double wiring in release-safe code', () {
     final MotionPathTrackRuntime track = MotionPathTrackRuntime('parent');
-    void Function(MotionPathTrackRuntime, double) first = (_, __) {};
-    void Function(MotionPathTrackRuntime, double) second = (_, __) {};
+
+    void first(MotionPathTrackRuntime child, double offset) {}
+    void second(MotionPathTrackRuntime child, double offset) {}
 
     track.onChildSpawned = first;
     expect(
