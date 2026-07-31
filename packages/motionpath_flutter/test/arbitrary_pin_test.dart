@@ -21,13 +21,13 @@ void main() {
     );
     binding.sampleFromOffset(200);
     await tester.pumpWidget(
-      const Directionality(
+      Directionality(
         textDirection: TextDirection.ltr,
         child: Stack(
           children: <Widget>[
             MotionPathArbitraryPinned(
               binding: binding,
-              child: SizedBox(
+              child: const SizedBox(
                 key: ValueKey<String>('pinned'),
                 height: 50,
                 width: 50,
@@ -38,7 +38,10 @@ void main() {
       ),
     );
     expect(find.byKey(const ValueKey<String>('pinned')), findsOneWidget);
-    expect(tester.getTopLeft(find.byKey(const ValueKey<String>('pinned'))).dy, 0);
+    expect(
+      tester.getTopLeft(find.byKey(const ValueKey<String>('pinned'))).dy,
+      0,
+    );
     binding.dispose();
   });
 }
