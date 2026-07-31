@@ -129,6 +129,8 @@ Tasks:
 - Add a generic spawned-instance widget/painter host.
 - Delete or refactor duplicate frame-triggered rebuild paths in the Spiral example.
 
+**Integration boundary:** `MotionPathLayoutDelegate` exposes settled logical offsets in seconds, while Flutter transforms consume renderer units such as logical pixels. The tweener is now tested as a clock-neutral scalar primitive, but it must not be wired directly to `x`/`y` patch keys. The next implementation slice must define an explicit renderer-neutral visual placement field or host mapping for reflow offsets, then consume the tweener through that contract.
+
 Exit criteria:
 
 - Spawn and reflow behavior is tested without Spiral-specific code.
