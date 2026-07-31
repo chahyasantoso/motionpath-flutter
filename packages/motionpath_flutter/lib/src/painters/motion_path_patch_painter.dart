@@ -151,14 +151,14 @@ class MotionPathPatchTransform {
 
   @override
   int get hashCode => Object.hash(
-        translateX,
-        translateY,
-        rotation,
-        scaleX,
-        scaleY,
-        opacity,
-        argb,
-      );
+    translateX,
+    translateY,
+    rotation,
+    scaleX,
+    scaleY,
+    opacity,
+    argb,
+  );
 }
 
 /// Paints a composed MotionPath patch onto a canvas.

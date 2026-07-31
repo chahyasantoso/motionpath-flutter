@@ -4,22 +4,23 @@ import 'package:motionpath_core/motionpath_core.dart';
 import 'package:motionpath_flutter/motionpath_flutter.dart';
 
 MotionPathTrackRuntime _child(String id) => MotionPathTrackRuntime(
-      id,
-      properties: <String, List<MotionPathStop>>{
-        'x': const <MotionPathStop>[
-          MotionPathStop(progress: 0, value: 0),
-          MotionPathStop(progress: 1, value: 100),
-        ],
-        'opacity': const <MotionPathStop>[
-          MotionPathStop(progress: 0, value: 1),
-          MotionPathStop(progress: 1, value: 0),
-        ],
-      },
-    );
+  id,
+  properties: <String, List<MotionPathStop>>{
+    'x': const <MotionPathStop>[
+      MotionPathStop(progress: 0, value: 0),
+      MotionPathStop(progress: 1, value: 100),
+    ],
+    'opacity': const <MotionPathStop>[
+      MotionPathStop(progress: 0, value: 1),
+      MotionPathStop(progress: 1, value: 0),
+    ],
+  },
+);
 
 void main() {
-  testWidgets('renders live instances with stable ids and composed patches',
-      (WidgetTester tester) async {
+  testWidgets('renders live instances with stable ids and composed patches', (
+    WidgetTester tester,
+  ) async {
     final MotionPathSpawnController controller = MotionPathSpawnController(
       parent: MotionPathTrackRuntime('parent'),
       childDuration: 10,
@@ -49,8 +50,9 @@ void main() {
     controller.dispose();
   });
 
-  testWidgets('removes a drained instance without affecting survivors',
-      (WidgetTester tester) async {
+  testWidgets('removes a drained instance without affecting survivors', (
+    WidgetTester tester,
+  ) async {
     final MotionPathSpawnController controller = MotionPathSpawnController(
       parent: MotionPathTrackRuntime('parent'),
       childDuration: 1,
@@ -64,8 +66,9 @@ void main() {
         textDirection: TextDirection.ltr,
         child: MotionPathSpawnView(
           controller: controller,
-          itemBuilder: (BuildContext context, MotionPathSpawnInstance instance) =>
-              Text(instance.id),
+          itemBuilder:
+              (BuildContext context, MotionPathSpawnInstance instance) =>
+                  Text(instance.id),
         ),
       ),
     );

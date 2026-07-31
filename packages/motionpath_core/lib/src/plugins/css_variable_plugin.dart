@@ -23,5 +23,7 @@ Map<String, Object?>? _composeCssVariables(Map<String, Object?> raw) {
       variables[key] = entry;
     }
   });
-  return variables.isEmpty ? null : <String, Object?>{'cssVariables': variables};
+  return variables.isEmpty
+      ? null
+      : <String, Object?>{'cssVariables': variables};
 }

@@ -7,14 +7,14 @@ void main() {
       'styles',
       properties: <String, List<MotionPathStop>>{
         'cssVariables': const <MotionPathStop>[
-          MotionPathStop(progress: 0, value: <String, Object?>{
-            '--opacity': 0,
-            'color': 'red',
-          }),
-          MotionPathStop(progress: 1, value: <String, Object?>{
-            '--opacity': 1,
-            'color': 'blue',
-          }),
+          MotionPathStop(
+            progress: 0,
+            value: <String, Object?>{'--opacity': 0, 'color': 'red'},
+          ),
+          MotionPathStop(
+            progress: 1,
+            value: <String, Object?>{'--opacity': 1, 'color': 'blue'},
+          ),
         ],
       },
       plugins: <MotionPathPlugin>[cssVariablePlugin],

@@ -51,10 +51,11 @@ class MotionPathPatchView extends StatelessWidget {
         }
         final MotionPathPatchTransform transform =
             MotionPathPatchTransform.fromPatch(
-          patch,
-          fallbackArgb: fallbackArgb,
-        );
-        final ImageFilter filter = MotionPathPatchConsumers.blurFilter(patch) ??
+              patch,
+              fallbackArgb: fallbackArgb,
+            );
+        final ImageFilter filter =
+            MotionPathPatchConsumers.blurFilter(patch) ??
             ImageFilter.blur(sigmaX: 0, sigmaY: 0);
         return Opacity(
           opacity: transform.opacity,
@@ -65,10 +66,7 @@ class MotionPathPatchView extends StatelessWidget {
               child: Transform.scale(
                 scaleX: transform.scaleX,
                 scaleY: transform.scaleY,
-                child: ImageFiltered(
-                  imageFilter: filter,
-                  child: stableChild,
-                ),
+                child: ImageFiltered(imageFilter: filter, child: stableChild),
               ),
             ),
           ),

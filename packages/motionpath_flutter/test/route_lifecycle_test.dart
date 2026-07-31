@@ -4,38 +4,40 @@ import 'package:motionpath_core/motionpath_core.dart';
 import 'package:motionpath_flutter/motionpath_flutter.dart';
 
 void main() {
-  testWidgets('route teardown detaches and permanently disposes viewport state',
-      (WidgetTester tester) async {
-    final MotionPathMotionRuntime motion = MotionPathMotionRuntime(
-      id: 'route-motion',
-      tracks: <MotionPathTrackRuntime>[MotionPathTrackRuntime('scene')],
-    );
-    MotionPathViewportBinding? binding;
-    final ScrollController controller = ScrollController();
+  testWidgets(
+    'route teardown detaches and permanently disposes viewport state',
+    (WidgetTester tester) async {
+      final MotionPathMotionRuntime motion = MotionPathMotionRuntime(
+        id: 'route-motion',
+        tracks: <MotionPathTrackRuntime>[MotionPathTrackRuntime('scene')],
+      );
+      MotionPathViewportBinding? binding;
+      final ScrollController controller = ScrollController();
 
-    await tester.pumpWidget(
-      _ViewportRouteHost(
-        controller: controller,
-        motion: motion,
-        onBinding: (MotionPathViewportBinding value) => binding = value,
-      ),
-    );
-    await tester.pump();
+      await tester.pumpWidget(
+        _ViewportRouteHost(
+          controller: controller,
+          motion: motion,
+          onBinding: (MotionPathViewportBinding value) => binding = value,
+        ),
+      );
+      await tester.pump();
 
-    expect(binding, isNotNull);
-    expect(binding!.isAttached, isTrue);
-    expect(binding!.isDisposed, isFalse);
+      expect(binding, isNotNull);
+      expect(binding!.isAttached, isTrue);
+      expect(binding!.isDisposed, isFalse);
 
-    await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pump();
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
 
-    expect(binding!.isAttached, isFalse);
-    expect(binding!.isDisposed, isTrue);
-    expect(() => binding!.sampleFromOffset(50), returnsNormally);
-    expect(binding!.sample.progress, 0);
+      expect(binding!.isAttached, isFalse);
+      expect(binding!.isDisposed, isTrue);
+      expect(() => binding!.sampleFromOffset(50), returnsNormally);
+      expect(binding!.sample.progress, 0);
 
-    controller.dispose();
-  });
+      controller.dispose();
+    },
+  );
 }
 
 class _ViewportRouteHost extends StatefulWidget {
@@ -78,9 +80,9 @@ class _ViewportRouteHostState extends State<_ViewportRouteHost> {
 
   @override
   Widget build(BuildContext context) => SingleChildScrollView(
-        controller: widget.controller,
-        child: const SizedBox(height: 800),
-      );
+    controller: widget.controller,
+    child: const SizedBox(height: 800),
+  );
 
   @override
   void dispose() {

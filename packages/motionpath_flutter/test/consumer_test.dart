@@ -5,13 +5,12 @@ void main() {
   test('reads image and CSS variable payloads', () {
     const Map<String, Object?> patch = <String, Object?>{
       'image': 'hero.png',
-      'cssVariables': <String, Object?>{
-        '--x': 12,
-        'color': 'drop',
-      },
+      'cssVariables': <String, Object?>{'--x': 12, 'color': 'drop'},
     };
     expect(MotionPathPatchConsumers.imageFrame(patch), 'hero.png');
-    expect(MotionPathPatchConsumers.cssVariables(patch), <String, Object?>{'--x': 12});
+    expect(MotionPathPatchConsumers.cssVariables(patch), <String, Object?>{
+      '--x': 12,
+    });
   });
 
   test('creates blur filter only for positive numeric values', () {

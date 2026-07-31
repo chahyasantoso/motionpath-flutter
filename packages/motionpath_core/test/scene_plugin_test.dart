@@ -7,17 +7,20 @@ void main() {
       'overlay',
       properties: <String, List<MotionPathStop>>{
         'overlay': const <MotionPathStop>[
-          MotionPathStop(progress: 0, value: <String, Object?>{
-            'slot': 'hud',
-            '': 'drop',
-          }),
+          MotionPathStop(
+            progress: 0,
+            value: <String, Object?>{'slot': 'hud', '': 'drop'},
+          ),
         ],
       },
       plugins: <MotionPathPlugin>[overlayPlugin],
     );
     final Map<String, Object?> patch = track.compose();
     expect((patch['overlay']! as Map<String, Object?>)['slot'], 'hud');
-    expect((patch['overlay']! as Map<String, Object?>).containsKey(''), isFalse);
+    expect(
+      (patch['overlay']! as Map<String, Object?>).containsKey(''),
+      isFalse,
+    );
   });
 
   test('expands a bounded spawner payload', () {
@@ -25,10 +28,10 @@ void main() {
       'spawner',
       properties: <String, List<MotionPathStop>>{
         'spawner': const <MotionPathStop>[
-          MotionPathStop(progress: 0, value: <String, Object?>{
-            'count': 3,
-            'template': 'particle',
-          }),
+          MotionPathStop(
+            progress: 0,
+            value: <String, Object?>{'count': 3, 'template': 'particle'},
+          ),
         ],
       },
       plugins: <MotionPathPlugin>[spawnerPlugin],

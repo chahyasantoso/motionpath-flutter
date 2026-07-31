@@ -3,9 +3,9 @@ import 'package:motionpath_core/motionpath_core.dart';
 import 'package:motionpath_flutter/motionpath_flutter.dart';
 
 MotionPathMotionRuntime _motion() => MotionPathMotionRuntime(
-      id: 'viewport',
-      tracks: <MotionPathTrackRuntime>[MotionPathTrackRuntime('a')],
-    );
+  id: 'viewport',
+  tracks: <MotionPathTrackRuntime>[MotionPathTrackRuntime('a')],
+);
 
 void main() {
   test('reports window crossings without replaying the first sample', () {

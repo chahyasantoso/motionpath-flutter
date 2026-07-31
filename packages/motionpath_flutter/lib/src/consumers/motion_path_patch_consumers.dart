@@ -33,9 +33,7 @@ class MotionPathPatchConsumers {
     return sigma > 0 ? ImageFilter.blur(sigmaX: sigma, sigmaY: sigma) : null;
   }
 
-  static List<Map<String, Object?>> instances(
-    Map<String, Object?> patch,
-  ) {
+  static List<Map<String, Object?>> instances(Map<String, Object?> patch) {
     final Object? raw = patch['instances'];
     if (raw is! List<Object?>) {
       return const <Map<String, Object?>>[];

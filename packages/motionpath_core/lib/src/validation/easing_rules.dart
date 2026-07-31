@@ -17,21 +17,32 @@ List<MotionPathDiagnostic> easingRules(
     for (int index = 0; index < rawStops.length; index++) {
       final Map<String, Object?> stop = asStringKeyedMap(rawStops[index]);
       if (stop.containsKey('ease')) {
-        _validateEase(stop['ease'], '$propertyPath.stops[$index].ease', diagnostics);
+        _validateEase(
+          stop['ease'],
+          '$propertyPath.stops[$index].ease',
+          diagnostics,
+        );
       }
     }
   }
   return diagnostics;
 }
 
-void _validateEase(Object? value, String path, List<MotionPathDiagnostic> diagnostics) {
+void _validateEase(
+  Object? value,
+  String path,
+  List<MotionPathDiagnostic> diagnostics,
+) {
   if (value == null) return;
-  if (value is! String || (!_isSupportedEaseSyntax(value) && !isKnownEasing(value))) {
-    diagnostics.add(MotionPathDiagnostic(
-      path: path,
-      code: 'ease-shape',
-      message: 'Ease must be a supported MotionPath easing name.',
-    ));
+  if (value is! String ||
+      (!_isSupportedEaseSyntax(value) && !isKnownEasing(value))) {
+    diagnostics.add(
+      MotionPathDiagnostic(
+        path: path,
+        code: 'ease-shape',
+        message: 'Ease must be a supported MotionPath easing name.',
+      ),
+    );
   }
 }
 

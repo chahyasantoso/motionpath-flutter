@@ -15,8 +15,9 @@ class _FakeTickerDriver extends MotionPathTickerDriver {
   }
 
   void emit(double delta) {
-    for (final void Function(double) listener
-        in List<void Function(double)>.of(listeners)) {
+    for (final void Function(double) listener in List<void Function(double)>.of(
+      listeners,
+    )) {
       listener(delta);
     }
   }
@@ -30,14 +31,14 @@ class _FakeProvider implements TickerProvider {
 }
 
 MotionPathTrackRuntime _child(String id) => MotionPathTrackRuntime(
-      id,
-      properties: <String, List<MotionPathStop>>{
-        'x': const <MotionPathStop>[
-          MotionPathStop(progress: 0, value: 0),
-          MotionPathStop(progress: 1, value: 100),
-        ],
-      },
-    );
+  id,
+  properties: <String, List<MotionPathStop>>{
+    'x': const <MotionPathStop>[
+      MotionPathStop(progress: 0, value: 0),
+      MotionPathStop(progress: 1, value: 100),
+    ],
+  },
+);
 
 void main() {
   test('advances the spawn surface from the shared ticker delta', () {
@@ -47,8 +48,10 @@ void main() {
       childDuration: 10,
     );
     controller.spawn(_child('child'));
-    final MotionPathSpawnTickerBinding binding =
-        MotionPathSpawnTickerBinding(driver: driver, controller: controller);
+    final MotionPathSpawnTickerBinding binding = MotionPathSpawnTickerBinding(
+      driver: driver,
+      controller: controller,
+    );
 
     driver.emit(5);
 
@@ -66,8 +69,10 @@ void main() {
     final MotionPathSpawnController controller = MotionPathSpawnController(
       parent: MotionPathTrackRuntime('parent'),
     );
-    final MotionPathSpawnTickerBinding binding =
-        MotionPathSpawnTickerBinding(driver: driver, controller: controller);
+    final MotionPathSpawnTickerBinding binding = MotionPathSpawnTickerBinding(
+      driver: driver,
+      controller: controller,
+    );
 
     binding.dispose();
     binding.dispose();

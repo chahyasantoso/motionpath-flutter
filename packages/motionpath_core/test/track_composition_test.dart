@@ -4,15 +4,14 @@ import 'package:test/test.dart';
 MotionPathTrackRuntime _track(
   String id, {
   MotionPathLayoutDelegate? layoutDelegate,
-}) =>
-    MotionPathTrackRuntime(id, layoutDelegate: layoutDelegate);
+}) => MotionPathTrackRuntime(id, layoutDelegate: layoutDelegate);
 
 void main() {
   test('children are placed one stagger after the frontmost sibling', () {
     final MotionPathTrackRuntime parent = _track('parent');
     final List<double> spawned = <double>[];
-    parent.onChildSpawned =
-        (MotionPathTrackRuntime child, double offset) => spawned.add(offset);
+    parent.onChildSpawned = (MotionPathTrackRuntime child, double offset) =>
+        spawned.add(offset);
 
     parent.addChild(_track('a'), stagger: 4);
     parent.addChild(_track('b'), stagger: 4);
@@ -58,8 +57,10 @@ void main() {
   });
 
   test('the static policy leaves the gap open and keeps growing the span', () {
-    final MotionPathTrackRuntime parent =
-        _track('parent', layoutDelegate: kStaticLayoutDelegate);
+    final MotionPathTrackRuntime parent = _track(
+      'parent',
+      layoutDelegate: kStaticLayoutDelegate,
+    );
     for (final String id in <String>['a', 'b', 'c']) {
       parent.addChild(_track(id), stagger: 10);
     }
@@ -73,8 +74,8 @@ void main() {
 
   test('removing an unknown child is a no-op', () {
     final MotionPathTrackRuntime parent = _track('parent');
-    parent.onChildRemoved =
-        (MotionPathTrackRuntime child) => fail('nothing was removed');
+    parent.onChildRemoved = (MotionPathTrackRuntime child) =>
+        fail('nothing was removed');
     parent.addChild(_track('a'));
 
     parent.removeChild('missing');

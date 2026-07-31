@@ -4,8 +4,7 @@ import 'package:test/test.dart';
 List<MotionPathToggleAction> _drive(
   MotionPathToggleStateMachine machine,
   double value,
-) =>
-    machine.updateForValue(value: value, start: 100, end: 200);
+) => machine.updateForValue(value: value, start: 100, end: 200);
 
 void main() {
   test('the first sample seeds silently', () {
@@ -97,11 +96,8 @@ void main() {
 
   test('an inverted or non-finite window fails fast', () {
     expect(
-      () => MotionPathToggleStateMachine.zoneFor(
-        value: 0,
-        start: 200,
-        end: 100,
-      ),
+      () =>
+          MotionPathToggleStateMachine.zoneFor(value: 0, start: 200, end: 100),
       throwsArgumentError,
     );
     expect(

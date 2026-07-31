@@ -39,11 +39,7 @@ void main() {
       expect(builds.value, 1);
 
       source.publish(<String, Map<String, Object?>>{
-        'card': <String, Object?>{
-          'x': 20,
-          'scale': 1.2,
-          'opacity': 0.5,
-        },
+        'card': <String, Object?>{'x': 20, 'scale': 1.2, 'opacity': 0.5},
       });
       await tester.pump();
 
@@ -55,56 +51,52 @@ void main() {
     },
   );
 
-  testWidgets(
-    'applies rotation and blur from the patch',
-    (WidgetTester tester) async {
-      final MotionPathPatchSource source = MotionPathPatchSource();
+  testWidgets('applies rotation and blur from the patch', (
+    WidgetTester tester,
+  ) async {
+    final MotionPathPatchSource source = MotionPathPatchSource();
 
-      await tester.pumpWidget(
-        Directionality(
-          textDirection: TextDirection.ltr,
-          child: MotionPathPatchView(
-            source: source,
-            trackId: 'card',
-            child: const SizedBox(),
-          ),
+    await tester.pumpWidget(
+      Directionality(
+        textDirection: TextDirection.ltr,
+        child: MotionPathPatchView(
+          source: source,
+          trackId: 'card',
+          child: const SizedBox(),
         ),
-      );
+      ),
+    );
 
-      source.publish(<String, Map<String, Object?>>{
-        'card': <String, Object?>{
-          'rotation': 90,
-          'filter': <String, Object?>{'blur': 4},
-        },
-      });
-      await tester.pump();
+    source.publish(<String, Map<String, Object?>>{
+      'card': <String, Object?>{
+        'rotation': 90,
+        'filter': <String, Object?>{'blur': 4},
+      },
+    });
+    await tester.pump();
 
-      expect(find.byType(Transform), findsWidgets);
-      expect(find.byType(ImageFiltered), findsOneWidget);
-      expect(tester.takeException(), isNull);
-    },
-  );
+    expect(find.byType(Transform), findsWidgets);
+    expect(find.byType(ImageFiltered), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 
-  testWidgets(
-    'keeps diagnostic painter opt-in',
-    (WidgetTester tester) async {
-      final MotionPathPatchSource source = MotionPathPatchSource();
+  testWidgets('keeps diagnostic painter opt-in', (WidgetTester tester) async {
+    final MotionPathPatchSource source = MotionPathPatchSource();
 
-      await tester.pumpWidget(
-        Directionality(
-          textDirection: TextDirection.ltr,
-          child: MotionPathPatchView(
-            source: source,
-            trackId: 'card',
-            useDiagnosticPainter: true,
-            child: const SizedBox(),
-          ),
+    await tester.pumpWidget(
+      Directionality(
+        textDirection: TextDirection.ltr,
+        child: MotionPathPatchView(
+          source: source,
+          trackId: 'card',
+          useDiagnosticPainter: true,
+          child: const SizedBox(),
         ),
-      );
+      ),
+    );
 
-      expect(find.byType(CustomPaint), findsOneWidget);
-      expect(find.byType(SizedBox), findsNothing);
-      expect(tester.takeException(), isNull);
-    },
-  );
+    expect(find.byType(CustomPaint), findsOneWidget);
+    expect(find.byType(SizedBox), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
 }

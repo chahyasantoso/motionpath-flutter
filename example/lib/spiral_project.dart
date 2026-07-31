@@ -49,8 +49,9 @@ const Map<String, Object?> spiralBallProjectJson = <String, Object?>{
 };
 
 MotionPathTrackRuntime createAuthoredSpiralBall(String id) {
-  final MotionPathProject project =
-      MotionPathProject.fromJson(spiralBallProjectJson);
+  final MotionPathProject project = MotionPathProject.fromJson(
+    spiralBallProjectJson,
+  );
   final MotionPathTrack authored = project.motions.single.tracks.single;
   return MotionPathTrackRuntime(
     id,

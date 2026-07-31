@@ -64,14 +64,16 @@ List<_PathNode> _nodes(Object? raw) {
     if (point['x'] is! num || point['y'] is! num) continue;
     double? number(String key) =>
         point[key] is num ? (point[key]! as num).toDouble() : null;
-    result.add(_PathNode(
-      x: (point['x']! as num).toDouble(),
-      y: (point['y']! as num).toDouble(),
-      z: number('z') ?? 0,
-      ctrlX: number('ctrlX'),
-      ctrlY: number('ctrlY'),
-      ctrlZ: number('ctrlZ'),
-    ));
+    result.add(
+      _PathNode(
+        x: (point['x']! as num).toDouble(),
+        y: (point['y']! as num).toDouble(),
+        z: number('z') ?? 0,
+        ctrlX: number('ctrlX'),
+        ctrlY: number('ctrlY'),
+        ctrlZ: number('ctrlZ'),
+      ),
+    );
   }
   return result;
 }
@@ -113,7 +115,11 @@ Map<String, Object?> _samplePath(List<_PathNode> nodes, double progress) {
     totalLength += length;
   }
   if (totalLength == 0) {
-    return <String, Object?>{'x': nodes.first.x, 'y': nodes.first.y, 'z': nodes.first.z};
+    return <String, Object?>{
+      'x': nodes.first.x,
+      'y': nodes.first.y,
+      'z': nodes.first.z,
+    };
   }
 
   double target = progress * totalLength;
@@ -134,15 +140,18 @@ Map<String, Object?> _point(_CubicSegment segment, double t) {
   final double mt2 = mt * mt;
   final double t2 = t * t;
   return <String, Object?>{
-    'x': mt2 * mt * segment.p0.x +
+    'x':
+        mt2 * mt * segment.p0.x +
         3 * mt2 * t * segment.p1.x +
         3 * mt * t2 * segment.p2.x +
         t2 * t * segment.p3.x,
-    'y': mt2 * mt * segment.p0.y +
+    'y':
+        mt2 * mt * segment.p0.y +
         3 * mt2 * t * segment.p1.y +
         3 * mt * t2 * segment.p2.y +
         t2 * t * segment.p3.y,
-    'z': mt2 * mt * segment.p0.z +
+    'z':
+        mt2 * mt * segment.p0.z +
         3 * mt2 * t * segment.p1.z +
         3 * mt * t2 * segment.p2.z +
         t2 * t * segment.p3.z,

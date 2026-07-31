@@ -17,14 +17,19 @@ void main() {
     expect(seen, isEmpty);
   });
 
-  testWidgets('ticker driver can stop and dispose repeatedly',
-      (WidgetTester tester) async {
+  testWidgets('ticker driver can stop and dispose repeatedly', (
+    WidgetTester tester,
+  ) async {
     final MotionPathEngine engine = MotionPathEngine();
     late MotionPathTickerDriver driver;
-    await tester.pumpWidget(_TickerHost(onReady: (TickerProvider provider) {
-      driver = MotionPathTickerDriver(engine, provider);
-      driver.start();
-    }));
+    await tester.pumpWidget(
+      _TickerHost(
+        onReady: (TickerProvider provider) {
+          driver = MotionPathTickerDriver(engine, provider);
+          driver.start();
+        },
+      ),
+    );
     await tester.pump();
     expect(driver.isActive, isTrue);
     driver.stop();

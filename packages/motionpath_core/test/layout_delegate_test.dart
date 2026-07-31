@@ -22,30 +22,32 @@ void main() {
 
     test('a single child appends one stagger after it', () {
       expect(
-        kGaplessLayoutDelegate.computeSpawnOffset(
-          <MotionPathLayoutChild>[_Child(10)],
-          stagger: 5,
-        ),
+        kGaplessLayoutDelegate.computeSpawnOffset(<MotionPathLayoutChild>[
+          _Child(10),
+        ], stagger: 5),
         15,
       );
     });
 
-    test('placement anchors to the frontmost offset, not the last inserted',
-        () {
-      expect(
-        kGaplessLayoutDelegate.computeSpawnOffset(
-          <MotionPathLayoutChild>[_Child(10), _Child(25), _Child(15)],
-          stagger: 5,
-        ),
-        30,
-      );
-    });
+    test(
+      'placement anchors to the frontmost offset, not the last inserted',
+      () {
+        expect(
+          kGaplessLayoutDelegate.computeSpawnOffset(<MotionPathLayoutChild>[
+            _Child(10),
+            _Child(25),
+            _Child(15),
+          ], stagger: 5),
+          30,
+        );
+      },
+    );
 
     test('a zero stagger stacks a new child on the frontmost offset', () {
       expect(
-        kGaplessLayoutDelegate.computeSpawnOffset(
-          <MotionPathLayoutChild>[_Child(10)],
-        ),
+        kGaplessLayoutDelegate.computeSpawnOffset(<MotionPathLayoutChild>[
+          _Child(10),
+        ]),
         10,
       );
     });
@@ -64,29 +66,31 @@ void main() {
       );
     });
 
-    test('a mid-chain removal cascades survivors down one slot, in rank order',
-        () {
-      final _Child first = _Child(0);
-      final _Child second = _Child(10);
-      final _Child third = _Child(20);
-      final _Child fourth = _Child(30);
-      // Passed out of insertion order on purpose: the policy must order by
-      // settled offset itself.
-      final List<MotionPathLayoutChild> children = <MotionPathLayoutChild>[
-        third,
-        first,
-        fourth,
-        second,
-      ];
+    test(
+      'a mid-chain removal cascades survivors down one slot, in rank order',
+      () {
+        final _Child first = _Child(0);
+        final _Child second = _Child(10);
+        final _Child third = _Child(20);
+        final _Child fourth = _Child(30);
+        // Passed out of insertion order on purpose: the policy must order by
+        // settled offset itself.
+        final List<MotionPathLayoutChild> children = <MotionPathLayoutChild>[
+          third,
+          first,
+          fourth,
+          second,
+        ];
 
-      expect(
-        kGaplessLayoutDelegate.computeReflow(children, second),
-        <MotionPathReflowTarget>[
-          MotionPathReflowTarget(child: third, offset: 10),
-          MotionPathReflowTarget(child: fourth, offset: 20),
-        ],
-      );
-    });
+        expect(
+          kGaplessLayoutDelegate.computeReflow(children, second),
+          <MotionPathReflowTarget>[
+            MotionPathReflowTarget(child: third, offset: 10),
+            MotionPathReflowTarget(child: fourth, offset: 20),
+          ],
+        );
+      },
+    );
 
     test('a child outside the chain never reflows it', () {
       final List<MotionPathLayoutChild> children = <MotionPathLayoutChild>[
@@ -99,36 +103,38 @@ void main() {
       );
     });
 
-    test('equal offsets keep insertion order, so reflow stays deterministic',
-        () {
-      final _Child first = _Child(0);
-      final _Child tiedEarly = _Child(10);
-      final _Child tiedLate = _Child(10);
-      final _Child last = _Child(20);
-      final List<MotionPathLayoutChild> children = <MotionPathLayoutChild>[
-        first,
-        tiedEarly,
-        tiedLate,
-        last,
-      ];
+    test(
+      'equal offsets keep insertion order, so reflow stays deterministic',
+      () {
+        final _Child first = _Child(0);
+        final _Child tiedEarly = _Child(10);
+        final _Child tiedLate = _Child(10);
+        final _Child last = _Child(20);
+        final List<MotionPathLayoutChild> children = <MotionPathLayoutChild>[
+          first,
+          tiedEarly,
+          tiedLate,
+          last,
+        ];
 
-      expect(
-        kGaplessLayoutDelegate.computeReflow(children, tiedEarly),
-        <MotionPathReflowTarget>[
-          MotionPathReflowTarget(child: tiedLate, offset: 10),
-          MotionPathReflowTarget(child: last, offset: 10),
-        ],
-      );
-    });
+        expect(
+          kGaplessLayoutDelegate.computeReflow(children, tiedEarly),
+          <MotionPathReflowTarget>[
+            MotionPathReflowTarget(child: tiedLate, offset: 10),
+            MotionPathReflowTarget(child: last, offset: 10),
+          ],
+        );
+      },
+    );
   });
 
   group('static policy', () {
     test('spawn placement is inherited unchanged', () {
       expect(
-        kStaticLayoutDelegate.computeSpawnOffset(
-          <MotionPathLayoutChild>[_Child(10), _Child(25)],
-          stagger: 5,
-        ),
+        kStaticLayoutDelegate.computeSpawnOffset(<MotionPathLayoutChild>[
+          _Child(10),
+          _Child(25),
+        ], stagger: 5),
         30,
       );
     });

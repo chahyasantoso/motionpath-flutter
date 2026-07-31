@@ -74,8 +74,7 @@ class MotionPathTrigger {
 
   /// Whether this trigger scrubs on scroll rather than on time.
   bool get isScrub =>
-      type == MotionPathTriggerType.scroll &&
-      (scrub == true || scrub is num);
+      type == MotionPathTriggerType.scroll && (scrub == true || scrub is num);
 
   /// Normalized progress for [elapsed] seconds over a [duration].
   double progressAt(double elapsed, double duration) {
@@ -87,7 +86,9 @@ class MotionPathTrigger {
     if (repeat >= 0 && index > repeat) {
       return yoyo && repeat.isOdd ? 0 : 1;
     }
-    final double local = (shifted - index * cycle).clamp(0.0, duration).toDouble();
+    final double local = (shifted - index * cycle)
+        .clamp(0.0, duration)
+        .toDouble();
     final double value = local / duration;
     return yoyo && index.isOdd ? 1 - value : value;
   }

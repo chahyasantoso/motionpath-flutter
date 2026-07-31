@@ -5,10 +5,7 @@ import '../runtime/track.dart';
 /// Collects dirty graph nodes and publishes composed patches once per flush.
 class MotionPathGraphPublisher {
   /// Creates a publisher over mounted [tracks] and an optional compiled graph.
-  MotionPathGraphPublisher(
-    this.tracks, {
-    this.graph,
-  }) {
+  MotionPathGraphPublisher(this.tracks, {this.graph}) {
     _wireGraph();
   }
 

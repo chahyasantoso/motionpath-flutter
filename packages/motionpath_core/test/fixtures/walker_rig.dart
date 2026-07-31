@@ -50,43 +50,55 @@ double _elbowFlex(double ph) => 26 + 15 * math.sin(ph + 0.7);
 // desired world angle minus the parent's world angle.
 double Function(double) _hip(double shift) =>
     (double ph) => _thighWorld(ph + shift) - _pelvisTilt(ph);
-double Function(double) _knee(double shift) => (double ph) => _kneeFlex(ph + shift);
+double Function(double) _knee(double shift) =>
+    (double ph) => _kneeFlex(ph + shift);
 double Function(double) _ankle(double shift) =>
     (double ph) => _footWorld(ph + shift) - _shinWorld(ph + shift);
 double Function(double) _shoulder(double shift) =>
     (double ph) => _upperArmWorld(ph + shift) - _chestWorld(ph);
-double Function(double) _elbow(double shift) => (double ph) => _elbowFlex(ph + shift);
+double Function(double) _elbow(double shift) =>
+    (double ph) => _elbowFlex(ph + shift);
 
 /// Samples a phase function into JSON stops once, never per frame.
 Map<String, Object?> _sample(double Function(double ph) fn) {
   final stops = <Object?>[];
   for (var i = 0; i <= kSamples; i++) {
     final double p = _round(i / kSamples);
-    stops.add(<String, Object?>{'p': p, 'v': _round(fn(p * kCycles * _tau)), 'ease': 'none'});
+    stops.add(<String, Object?>{
+      'p': p,
+      'v': _round(fn(p * kCycles * _tau)),
+      'ease': 'none',
+    });
   }
   return <String, Object?>{'stops': stops};
 }
 
 Map<String, Object?> _hold(double value) => <String, Object?>{
-      'stops': <Object?>[
-        <String, Object?>{'p': 0, 'v': value, 'ease': 'none'},
-        <String, Object?>{'p': 1, 'v': value, 'ease': 'none'},
-      ],
-    };
+  'stops': <Object?>[
+    <String, Object?>{'p': 0, 'v': value, 'ease': 'none'},
+    <String, Object?>{'p': 1, 'v': value, 'ease': 'none'},
+  ],
+};
 
 Map<String, Object?> _bone(
   String id,
   String parent,
   Map<String, Object?> boneLength,
   Map<String, Object?> boneRotation,
-) =>
+) => <String, Object?>{
+  'id': id,
+  'observes': <Object?>[
     <String, Object?>{
-      'id': id,
-      'observes': <Object?>[
-        <String, Object?>{'source': parent, 'role': 'input', 'target': 'parentWorld'},
-      ],
-      'keyframes': <String, Object?>{'boneLength': boneLength, 'boneRotation': boneRotation},
-    };
+      'source': parent,
+      'role': 'input',
+      'target': 'parentWorld',
+    },
+  ],
+  'keyframes': <String, Object?>{
+    'boneLength': boneLength,
+    'boneRotation': boneRotation,
+  },
+};
 
 /// The full FK walk cycle as authored v4 JSON.
 Map<String, Object?> walkerProjectJson() {
@@ -104,8 +116,18 @@ Map<String, Object?> walkerProjectJson() {
         'rotation': _sample(_pelvisTilt),
       },
     },
-    _bone('spine', 'pelvis', _hold(0), _sample((double ph) => _spineWorld(ph) - _pelvisTilt(ph))),
-    _bone('chest', 'spine', _hold(kTorso), _sample((double ph) => _chestWorld(ph) - _spineWorld(ph))),
+    _bone(
+      'spine',
+      'pelvis',
+      _hold(0),
+      _sample((double ph) => _spineWorld(ph) - _pelvisTilt(ph)),
+    ),
+    _bone(
+      'chest',
+      'spine',
+      _hold(kTorso),
+      _sample((double ph) => _chestWorld(ph) - _spineWorld(ph)),
+    ),
     _bone(
       'head',
       'chest',
@@ -115,15 +137,45 @@ Map<String, Object?> walkerProjectJson() {
       _sample((double ph) => _headWorld(ph) - _chestWorld(ph)),
     ),
     _bone('arm-far-upper', 'chest', _hold(0), _sample(_shoulder(_nearPhase))),
-    _bone('arm-far-fore', 'arm-far-upper', _hold(kUpperArm), _sample(_elbow(_nearPhase))),
+    _bone(
+      'arm-far-fore',
+      'arm-far-upper',
+      _hold(kUpperArm),
+      _sample(_elbow(_nearPhase)),
+    ),
     _bone('leg-far-thigh', 'pelvis', _hold(0), _sample(_hip(_farPhase))),
-    _bone('leg-far-shin', 'leg-far-thigh', _hold(kThigh), _sample(_knee(_farPhase))),
-    _bone('leg-far-foot', 'leg-far-shin', _hold(kShin), _sample(_ankle(_farPhase))),
+    _bone(
+      'leg-far-shin',
+      'leg-far-thigh',
+      _hold(kThigh),
+      _sample(_knee(_farPhase)),
+    ),
+    _bone(
+      'leg-far-foot',
+      'leg-far-shin',
+      _hold(kShin),
+      _sample(_ankle(_farPhase)),
+    ),
     _bone('arm-near-upper', 'chest', _hold(0), _sample(_shoulder(_farPhase))),
-    _bone('arm-near-fore', 'arm-near-upper', _hold(kUpperArm), _sample(_elbow(_farPhase))),
+    _bone(
+      'arm-near-fore',
+      'arm-near-upper',
+      _hold(kUpperArm),
+      _sample(_elbow(_farPhase)),
+    ),
     _bone('leg-near-thigh', 'pelvis', _hold(0), _sample(_hip(_nearPhase))),
-    _bone('leg-near-shin', 'leg-near-thigh', _hold(kThigh), _sample(_knee(_nearPhase))),
-    _bone('leg-near-foot', 'leg-near-shin', _hold(kShin), _sample(_ankle(_nearPhase))),
+    _bone(
+      'leg-near-shin',
+      'leg-near-thigh',
+      _hold(kThigh),
+      _sample(_knee(_nearPhase)),
+    ),
+    _bone(
+      'leg-near-foot',
+      'leg-near-shin',
+      _hold(kShin),
+      _sample(_ankle(_nearPhase)),
+    ),
   ];
   return <String, Object?>{
     'schemaVersion': 4,

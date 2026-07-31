@@ -18,8 +18,9 @@ void main() {
         ),
       ],
     );
-    final MotionPathPatchController controller =
-        MotionPathPatchController(motion: motion);
+    final MotionPathPatchController controller = MotionPathPatchController(
+      motion: motion,
+    );
     controller.seek(0.5);
     expect(controller.patchFor('box')['x'], closeTo(50, 1e-9));
     controller.dispose();
@@ -30,8 +31,9 @@ void main() {
       id: 'motion',
       tracks: <MotionPathTrackRuntime>[MotionPathTrackRuntime('box')],
     );
-    final MotionPathPatchController controller =
-        MotionPathPatchController(motion: motion);
+    final MotionPathPatchController controller = MotionPathPatchController(
+      motion: motion,
+    );
     int notifications = 0;
     controller.addListener(() => notifications++);
     controller.dispose();

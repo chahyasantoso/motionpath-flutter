@@ -118,15 +118,13 @@ class MotionPathGaplessLayoutDelegate extends MotionPathLayoutDelegate {
       return const <MotionPathReflowTarget>[];
     }
 
-    return List<MotionPathReflowTarget>.unmodifiable(
-      <MotionPathReflowTarget>[
-        for (int index = removedRank + 1; index < ordered.length; index++)
-          MotionPathReflowTarget(
-            child: ordered[index],
-            offset: ordered[index - 1].currentOffset,
-          ),
-      ],
-    );
+    return List<MotionPathReflowTarget>.unmodifiable(<MotionPathReflowTarget>[
+      for (int index = removedRank + 1; index < ordered.length; index++)
+        MotionPathReflowTarget(
+          child: ordered[index],
+          offset: ordered[index - 1].currentOffset,
+        ),
+    ]);
   }
 
   /// Orders [children] by settled offset, stably.
@@ -144,7 +142,8 @@ class MotionPathGaplessLayoutDelegate extends MotionPathLayoutDelegate {
     final List<MotionPathLayoutChild> ordered = <MotionPathLayoutChild>[];
     for (final MotionPathLayoutChild child in children) {
       int slot = ordered.length;
-      while (slot > 0 && ordered[slot - 1].currentOffset > child.currentOffset) {
+      while (slot > 0 &&
+          ordered[slot - 1].currentOffset > child.currentOffset) {
         slot--;
       }
       ordered.insert(slot, child);
@@ -157,10 +156,7 @@ class MotionPathGaplessLayoutDelegate extends MotionPathLayoutDelegate {
   /// Identity, not equality: two distinct children can legitimately share a
   /// settled offset.
   @protected
-  int rankOf(
-    List<MotionPathLayoutChild> ordered,
-    MotionPathLayoutChild child,
-  ) {
+  int rankOf(List<MotionPathLayoutChild> ordered, MotionPathLayoutChild child) {
     for (int index = 0; index < ordered.length; index++) {
       if (identical(ordered[index], child)) {
         return index;
@@ -189,8 +185,7 @@ class MotionPathStaticLayoutDelegate extends MotionPathGaplessLayoutDelegate {
     List<MotionPathLayoutChild> children,
     MotionPathLayoutChild removedChild, {
     double stagger = 0,
-  }) =>
-      const <MotionPathReflowTarget>[];
+  }) => const <MotionPathReflowTarget>[];
 }
 
 /// Shared stateless gapless policy, used when a track declares none.

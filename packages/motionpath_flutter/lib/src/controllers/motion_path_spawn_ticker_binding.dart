@@ -9,10 +9,8 @@ import 'motion_path_spawn_controller.dart';
 /// spawn controller.
 class MotionPathSpawnTickerBinding {
   /// Creates and wires a binding.
-  MotionPathSpawnTickerBinding({
-    required this.driver,
-    required this.controller,
-  }) : _removeListener = driver.addTickListener(controller.advanceBy);
+  MotionPathSpawnTickerBinding({required this.driver, required this.controller})
+    : _removeListener = driver.addTickListener(controller.advanceBy);
 
   /// Shared engine ticker.
   final MotionPathTickerDriver driver;

@@ -2,9 +2,8 @@ import 'package:meta/meta.dart';
 
 import '../math/fk_math.dart';
 
-typedef PatchComposer = Map<String, Object?>? Function(
-  Map<String, Object?> raw,
-);
+typedef PatchComposer =
+    Map<String, Object?>? Function(Map<String, Object?> raw);
 
 @immutable
 class MotionPathPlugin {
@@ -36,7 +35,8 @@ double? _optionalDouble(Object? value) =>
 
 Map<String, Object?>? _composeForwardKinematics(Map<String, Object?> raw) {
   final double length = _optionalDouble(raw['boneLength']) ?? 0;
-  final double rotation = _optionalDouble(raw['boneRotation']) ??
+  final double rotation =
+      _optionalDouble(raw['boneRotation']) ??
       _optionalDouble(raw['rotation']) ??
       0;
   final MotionPathWorldTransform world = composeWorld(
@@ -91,7 +91,7 @@ void assertPluginContract(MotionPathPlugin plugin) {
 
 class MotionPathPluginRegistry {
   MotionPathPluginRegistry({List<MotionPathPlugin>? plugins})
-      : _plugins = <MotionPathPlugin>[] {
+    : _plugins = <MotionPathPlugin>[] {
     for (final MotionPathPlugin plugin
         in plugins ?? const <MotionPathPlugin>[forwardKinematicsPlugin]) {
       register(plugin);
@@ -105,7 +105,9 @@ class MotionPathPluginRegistry {
 
   void register(MotionPathPlugin plugin) {
     assertPluginContract(plugin);
-    if (_plugins.any((MotionPathPlugin existing) => existing.name == plugin.name)) {
+    if (_plugins.any(
+      (MotionPathPlugin existing) => existing.name == plugin.name,
+    )) {
       throw StateError('Plugin "${plugin.name}" is already registered.');
     }
     _plugins.add(plugin);
@@ -116,8 +118,9 @@ class MotionPathPluginRegistry {
     final List<MotionPathPlugin> resolved = <MotionPathPlugin>[];
     final Set<String> claimed = <String>{};
     for (final MotionPathPlugin plugin in _plugins) {
-      final List<String> matched =
-          keys.where(plugin.claimsKey).toList(growable: false);
+      final List<String> matched = keys
+          .where(plugin.claimsKey)
+          .toList(growable: false);
       if (matched.isEmpty) {
         continue;
       }
@@ -138,10 +141,7 @@ class MotionPathPluginRegistry {
   }
 }
 
-void assertOutputCompatibility(
-  String trackId,
-  List<MotionPathPlugin> plugins,
-) {
+void assertOutputCompatibility(String trackId, List<MotionPathPlugin> plugins) {
   final Map<String, String> owners = <String, String>{};
   for (final MotionPathPlugin plugin in plugins) {
     for (final String output in plugin.outputs) {

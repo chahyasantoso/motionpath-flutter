@@ -4,9 +4,9 @@ import 'package:motionpath_core/motionpath_core.dart';
 import 'package:motionpath_flutter/motionpath_flutter.dart';
 
 MotionPathMotionRuntime _motion() => MotionPathMotionRuntime(
-      id: 'scroll-lifecycle',
-      tracks: <MotionPathTrackRuntime>[MotionPathTrackRuntime('scene')],
-    );
+  id: 'scroll-lifecycle',
+  tracks: <MotionPathTrackRuntime>[MotionPathTrackRuntime('scene')],
+);
 
 Future<ScrollPosition> _pumpScrollable(
   WidgetTester tester,
@@ -26,8 +26,9 @@ Future<ScrollPosition> _pumpScrollable(
 }
 
 void main() {
-  testWidgets('reattaching a reused position seeds instead of replaying',
-      (WidgetTester tester) async {
+  testWidgets('reattaching a reused position seeds instead of replaying', (
+    WidgetTester tester,
+  ) async {
     final ScrollController controller = ScrollController();
     final ScrollPosition position = await _pumpScrollable(tester, controller);
     final List<MotionPathToggleAction> seen = <MotionPathToggleAction>[];
@@ -69,8 +70,9 @@ void main() {
     controller.dispose();
   });
 
-  testWidgets('disposing mid-scroll stops sampling for good',
-      (WidgetTester tester) async {
+  testWidgets('disposing mid-scroll stops sampling for good', (
+    WidgetTester tester,
+  ) async {
     final ScrollController controller = ScrollController();
     final ScrollPosition position = await _pumpScrollable(tester, controller);
     int samples = 0;

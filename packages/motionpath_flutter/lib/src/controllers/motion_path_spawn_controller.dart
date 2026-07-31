@@ -210,27 +210,25 @@ class MotionPathSpawnController extends ChangeNotifier {
       }
       ordered.insert(slot, child);
     }
-    _instances = List<MotionPathSpawnInstance>.unmodifiable(
-      <MotionPathSpawnInstance>[
-        for (final MotionPathTrackRuntime child in ordered)
-          MotionPathSpawnInstance(
-            id: child.id,
-            offset: _effectiveOffset(child),
-            progress: child.progress,
-            hasStarted: _elapsed >= _effectiveOffset(child),
-            patch: child.compose(),
-          ),
-      ],
-    );
+    _instances =
+        List<MotionPathSpawnInstance>.unmodifiable(<MotionPathSpawnInstance>[
+          for (final MotionPathTrackRuntime child in ordered)
+            MotionPathSpawnInstance(
+              id: child.id,
+              offset: _effectiveOffset(child),
+              progress: child.progress,
+              hasStarted: _elapsed >= _effectiveOffset(child),
+              patch: child.compose(),
+            ),
+        ]);
   }
 
   double _effectiveOffset(MotionPathTrackRuntime child) =>
       _offsets[child]?.value ?? child.currentOffset;
 
-  double _spanOf(MotionPathTrackRuntime child) =>
-      child.duration > 0
-          ? child.duration
-          : (childDuration > 0 ? childDuration : 1);
+  double _spanOf(MotionPathTrackRuntime child) => child.duration > 0
+      ? child.duration
+      : (childDuration > 0 ? childDuration : 1);
 
   double _localProgress(MotionPathTrackRuntime child) =>
       ((_elapsed - _effectiveOffset(child)) / _spanOf(child))

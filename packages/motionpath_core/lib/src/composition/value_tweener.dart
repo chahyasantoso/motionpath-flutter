@@ -12,11 +12,11 @@ class MotionPathValueTweener {
     required double target,
     required double duration,
     required Easing ease,
-  })  : _start = initial,
-        _value = initial,
-        _target = target,
-        _duration = duration,
-        _ease = ease;
+  }) : _start = initial,
+       _value = initial,
+       _target = target,
+       _duration = duration,
+       _ease = ease;
 
   final double _duration;
   final Easing _ease;

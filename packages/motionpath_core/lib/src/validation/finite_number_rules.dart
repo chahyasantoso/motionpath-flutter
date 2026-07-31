@@ -7,11 +7,17 @@ List<MotionPathDiagnostic> finiteNumberRules(Map<String, Object?> json) {
   final Object? rawMotions = json['motions'];
   if (rawMotions is List<Object?>) {
     for (int motionIndex = 0; motionIndex < rawMotions.length; motionIndex++) {
-      final Map<String, Object?> motion = asStringKeyedMap(rawMotions[motionIndex]);
+      final Map<String, Object?> motion = asStringKeyedMap(
+        rawMotions[motionIndex],
+      );
       final String motionPath = 'motions[$motionIndex]';
       _finite(motion['stagger'], '$motionPath.stagger', diagnostics);
       final Map<String, Object?> trigger = asStringKeyedMap(motion['trigger']);
-      _finite(trigger['repeatDelay'], '$motionPath.trigger.repeatDelay', diagnostics);
+      _finite(
+        trigger['repeatDelay'],
+        '$motionPath.trigger.repeatDelay',
+        diagnostics,
+      );
       _finite(trigger['delay'], '$motionPath.trigger.delay', diagnostics);
       _finite(trigger['scrub'], '$motionPath.trigger.scrub', diagnostics);
       final Object? rawTracks = motion['tracks'];
@@ -29,7 +35,11 @@ List<MotionPathDiagnostic> finiteNumberRules(Map<String, Object?> json) {
   final Object? rawTracks = json['tracks'];
   if (rawTracks is List<Object?>) {
     for (int index = 0; index < rawTracks.length; index++) {
-      _trackFinite(asStringKeyedMap(rawTracks[index]), 'tracks[$index]', diagnostics);
+      _trackFinite(
+        asStringKeyedMap(rawTracks[index]),
+        'tracks[$index]',
+        diagnostics,
+      );
     }
   }
   return diagnostics;
@@ -48,18 +58,32 @@ void _trackFinite(
     if (rawStops is! List<Object?>) continue;
     for (int index = 0; index < rawStops.length; index++) {
       final Map<String, Object?> stop = asStringKeyedMap(rawStops[index]);
-      _finite(stop['p'], '$path.keyframes.${entry.key}.stops[$index].p', diagnostics);
-      _finite(stop['v'], '$path.keyframes.${entry.key}.stops[$index].v', diagnostics);
+      _finite(
+        stop['p'],
+        '$path.keyframes.${entry.key}.stops[$index].p',
+        diagnostics,
+      );
+      _finite(
+        stop['v'],
+        '$path.keyframes.${entry.key}.stops[$index].v',
+        diagnostics,
+      );
     }
   }
 }
 
-void _finite(Object? value, String path, List<MotionPathDiagnostic> diagnostics) {
+void _finite(
+  Object? value,
+  String path,
+  List<MotionPathDiagnostic> diagnostics,
+) {
   if (value is num && !value.toDouble().isFinite) {
-    diagnostics.add(MotionPathDiagnostic(
-      path: path,
-      code: 'finite-number',
-      message: 'Numeric values must be finite.',
-    ));
+    diagnostics.add(
+      MotionPathDiagnostic(
+        path: path,
+        code: 'finite-number',
+        message: 'Numeric values must be finite.',
+      ),
+    );
   }
 }

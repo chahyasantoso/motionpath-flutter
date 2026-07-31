@@ -131,21 +131,24 @@ class MotionPathProject {
         List<MotionPathDiagnostic>.unmodifiable(fatal),
       );
     }
-    final List<Map<String, Object?>> templates =
-        asStringKeyedMapList(json['templates']);
+    final List<Map<String, Object?>> templates = asStringKeyedMapList(
+      json['templates'],
+    );
     return MotionPathProject(
       schemaVersion: 4,
       projectId: _optionalString(json['projectId']),
       perspective: _optionalNum(json['perspective']),
       templates: List<Map<String, Object?>>.unmodifiable(templates),
       motions: List<MotionPathMotion>.unmodifiable(<MotionPathMotion>[
-        for (final Map<String, Object?> motion
-            in asStringKeyedMapList(json['motions']))
+        for (final Map<String, Object?> motion in asStringKeyedMapList(
+          json['motions'],
+        ))
           MotionPathMotion.fromJson(motion, templates: templates),
       ]),
       tracks: List<MotionPathTrack>.unmodifiable(<MotionPathTrack>[
-        for (final Map<String, Object?> track
-            in asStringKeyedMapList(json['tracks']))
+        for (final Map<String, Object?> track in asStringKeyedMapList(
+          json['tracks'],
+        ))
           MotionPathTrack.fromJson(track, templates: templates),
       ]),
     );
@@ -204,8 +207,9 @@ class MotionPathMotion {
       trigger: asStringKeyedMap(json['trigger']),
       stagger: _optionalNum(json['stagger'])?.toDouble() ?? 0,
       tracks: <MotionPathTrack>[
-        for (final Map<String, Object?> track
-            in asStringKeyedMapList(json['tracks']))
+        for (final Map<String, Object?> track in asStringKeyedMapList(
+          json['tracks'],
+        ))
           MotionPathTrack.fromJson(track, templates: templates),
       ],
     );
