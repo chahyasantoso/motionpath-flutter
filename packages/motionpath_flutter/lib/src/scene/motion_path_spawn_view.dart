@@ -12,11 +12,11 @@ typedef MotionPathSpawnItemBuilder =
 
 /// Renders dynamic children from composed spawn patches.
 ///
-/// The controller remains the only clock consumer. This widget only listens to
-/// its snapshots, sorts instances by settled offset, assigns stable identity,
-/// and applies the shared patch transform to each child.
+/// Controller snapshots remain in ascending-offset order for compatibility.
+/// Flutter paints the ascending list directly, putting the higher-offset
+/// top-most item last in the Stack. Use [motionPathTopMostFirst] when hit-test
+/// traversal needs the front-most child first.
 class MotionPathSpawnView extends StatelessWidget {
-  /// Creates a dynamic spawn view.
   const MotionPathSpawnView({
     required this.controller,
     required this.itemBuilder,
@@ -25,16 +25,9 @@ class MotionPathSpawnView extends StatelessWidget {
     super.key,
   });
 
-  /// Dynamic child lifecycle and composed patch source.
   final MotionPathSpawnController controller;
-
-  /// Builds the content inside each patch-driven instance wrapper.
   final MotionPathSpawnItemBuilder itemBuilder;
-
-  /// Stack alignment for children whose patches do not translate them.
   final Alignment alignment;
-
-  /// Fallback color for consumers that inspect color through the shared resolver.
   final int fallbackArgb;
 
   @override
@@ -62,52 +55,21 @@ class MotionPathSpawnView extends StatelessWidget {
 }
 
 class _MotionPathSpawnItem extends StatelessWidget {
-  const _MotionPathSpawnItem({
-    required this.instance,
-    required this.fallbackArgb,
-    required this.child,
-  });
-
+  const _MotionPathSpawnItem({required this.instance, required this.fallbackArgb, required this.child});
   final MotionPathSpawnInstance instance;
   final int fallbackArgb;
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    final MotionPathPatchTransform transform =
-        MotionPathPatchTransform.fromPatch(
-          instance.patch,
-          fallbackArgb: fallbackArgb,
-        );
+    final MotionPathPatchTransform transform = MotionPathPatchTransform.fromPatch(instance.patch, fallbackArgb: fallbackArgb);
     Widget result = child;
-    if (transform.opacity != 1) {
-      result = Opacity(opacity: transform.opacity, child: result);
-    }
-    final ImageFilter? filter = MotionPathPatchConsumers.blurFilter(
-      instance.patch,
-    );
-    if (filter != null) {
-      result = ImageFiltered(imageFilter: filter, child: result);
-    }
-    if (transform.scaleX != 1 || transform.scaleY != 1) {
-      result = Transform.scale(
-        scaleX: transform.scaleX,
-        scaleY: transform.scaleY,
-        child: result,
-      );
-    }
-    if (transform.rotationRadians != 0) {
-      result = Transform.rotate(
-        angle: transform.rotationRadians,
-        child: result,
-      );
-    }
-    if (transform.translateX != 0 || transform.translateY != 0) {
-      result = Transform.translate(
-        offset: Offset(transform.translateX, transform.translateY),
-        child: result,
-      );
-    }
+    if (transform.opacity != 1) result = Opacity(opacity: transform.opacity, child: result);
+    final ImageFilter? filter = MotionPathPatchConsumers.blurFilter(instance.patch);
+    if (filter != null) result = ImageFiltered(imageFilter: filter, child: result);
+    if (transform.scaleX != 1 || transform.scaleY != 1) result = Transform.scale(scaleX: transform.scaleX, scaleY: transform.scaleY, child: result);
+    if (transform.rotationRadians != 0) result = Transform.rotate(angle: transform.rotationRadians, child: result);
+    if (transform.translateX != 0 || transform.translateY != 0) result = Transform.translate(offset: Offset(transform.translateX, transform.translateY), child: result);
     return result;
   }
 }

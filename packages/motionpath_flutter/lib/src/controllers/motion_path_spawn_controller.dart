@@ -23,15 +23,20 @@ class MotionPathSpawnInstance {
       'MotionPathSpawnInstance($id, offset: $offset, progress: $progress)';
 }
 
+/// Returns instances in top-most-first order without changing the controller's
+/// legacy ascending-offset snapshot order. Equal offsets retain insertion order.
+List<MotionPathSpawnInstance> motionPathTopMostFirst(
+  Iterable<MotionPathSpawnInstance> instances,
+) {
+  final List<MotionPathSpawnInstance> ordered = instances.toList()
+    ..sort((MotionPathSpawnInstance a, MotionPathSpawnInstance b) {
+      final int byOffset = b.offset.compareTo(a.offset);
+      return byOffset != 0 ? byOffset : 0;
+    });
+  return List<MotionPathSpawnInstance>.unmodifiable(ordered);
+}
+
 /// Mounts a track's children at their settled offsets and drains them.
-///
-/// A track publishes a settled offset the instant a layout delegate decides it.
-/// When [reflowDuration] is positive this controller keeps one
-/// [MotionPathValueTweener] per child holding the offset a host should render,
-/// so a survivor slides into a freed slot instead of teleporting into it. The
-/// tweener is also the only record of where a child was before a reflow,
-/// because the track has already overwritten `currentOffset` by the time the
-/// reflow callback runs.
 class MotionPathSpawnController extends ChangeNotifier {
   MotionPathSpawnController({
     required this.parent,
@@ -57,8 +62,6 @@ class MotionPathSpawnController extends ChangeNotifier {
     parent.onChildSpawned = _handleSpawned;
     parent.onChildRemoved = _handleRemoved;
     parent.onChildReflowed = _handleReflowed;
-    // Children mounted before this controller existed never fired a spawn
-    // callback, so adopt them here or their first reflow has no origin.
     for (final MotionPathTrackRuntime child in parent.children) {
       _trackOffset(child, child.currentOffset);
     }
@@ -68,18 +71,12 @@ class MotionPathSpawnController extends ChangeNotifier {
   final MotionPathTrackRuntime parent;
   final double childDuration;
   final bool drainOnComplete;
-
-  /// Seconds a survivor takes to reach a freed slot. Zero settles immediately.
   final double reflowDuration;
-
-  /// Easing sampled across [reflowDuration].
   final Easing reflowEase;
 
   double _elapsed = 0;
   bool _disposed = false;
   List<MotionPathSpawnInstance> _instances = const <MotionPathSpawnInstance>[];
-
-  /// Rendered offset per live child. Empty while reflow is instant.
   final Map<MotionPathTrackRuntime, MotionPathValueTweener> _offsets =
       <MotionPathTrackRuntime, MotionPathValueTweener>{};
 
@@ -87,7 +84,6 @@ class MotionPathSpawnController extends ChangeNotifier {
   List<MotionPathSpawnInstance> get instances => _instances;
   int get liveCount => _instances.length;
   bool get isDisposed => _disposed;
-
   bool get _animatesReflow => reflowDuration > 0;
 
   void spawn(MotionPathTrackRuntime child, {double stagger = 0}) {
@@ -131,10 +127,6 @@ class MotionPathSpawnController extends ChangeNotifier {
   }
 
   void _handleReflowed(MotionPathTrackRuntime child, double offset) {
-    // `child.currentOffset` is already the destination here, so it can never
-    // serve as the tween origin. Retargeting the live tweener also makes a
-    // reflow interrupted by another reflow continue from where the child
-    // currently sits rather than snapping back to a settled position.
     final MotionPathValueTweener? animated = _offsets[child];
     if (animated == null) {
       _trackOffset(child, offset);
@@ -144,7 +136,6 @@ class MotionPathSpawnController extends ChangeNotifier {
     child.seek(_localProgress(child));
   }
 
-  /// Starts tracking [child] at [offset]. A no-op when reflow is instant.
   void _trackOffset(MotionPathTrackRuntime child, double offset) {
     if (!_animatesReflow) return;
     _offsets[child] = MotionPathValueTweener(
@@ -162,8 +153,6 @@ class MotionPathSpawnController extends ChangeNotifier {
     }
   }
 
-  /// Drops offsets for children detached without a removal callback, such as a
-  /// parent track disposed underneath this controller.
   void _pruneOffsets() {
     if (_offsets.length <= parent.childCount) return;
     _offsets.removeWhere(
@@ -201,39 +190,30 @@ class MotionPathSpawnController extends ChangeNotifier {
 
   void _rebuild() {
     _pruneOffsets();
-    final List<MotionPathTrackRuntime> ordered = <MotionPathTrackRuntime>[];
-    for (final MotionPathTrackRuntime child in parent.children) {
-      int slot = ordered.length;
-      while (slot > 0 &&
-          _effectiveOffset(ordered[slot - 1]) > _effectiveOffset(child)) {
-        slot--;
-      }
-      ordered.insert(slot, child);
-    }
-    _instances =
-        List<MotionPathSpawnInstance>.unmodifiable(<MotionPathSpawnInstance>[
-          for (final MotionPathTrackRuntime child in ordered)
-            MotionPathSpawnInstance(
-              id: child.id,
-              offset: _effectiveOffset(child),
-              progress: child.progress,
-              hasStarted: _elapsed >= _effectiveOffset(child),
-              patch: child.compose(),
-            ),
-        ]);
+    final List<MotionPathTrackRuntime> ordered = parent.children.toList()
+      ..sort((MotionPathTrackRuntime a, MotionPathTrackRuntime b) {
+        final int byOffset = _effectiveOffset(a).compareTo(_effectiveOffset(b));
+        return byOffset != 0 ? byOffset : 0;
+      });
+    _instances = List<MotionPathSpawnInstance>.unmodifiable(<MotionPathSpawnInstance>[
+      for (final MotionPathTrackRuntime child in ordered)
+        MotionPathSpawnInstance(
+          id: child.id,
+          offset: _effectiveOffset(child),
+          progress: child.progress,
+          hasStarted: _elapsed >= _effectiveOffset(child),
+          patch: child.compose(),
+        ),
+    ]);
   }
 
   double _effectiveOffset(MotionPathTrackRuntime child) =>
       _offsets[child]?.value ?? child.currentOffset;
-
   double _spanOf(MotionPathTrackRuntime child) => child.duration > 0
       ? child.duration
       : (childDuration > 0 ? childDuration : 1);
-
   double _localProgress(MotionPathTrackRuntime child) =>
-      ((_elapsed - _effectiveOffset(child)) / _spanOf(child))
-          .clamp(0.0, 1.0)
-          .toDouble();
+      ((_elapsed - _effectiveOffset(child)) / _spanOf(child)).clamp(0.0, 1.0).toDouble();
 
   @override
   void dispose() {
