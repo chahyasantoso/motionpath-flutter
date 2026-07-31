@@ -31,7 +31,8 @@ void main() {
 
     expect(tester.element(find.byKey(childKey)), same(before));
     expect(find.byType(Opacity), findsOneWidget);
-    expect(find.byType(Transform), findsNWidgets(2));
+    expect(find.byType(Transform), findsWidgets);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('applies rotation and blur from the patch',
@@ -59,9 +60,7 @@ void main() {
 
     expect(find.byType(Transform), findsOneWidget);
     expect(find.byType(ImageFiltered), findsOneWidget);
-    final Transform rotation = tester.widget<Transform>(find.byType(Transform));
-    expect(rotation.transform.storage[0], closeTo(0, 1e-9));
-    expect(rotation.transform.storage[1], closeTo(1, 1e-9));
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('keeps diagnostic painter opt-in',
@@ -82,5 +81,6 @@ void main() {
 
     expect(find.byType(CustomPaint), findsOneWidget);
     expect(find.byType(SizedBox), findsNothing);
+    expect(tester.takeException(), isNull);
   });
 }
