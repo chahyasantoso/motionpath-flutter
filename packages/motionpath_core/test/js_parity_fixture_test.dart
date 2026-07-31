@@ -55,12 +55,12 @@ void main() {
     final MotionPathTrackRuntime track = MotionPathTrackRuntime(
       'render-contract',
       properties: <String, List<MotionPathStop>>{
-        'x': const <MotionPathStop>[MotionPathStop(progress: 0, value: 0), MotionPathStop(progress: 1, value: 100)],
-        'y': const <MotionPathStop>[MotionPathStop(progress: 0, value: 40), MotionPathStop(progress: 1, value: -40)],
-        'rotation': const <MotionPathStop>[MotionPathStop(progress: 0, value: 0), MotionPathStop(progress: 1, value: 90)],
-        'scale': const <MotionPathStop>[MotionPathStop(progress: 0, value: 1), MotionPathStop(progress: 1, value: 2)],
-        'opacity': const <MotionPathStop>[MotionPathStop(progress: 0, value: 0), MotionPathStop(progress: 1, value: 1)],
-        'color': const <MotionPathStop>[MotionPathStop(progress: 0, value: 0xFF000000), MotionPathStop(progress: 1, value: 0xFFFFFFFF)],
+        'x': <MotionPathStop>[MotionPathStop(progress: 0, value: 0), MotionPathStop(progress: 1, value: 100, ease: resolveEasing('power1.inOut'))],
+        'y': <MotionPathStop>[MotionPathStop(progress: 0, value: 40), MotionPathStop(progress: 1, value: -40, ease: resolveEasing('power1.inOut'))],
+        'rotation': <MotionPathStop>[MotionPathStop(progress: 0, value: 0), MotionPathStop(progress: 1, value: 90, ease: resolveEasing('power1.inOut'))],
+        'scale': <MotionPathStop>[MotionPathStop(progress: 0, value: 1), MotionPathStop(progress: 1, value: 2, ease: resolveEasing('power1.inOut'))],
+        'opacity': <MotionPathStop>[MotionPathStop(progress: 0, value: 0), MotionPathStop(progress: 1, value: 1, ease: resolveEasing('power1.inOut'))],
+        'color': <MotionPathStop>[MotionPathStop(progress: 0, value: 0xFF000000), MotionPathStop(progress: 1, value: 0xFFFFFFFF, ease: resolveEasing('power1.inOut'))],
       },
     );
 
@@ -91,9 +91,9 @@ void main() {
     final MotionPathTrackRuntime track = MotionPathTrackRuntime(
       'filters',
       properties: <String, List<MotionPathStop>>{
-        'filter': const <MotionPathStop>[
-          MotionPathStop(progress: 0, value: <String, Object?>{'blur': 0, 'brightness': 1}),
-          MotionPathStop(progress: 1, value: <String, Object?>{'blur': 8, 'brightness': 1.5}),
+        'filter': <MotionPathStop>[
+          const MotionPathStop(progress: 0, value: <String, Object?>{'blur': 0, 'brightness': 1}),
+          MotionPathStop(progress: 1, value: <String, Object?>{'blur': 8, 'brightness': 1.5}, ease: resolveEasing('power1.inOut')),
         ],
       },
       plugins: <MotionPathPlugin>[filterPlugin],
@@ -117,7 +117,7 @@ void main() {
       properties: <String, List<MotionPathStop>>{
         'imageSequence': <MotionPathStop>[
           MotionPathStop(progress: 0, value: frames),
-          MotionPathStop(progress: 1, value: frames),
+          MotionPathStop(progress: 1, value: frames, ease: resolveEasing('power1.inOut')),
         ],
       },
       plugins: <MotionPathPlugin>[imageSequencePlugin],
@@ -137,13 +137,13 @@ void main() {
     final MotionPathTrackRuntime source = MotionPathTrackRuntime(
       'source',
       properties: <String, List<MotionPathStop>>{
-        'x': const <MotionPathStop>[MotionPathStop(progress: 0, value: 0), MotionPathStop(progress: 1, value: 100)],
+        'x': <MotionPathStop>[MotionPathStop(progress: 0, value: 0), MotionPathStop(progress: 1, value: 100, ease: resolveEasing('power1.inOut'))],
       },
     );
     final MotionPathTrackRuntime consumer = MotionPathTrackRuntime(
       'consumer',
       properties: <String, List<MotionPathStop>>{
-        'opacity': const <MotionPathStop>[MotionPathStop(progress: 0, value: 0.2), MotionPathStop(progress: 1, value: 1)],
+        'opacity': <MotionPathStop>[MotionPathStop(progress: 0, value: 0.2), MotionPathStop(progress: 1, value: 1, ease: resolveEasing('power1.inOut'))],
       },
     );
     consumer.observe(source);
