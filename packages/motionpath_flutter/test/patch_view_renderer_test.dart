@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:motionpath_flutter/motionpath_flutter.dart';
 
 class _BuildProbe extends StatefulWidget {
-  const _BuildProbe({required this.builds, super.key});
+  const _BuildProbe({required this.builds});
 
   final ValueNotifier<int> builds;
 
