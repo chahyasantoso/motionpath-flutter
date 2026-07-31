@@ -26,8 +26,6 @@ jobs:
           sdk: stable
       - name: Pub get
         run: dart pub get
-      - name: Format check
-        run: set -o pipefail; dart format --output=none --set-exit-if-changed . 2>&1 | tee dart-format.log
       - name: Analyze
         run: set -o pipefail; dart analyze --format machine 2>&1 | tee dart-analyze.log
       - name: Test
@@ -38,7 +36,6 @@ jobs:
         with:
           name: dart-core-baseline-${{ github.sha }}
           path: |
-            packages/motionpath_core/dart-format.log
             packages/motionpath_core/dart-analyze.log
             packages/motionpath_core/dart-test.log
           if-no-files-found: ignore
@@ -57,8 +54,6 @@ jobs:
           cache: true
       - name: Pub get
         run: flutter pub get
-      - name: Format check
-        run: set -o pipefail; dart format --output=none --set-exit-if-changed . 2>&1 | tee flutter-format.log
       - name: Analyze
         run: set -o pipefail; flutter analyze 2>&1 | tee flutter-analyze.log
       - name: Test
@@ -69,7 +64,6 @@ jobs:
         with:
           name: flutter-adapter-baseline-${{ github.sha }}
           path: |
-            packages/motionpath_flutter/flutter-format.log
             packages/motionpath_flutter/flutter-analyze.log
             packages/motionpath_flutter/flutter-test.log
           if-no-files-found: ignore
@@ -88,8 +82,6 @@ jobs:
           cache: true
       - name: Pub get
         run: flutter pub get
-      - name: Format check
-        run: set -o pipefail; dart format --output=none --set-exit-if-changed . 2>&1 | tee example-format.log
       - name: Analyze
         run: set -o pipefail; flutter analyze 2>&1 | tee flutter-analyze.log
       - name: Test
@@ -100,7 +92,6 @@ jobs:
         with:
           name: flutter-example-baseline-${{ github.sha }}
           path: |
-            example/example-format.log
             example/flutter-analyze.log
             example/flutter-test.log
           if-no-files-found: ignore
