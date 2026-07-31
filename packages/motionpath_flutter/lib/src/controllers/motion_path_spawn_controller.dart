@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:motionpath_core/motionpath_core.dart';
 
-/// One live child of a spawning track, ready for a painter or a widget list.
 @immutable
 class MotionPathSpawnInstance {
   const MotionPathSpawnInstance({
@@ -23,8 +22,6 @@ class MotionPathSpawnInstance {
       'MotionPathSpawnInstance($id, offset: $offset, progress: $progress)';
 }
 
-/// Returns instances in top-most-first order without changing the controller's
-/// legacy ascending-offset snapshot order. Equal offsets retain insertion order.
 List<MotionPathSpawnInstance> motionPathTopMostFirst(
   Iterable<MotionPathSpawnInstance> instances,
 ) {
@@ -34,6 +31,18 @@ List<MotionPathSpawnInstance> motionPathTopMostFirst(
       return byOffset != 0 ? byOffset : 0;
     });
   return List<MotionPathSpawnInstance>.unmodifiable(ordered);
+}
+
+/// Returns the first instance hit by [contains], traversing front-most first.
+MotionPathSpawnInstance? motionPathHitTest(
+  Iterable<MotionPathSpawnInstance> instances,
+  bool Function(MotionPathSpawnInstance instance) contains,
+) {
+  for (final MotionPathSpawnInstance instance
+      in motionPathTopMostFirst(instances)) {
+    if (contains(instance)) return instance;
+  }
+  return null;
 }
 
 /// Mounts a track's children at their settled offsets and drains them.
@@ -46,18 +55,10 @@ class MotionPathSpawnController extends ChangeNotifier {
     this.reflowEase = MotionPathInterpolators.linear,
   }) {
     if (!reflowDuration.isFinite || reflowDuration < 0) {
-      throw ArgumentError.value(
-        reflowDuration,
-        'reflowDuration',
-        'must be finite and non-negative',
-      );
+      throw ArgumentError.value(reflowDuration, 'reflowDuration', 'must be finite and non-negative');
     }
-    if (parent.onChildSpawned != null ||
-        parent.onChildRemoved != null ||
-        parent.onChildReflowed != null) {
-      throw StateError(
-        'Track "${parent.id}" already has composition hooks wired.',
-      );
+    if (parent.onChildSpawned != null || parent.onChildRemoved != null || parent.onChildReflowed != null) {
+      throw StateError('Track "${parent.id}" already has composition hooks wired.');
     }
     parent.onChildSpawned = _handleSpawned;
     parent.onChildRemoved = _handleRemoved;
@@ -73,12 +74,10 @@ class MotionPathSpawnController extends ChangeNotifier {
   final bool drainOnComplete;
   final double reflowDuration;
   final Easing reflowEase;
-
   double _elapsed = 0;
   bool _disposed = false;
   List<MotionPathSpawnInstance> _instances = const <MotionPathSpawnInstance>[];
-  final Map<MotionPathTrackRuntime, MotionPathValueTweener> _offsets =
-      <MotionPathTrackRuntime, MotionPathValueTweener>{};
+  final Map<MotionPathTrackRuntime, MotionPathValueTweener> _offsets = <MotionPathTrackRuntime, MotionPathValueTweener>{};
 
   double get elapsed => _elapsed;
   List<MotionPathSpawnInstance> get instances => _instances;
@@ -115,115 +114,20 @@ class MotionPathSpawnController extends ChangeNotifier {
   }
 
   void advanceBy(double delta) => advanceTo(_elapsed + delta);
-
-  void _handleSpawned(MotionPathTrackRuntime child, double offset) {
-    _trackOffset(child, offset);
-    child.seek(_localProgress(child));
-  }
-
-  void _handleRemoved(MotionPathTrackRuntime child) {
-    _offsets.remove(child);
-    child.seek(0);
-  }
-
-  void _handleReflowed(MotionPathTrackRuntime child, double offset) {
-    final MotionPathValueTweener? animated = _offsets[child];
-    if (animated == null) {
-      _trackOffset(child, offset);
-    } else {
-      animated.retarget(offset);
-    }
-    child.seek(_localProgress(child));
-  }
-
-  void _trackOffset(MotionPathTrackRuntime child, double offset) {
-    if (!_animatesReflow) return;
-    _offsets[child] = MotionPathValueTweener(
-      initial: offset,
-      target: offset,
-      duration: reflowDuration,
-      ease: reflowEase,
-    );
-  }
-
-  void _advanceOffsets(double delta) {
-    if (delta <= 0 || _offsets.isEmpty) return;
-    for (final MotionPathValueTweener animated in _offsets.values) {
-      if (!animated.isComplete) animated.advance(delta);
-    }
-  }
-
-  void _pruneOffsets() {
-    if (_offsets.length <= parent.childCount) return;
-    _offsets.removeWhere(
-      (MotionPathTrackRuntime child, MotionPathValueTweener animated) =>
-          !identical(child.parent, parent),
-    );
-  }
-
-  void _settle({bool drain = false}) {
-    _seekChildren();
-    if (drain) _drain();
-    _rebuild();
-    notifyListeners();
-  }
-
-  void _seekChildren() {
-    for (final MotionPathTrackRuntime child in parent.children) {
-      child.seek(_localProgress(child));
-    }
-  }
-
-  void _drain() {
-    final List<String> completed = <String>[];
-    for (final MotionPathTrackRuntime child in parent.children) {
-      if (_localProgress(child) >= 1) {
-        completed.add(child.id);
-      }
-    }
-    if (completed.isEmpty) return;
-    for (final String childId in completed) {
-      parent.removeChild(childId);
-    }
-    _seekChildren();
-  }
-
-  void _rebuild() {
-    _pruneOffsets();
-    final List<MotionPathTrackRuntime> ordered = parent.children.toList()
-      ..sort((MotionPathTrackRuntime a, MotionPathTrackRuntime b) {
-        final int byOffset = _effectiveOffset(a).compareTo(_effectiveOffset(b));
-        return byOffset != 0 ? byOffset : 0;
-      });
-    _instances = List<MotionPathSpawnInstance>.unmodifiable(<MotionPathSpawnInstance>[
-      for (final MotionPathTrackRuntime child in ordered)
-        MotionPathSpawnInstance(
-          id: child.id,
-          offset: _effectiveOffset(child),
-          progress: child.progress,
-          hasStarted: _elapsed >= _effectiveOffset(child),
-          patch: child.compose(),
-        ),
-    ]);
-  }
-
-  double _effectiveOffset(MotionPathTrackRuntime child) =>
-      _offsets[child]?.value ?? child.currentOffset;
-  double _spanOf(MotionPathTrackRuntime child) => child.duration > 0
-      ? child.duration
-      : (childDuration > 0 ? childDuration : 1);
-  double _localProgress(MotionPathTrackRuntime child) =>
-      ((_elapsed - _effectiveOffset(child)) / _spanOf(child)).clamp(0.0, 1.0).toDouble();
+  void _handleSpawned(MotionPathTrackRuntime child, double offset) { _trackOffset(child, offset); child.seek(_localProgress(child)); }
+  void _handleRemoved(MotionPathTrackRuntime child) { _offsets.remove(child); child.seek(0); }
+  void _handleReflowed(MotionPathTrackRuntime child, double offset) { final MotionPathValueTweener? animated = _offsets[child]; if (animated == null) { _trackOffset(child, offset); } else { animated.retarget(offset); } child.seek(_localProgress(child)); }
+  void _trackOffset(MotionPathTrackRuntime child, double offset) { if (!_animatesReflow) return; _offsets[child] = MotionPathValueTweener(initial: offset, target: offset, duration: reflowDuration, ease: reflowEase); }
+  void _advanceOffsets(double delta) { if (delta <= 0 || _offsets.isEmpty) return; for (final MotionPathValueTweener animated in _offsets.values) { if (!animated.isComplete) animated.advance(delta); } }
+  void _pruneOffsets() { if (_offsets.length <= parent.childCount) return; _offsets.removeWhere((MotionPathTrackRuntime child, MotionPathValueTweener animated) => !identical(child.parent, parent)); }
+  void _settle({bool drain = false}) { _seekChildren(); if (drain) _drain(); _rebuild(); notifyListeners(); }
+  void _seekChildren() { for (final MotionPathTrackRuntime child in parent.children) { child.seek(_localProgress(child)); } }
+  void _drain() { final List<String> completed = <String>[]; for (final MotionPathTrackRuntime child in parent.children) { if (_localProgress(child) >= 1) { completed.add(child.id); } } if (completed.isEmpty) return; for (final String childId in completed) { parent.removeChild(childId); } _seekChildren(); }
+  void _rebuild() { _pruneOffsets(); final List<MotionPathTrackRuntime> ordered = parent.children.toList()..sort((MotionPathTrackRuntime a, MotionPathTrackRuntime b) { final int byOffset = _effectiveOffset(a).compareTo(_effectiveOffset(b)); return byOffset != 0 ? byOffset : 0; }); _instances = List<MotionPathSpawnInstance>.unmodifiable(<MotionPathSpawnInstance>[for (final MotionPathTrackRuntime child in ordered) MotionPathSpawnInstance(id: child.id, offset: _effectiveOffset(child), progress: child.progress, hasStarted: _elapsed >= _effectiveOffset(child), patch: child.compose())]); }
+  double _effectiveOffset(MotionPathTrackRuntime child) => _offsets[child]?.value ?? child.currentOffset;
+  double _spanOf(MotionPathTrackRuntime child) => child.duration > 0 ? child.duration : (childDuration > 0 ? childDuration : 1);
+  double _localProgress(MotionPathTrackRuntime child) => ((_elapsed - _effectiveOffset(child)) / _spanOf(child)).clamp(0.0, 1.0).toDouble();
 
   @override
-  void dispose() {
-    if (_disposed) return;
-    _disposed = true;
-    parent.onChildSpawned = null;
-    parent.onChildRemoved = null;
-    parent.onChildReflowed = null;
-    _offsets.clear();
-    _instances = const <MotionPathSpawnInstance>[];
-    super.dispose();
-  }
+  void dispose() { if (_disposed) return; _disposed = true; parent.onChildSpawned = null; parent.onChildRemoved = null; parent.onChildReflowed = null; _offsets.clear(); _instances = const <MotionPathSpawnInstance>[]; super.dispose(); }
 }
