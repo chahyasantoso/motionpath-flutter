@@ -1,10 +1,8 @@
 import '../contract/motionpath_types.dart';
+import 'easing_rules.dart';
 import 'project_rules.dart';
 
 /// Validates a decoded v4 project and collects every diagnostic.
-///
-/// Validation never throws and never stops at the first problem: the caller
-/// decides what to do with fatal errors and warnings.
 List<MotionPathDiagnostic> validateProject(Map<String, Object?> json) {
   final List<MotionPathDiagnostic> diagnostics = <MotionPathDiagnostic>[];
   diagnostics.addAll(schemaVersionRule(json));
@@ -27,9 +25,7 @@ List<MotionPathDiagnostic> validateProject(Map<String, Object?> json) {
 
   for (int index = 0; index < rawMotions.length; index++) {
     final Map<String, Object?> motion = asStringKeyedMap(rawMotions[index]);
-    if (motion.isEmpty) {
-      continue;
-    }
+    if (motion.isEmpty) continue;
     final String motionPath = 'motions[$index]';
     diagnostics.addAll(triggerShapeRule(motion, motionPath));
 
@@ -37,8 +33,16 @@ List<MotionPathDiagnostic> validateProject(Map<String, Object?> json) {
         MotionPathMotion.fromJson(motion, templates: templates);
     for (int trackIndex = 0; trackIndex < parsed.tracks.length; trackIndex++) {
       final MotionPathTrack track = parsed.tracks[trackIndex];
+      final Map<String, Object?> trackJson = <String, Object?>{
+        'id': track.id,
+        'keyframes': track.keyframes,
+      };
       diagnostics.addAll(trackKeyframeRules(
-        <String, Object?>{'id': track.id, 'keyframes': track.keyframes},
+        trackJson,
+        '$motionPath.tracks[$trackIndex]',
+      ));
+      diagnostics.addAll(easingRules(
+        trackJson,
         '$motionPath.tracks[$trackIndex]',
       ));
     }
@@ -52,10 +56,12 @@ List<MotionPathDiagnostic> validateProject(Map<String, Object?> json) {
         asStringKeyedMap(rawTracks[index]),
         templates: templates,
       );
-      diagnostics.addAll(trackKeyframeRules(
-        <String, Object?>{'id': track.id, 'keyframes': track.keyframes},
-        'tracks[$index]',
-      ));
+      final Map<String, Object?> trackJson = <String, Object?>{
+        'id': track.id,
+        'keyframes': track.keyframes,
+      };
+      diagnostics.addAll(trackKeyframeRules(trackJson, 'tracks[$index]'));
+      diagnostics.addAll(easingRules(trackJson, 'tracks[$index]'));
     }
   }
 
