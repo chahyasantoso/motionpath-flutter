@@ -157,18 +157,19 @@ class _SpiralZumaPageState extends State<SpiralZumaPage>
     super.dispose();
   }
 
-  Widget _balls(BuildContext context) => Stack(
+  Widget _balls() => Stack(
         clipBehavior: Clip.none,
         children: <Widget>[
           for (final MotionPathSpawnInstance instance in _spawns.instances)
-            KeyedSubtree(
-              key: ValueKey<String>(instance.id),
-              child: MotionPathPatchView(
-                source: _patchSources[instance.id] ?? MotionPathPatchSource(),
-                trackId: instance.id,
-                child: const _SpiralBall(),
+            if (_patchSources[instance.id] case final MotionPathPatchSource source)
+              KeyedSubtree(
+                key: ValueKey<String>(instance.id),
+                child: MotionPathPatchView(
+                  source: source,
+                  trackId: instance.id,
+                  child: const _SpiralBall(),
+                ),
               ),
-            ),
         ],
       );
 
@@ -223,7 +224,7 @@ class _SpiralZumaPageState extends State<SpiralZumaPage>
                       size: const Size(360, 360),
                       painter: _SpiralGuidePainter(_guide),
                     ),
-                    _balls(context),
+                    _balls(),
                   ],
                 ),
               ),
