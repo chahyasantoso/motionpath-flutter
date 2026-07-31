@@ -12,9 +12,10 @@ typedef MotionPathSpawnItemBuilder =
 
 /// Renders dynamic children from composed spawn patches.
 ///
-/// Instances are supplied top-most-first for hit testing. Stack children are
-/// painted in reverse so the top-most instance is inserted last and appears on
-/// top visually. Equal offsets preserve insertion order.
+/// Controller snapshots remain in ascending-offset order for compatibility.
+/// Flutter paints the ascending list directly, putting the higher-offset
+/// top-most item last in the Stack. Use [motionPathTopMostFirst] when hit-test
+/// traversal needs the front-most child first.
 class MotionPathSpawnView extends StatelessWidget {
   const MotionPathSpawnView({
     required this.controller,
@@ -34,12 +35,10 @@ class MotionPathSpawnView extends StatelessWidget {
     return AnimatedBuilder(
       animation: controller,
       builder: (BuildContext context, Widget? child) {
-        final List<MotionPathSpawnInstance> topMostFirst =
-            motionPathTopMostFirst(controller.instances);
         return Stack(
           alignment: alignment,
           children: <Widget>[
-            for (final MotionPathSpawnInstance instance in topMostFirst.reversed)
+            for (final MotionPathSpawnInstance instance in controller.instances)
               KeyedSubtree(
                 key: ValueKey<String>(instance.id),
                 child: _MotionPathSpawnItem(
@@ -56,22 +55,14 @@ class MotionPathSpawnView extends StatelessWidget {
 }
 
 class _MotionPathSpawnItem extends StatelessWidget {
-  const _MotionPathSpawnItem({
-    required this.instance,
-    required this.fallbackArgb,
-    required this.child,
-  });
-
+  const _MotionPathSpawnItem({required this.instance, required this.fallbackArgb, required this.child});
   final MotionPathSpawnInstance instance;
   final int fallbackArgb;
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    final MotionPathPatchTransform transform = MotionPathPatchTransform.fromPatch(
-      instance.patch,
-      fallbackArgb: fallbackArgb,
-    );
+    final MotionPathPatchTransform transform = MotionPathPatchTransform.fromPatch(instance.patch, fallbackArgb: fallbackArgb);
     Widget result = child;
     if (transform.opacity != 1) result = Opacity(opacity: transform.opacity, child: result);
     final ImageFilter? filter = MotionPathPatchConsumers.blurFilter(instance.patch);

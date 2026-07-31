@@ -5,7 +5,7 @@ import 'package:motionpath_flutter/motionpath_flutter.dart';
 MotionPathTrackRuntime _child(String id) => MotionPathTrackRuntime(id);
 
 void main() {
-  test('orders higher offsets first and preserves insertion order on ties', () {
+  test('keeps controller snapshots ascending and exposes top-most order separately', () {
     final MotionPathSpawnController controller = MotionPathSpawnController(
       parent: MotionPathTrackRuntime('parent'),
     );
@@ -14,7 +14,7 @@ void main() {
     controller.spawn(_child('third'), stagger: 5);
 
     expect(controller.instances.map((MotionPathSpawnInstance i) => i.id),
-        <String>['third', 'second', 'first']);
+        <String>['first', 'second', 'third']);
     expect(
       motionPathTopMostFirst(controller.instances)
           .map((MotionPathSpawnInstance i) => i.id),

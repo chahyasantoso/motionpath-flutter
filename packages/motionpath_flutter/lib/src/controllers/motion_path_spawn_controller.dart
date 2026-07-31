@@ -23,11 +23,8 @@ class MotionPathSpawnInstance {
       'MotionPathSpawnInstance($id, offset: $offset, progress: $progress)';
 }
 
-/// Stable top-most-first ordering for stacked spawned children.
-///
-/// Higher effective offsets are closer to the active end of the track and are
-/// treated as top-most. Equal offsets retain the parent's insertion order
-/// because Dart's stable sort preserves that deterministic tie break.
+/// Returns instances in top-most-first order without changing the controller's
+/// legacy ascending-offset snapshot order. Equal offsets retain insertion order.
 List<MotionPathSpawnInstance> motionPathTopMostFirst(
   Iterable<MotionPathSpawnInstance> instances,
 ) {
@@ -87,7 +84,6 @@ class MotionPathSpawnController extends ChangeNotifier {
   List<MotionPathSpawnInstance> get instances => _instances;
   int get liveCount => _instances.length;
   bool get isDisposed => _disposed;
-
   bool get _animatesReflow => reflowDuration > 0;
 
   void spawn(MotionPathTrackRuntime child, {double stagger = 0}) {
@@ -196,7 +192,7 @@ class MotionPathSpawnController extends ChangeNotifier {
     _pruneOffsets();
     final List<MotionPathTrackRuntime> ordered = parent.children.toList()
       ..sort((MotionPathTrackRuntime a, MotionPathTrackRuntime b) {
-        final int byOffset = _effectiveOffset(b).compareTo(_effectiveOffset(a));
+        final int byOffset = _effectiveOffset(a).compareTo(_effectiveOffset(b));
         return byOffset != 0 ? byOffset : 0;
       });
     _instances = List<MotionPathSpawnInstance>.unmodifiable(<MotionPathSpawnInstance>[
