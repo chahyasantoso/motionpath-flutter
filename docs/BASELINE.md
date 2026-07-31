@@ -23,6 +23,10 @@ Every implementation phase lands through a pull request. The PR must target `mai
 
 Do not merge a red or incomplete PR, and do not start Phase 1 until this PR passes all jobs. If CI fails, fix the branch and rerun the same PR rather than bypassing the gate with a direct push to `main`.
 
+## Format baseline
+
+The initial CI run identified repository-wide Dart formatting drift. The branch now contains the formatter's canonical output for the core package, Flutter adapter, and example; the next CI run verifies that clean state before any phase advances.
+
 ## How to capture a baseline locally
 
 Run the commands from the package directories shown in `.github/workflows/ci.yml`. Save stdout and stderr with the commit SHA, Dart/Flutter versions, operating system, and build mode. CI is the canonical capture path because it runs the same commands on a clean checkout.
