@@ -12,11 +12,10 @@ typedef MotionPathSpawnItemBuilder =
 
 /// Renders dynamic children from composed spawn patches.
 ///
-/// The controller remains the only clock consumer. This widget only listens to
-/// its snapshots, sorts instances by settled offset, assigns stable identity,
-/// and applies the shared patch transform to each child.
+/// Instances are supplied top-most-first for hit testing. Stack children are
+/// painted in reverse so the top-most instance is inserted last and appears on
+/// top visually. Equal offsets preserve insertion order.
 class MotionPathSpawnView extends StatelessWidget {
-  /// Creates a dynamic spawn view.
   const MotionPathSpawnView({
     required this.controller,
     required this.itemBuilder,
@@ -25,16 +24,9 @@ class MotionPathSpawnView extends StatelessWidget {
     super.key,
   });
 
-  /// Dynamic child lifecycle and composed patch source.
   final MotionPathSpawnController controller;
-
-  /// Builds the content inside each patch-driven instance wrapper.
   final MotionPathSpawnItemBuilder itemBuilder;
-
-  /// Stack alignment for children whose patches do not translate them.
   final Alignment alignment;
-
-  /// Fallback color for consumers that inspect color through the shared resolver.
   final int fallbackArgb;
 
   @override
@@ -42,10 +34,12 @@ class MotionPathSpawnView extends StatelessWidget {
     return AnimatedBuilder(
       animation: controller,
       builder: (BuildContext context, Widget? child) {
+        final List<MotionPathSpawnInstance> topMostFirst =
+            motionPathTopMostFirst(controller.instances);
         return Stack(
           alignment: alignment,
           children: <Widget>[
-            for (final MotionPathSpawnInstance instance in controller.instances)
+            for (final MotionPathSpawnInstance instance in topMostFirst.reversed)
               KeyedSubtree(
                 key: ValueKey<String>(instance.id),
                 child: _MotionPathSpawnItem(
@@ -74,40 +68,17 @@ class _MotionPathSpawnItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final MotionPathPatchTransform transform =
-        MotionPathPatchTransform.fromPatch(
-          instance.patch,
-          fallbackArgb: fallbackArgb,
-        );
-    Widget result = child;
-    if (transform.opacity != 1) {
-      result = Opacity(opacity: transform.opacity, child: result);
-    }
-    final ImageFilter? filter = MotionPathPatchConsumers.blurFilter(
+    final MotionPathPatchTransform transform = MotionPathPatchTransform.fromPatch(
       instance.patch,
+      fallbackArgb: fallbackArgb,
     );
-    if (filter != null) {
-      result = ImageFiltered(imageFilter: filter, child: result);
-    }
-    if (transform.scaleX != 1 || transform.scaleY != 1) {
-      result = Transform.scale(
-        scaleX: transform.scaleX,
-        scaleY: transform.scaleY,
-        child: result,
-      );
-    }
-    if (transform.rotationRadians != 0) {
-      result = Transform.rotate(
-        angle: transform.rotationRadians,
-        child: result,
-      );
-    }
-    if (transform.translateX != 0 || transform.translateY != 0) {
-      result = Transform.translate(
-        offset: Offset(transform.translateX, transform.translateY),
-        child: result,
-      );
-    }
+    Widget result = child;
+    if (transform.opacity != 1) result = Opacity(opacity: transform.opacity, child: result);
+    final ImageFilter? filter = MotionPathPatchConsumers.blurFilter(instance.patch);
+    if (filter != null) result = ImageFiltered(imageFilter: filter, child: result);
+    if (transform.scaleX != 1 || transform.scaleY != 1) result = Transform.scale(scaleX: transform.scaleX, scaleY: transform.scaleY, child: result);
+    if (transform.rotationRadians != 0) result = Transform.rotate(angle: transform.rotationRadians, child: result);
+    if (transform.translateX != 0 || transform.translateY != 0) result = Transform.translate(offset: Offset(transform.translateX, transform.translateY), child: result);
     return result;
   }
 }
