@@ -229,44 +229,39 @@ Exit criteria:
 
 Update this section after every meaningful implementation batch. Keep reports factual and tied to exit criteria.
 
-### Audit snapshot: 2026-07-31, `main` at `2bcf0372f287bc9f184fb46cfc39859bc006af8d`
+### Audit snapshot: 2026-07-31, `main` at `502d657caa6f64f74636b5c4cc9502af225ae688`
 
-This is a source and documentation audit against the repository contents and CI configuration. It does not claim that a fresh local Dart or Flutter run was executed here.
+This is a source and documentation audit against the repository contents, current package metadata, tests, examples, and CI configuration. It does not claim that a fresh local Dart or Flutter run was executed here.
 
 | Phase | Status | Finished in code | Still needs attention |
 |---|---|---|---|
 | 0 Baseline and guardrails | Partial | Package boundaries, strict core analysis, Flutter analysis, core and Flutter test jobs, example analysis, parity fixture format, and `PARITY_MATRIX.md`. | No formatting or generated-file hygiene CI gate, no checked-in baseline analyzer/test output, and example tests are not run in CI. |
-| 1 Lifecycle ownership | Partial | Guarded child callbacks, duplicate mount rejection, project replacement rejection, repeated `prepare()` rejection, immutable runtime track lists, explicit trigger/easing validation, finite-value validation, and focused lifecycle tests. | Direct runtime observation wiring still silently ignores an invalid input key; make that API fail explicitly rather than relying only on pre-runtime graph validation. |
+| 1 Lifecycle ownership | Partial | Guarded child callbacks, duplicate mount rejection, project replacement rejection, repeated `prepare()` rejection, immutable runtime track lists, explicit trigger/easing validation, finite-value validation, and focused lifecycle tests. | Direct runtime observation wiring in `MotionPathTrackRuntime.observe()` still silently returns for an input observation with a missing key; make that API fail explicitly rather than relying only on pre-runtime graph validation. |
 | 2 Immutable patch contract | Partial | Recursive immutable patch snapshots, internal-key filtering, plugin output declarations, renderer-neutral composition, mutation tests, and initial JS/Dart fixture coverage. | Formal public/internal/renderer/plugin key taxonomy is incomplete, there is no dedicated output normalizer/serializer boundary, and parity coverage does not include every supported plugin. |
-| 3 Shared Flutter renderer | Partial | Reusable child wrapper, stable `AnimatedBuilder.child`, shared transform resolver, ARGB and degree-to-radian conversion, blur consumer, diagnostic painter, image/CSS/filter/instance consumer helpers, and renderer tests. | The generic child view does not yet consume color, visibility, image frames, CSS values, z/perspective/3D, or dirty-check patches. Image resolution/cache disposal is also absent. |
-| 4 Dynamic children and spawn lifecycle | Partial | Pure value tweener, spawn/reflow/drain controller, stable keyed instances, shared ticker binding, bounded wave reset support, and reusable spawn view with lifecycle coverage. | Explicit top-most-first hit testing and paint ordering are not implemented or specified in a shared host contract; current ordering is offset-based only. |
+| 3 Shared Flutter renderer | Partial | Reusable child wrapper, stable `AnimatedBuilder.child`, shared transform resolver, ARGB and degree-to-radian conversion, blur consumer, diagnostic painter, image/CSS/filter/instance consumer helpers, and renderer tests. | `MotionPathPatchView` still does not apply patch color, visibility, image frames, CSS values, instances, z/perspective, or 3D values. Image resolution/cache disposal is absent, and dirty checking is only shallow `mapEquals` on the diagnostic painter. |
+| 4 Dynamic children and spawn lifecycle | Partial | Pure value tweener, spawn/reflow/drain controller, stable keyed instances, shared ticker binding, bounded wave reset support, and reusable spawn view with lifecycle coverage. | `MotionPathSpawnController` and `MotionPathSpawnView` order by effective offset only, with no shared top-most-first paint/hit-test contract. The Spiral example still recomputes path position, color, visibility, reflow, and frame updates locally instead of consuming composed patches directly. |
 | 5 Scroll capabilities | Partial | Scroll scrub, viewport sampling, pin state, toggle actions, top pinning through `SliverPersistentHeader`, attach/detach/reattach, route teardown, and disposal tests. | Arbitrary pinning still has no host widget or stack implementation. Snap remains intentionally deferred. |
 | 6 Cross-repository parity | Partial | Versioned JS-generated fixtures for easing, transforms/colors, filters, image sequence, and observation graph, with numeric normalization and a documented image/path easing asymmetry. | Lifecycle is only partial; triggers, repeats, yoyo, delay, stagger, path, FK, plugin-specific behavior, malformed diagnostics, trajectories, z-depth, and patch disappearance still need JS-backed fixtures/goldens. |
 | 7 Carousel | Not started | No Carousel schema, renderer, or example exists in the repository. | Port it only after the shared renderer and parity fixtures are complete. |
 | 8 Helix and depth | Not started | Walker FK and 2D rig rendering exist, but that is not Helix or depth rendering. | Add Helix, perspective/3D transform semantics, deterministic depth sorting, and golden coverage. |
-| 9 Release hardening | Not started | API, migration, compatibility, benchmark instructions, changelog, and release checklist docs exist; CI analysis/test commands are defined. | Packages still use `publish_to: none`, Flutter still uses a path dependency, API docs are hand-maintained, no benchmark report is recorded, and publish/security checks are unchecked. |
+| 9 Release hardening | Partial | Public API, migration, compatibility, benchmark instructions, changelog, release checklist, package metadata, and CI analysis/test commands exist. | Packages still use `publish_to: none`, Flutter still uses a path dependency, API docs are hand-maintained, no benchmark report is recorded, and publish/security checks are unchecked. |
 
-### Progress report template
+### Audit evidence reviewed
 
-```md
-### YYYY-MM-DD: Phase N, short title
+- Core contract and lifecycle: `packages/motionpath_core/lib/src/contract/motionpath_types.dart`, `runtime/engine.dart`, `runtime/motion.dart`, `runtime/track.dart`, validation modules, and lifecycle/validation tests.
+- Patch boundary and plugins: `composition/compose_patch.dart`, `composition/immutable_patch.dart`, `plugins/*`, plugin tests, and `js_parity_fixture_test.dart`.
+- Flutter renderer: `scene/motion_path_patch_view.dart`, `painters/motion_path_patch_painter.dart`, `consumers/motion_path_patch_consumers.dart`, renderer tests, and painter tests.
+- Dynamic and scroll hosts: spawn controller/view/ticker sources, viewport bindings, pinned header, scroll lifecycle tests, and spawn lifecycle tests.
+- Demos and release controls: `example/lib/main.dart`, `example/lib/spiral_main.dart`, `example/lib/spiral_project.dart`, `.github/workflows/ci.yml`, both package manifests, and the existing docs/status reports.
+- History: current `main` includes the lifecycle hardening, immutable patch, shared renderer, spawn/reflow, scroll/pinning, and JS fixture batches through commits `#54` to `#65`; the audit baseline is the current tip `502d657`.
 
-- Changed: files, APIs, or behavior changed.
-- Verified: tests, analysis, fixtures, and benchmarks run.
-- Result: pass, partial, or blocked.
-- Risks: known regressions or follow-up work.
-- Next: smallest next implementation slice.
-```
+### 2026-07-31: Fresh full code-backed plan audit
 
-### Current report
-
-### 2026-07-31: Full code-backed plan audit
-
-- Changed: refreshed this plan's phase-by-phase status from Phase 0 through Phase 9 against `main` at `2bcf0372f287bc9f184fb46cfc39859bc006af8d`.
+- Changed: refreshed the phase table and progress report against `main` at `502d657`, from Phase 0 through Phase 9, and added file-level audit evidence.
 - Verified: inspected the core and Flutter source trees, tests, examples, parity fixtures, package metadata, release docs, and CI configuration; no fresh local Dart/Flutter command was run in this audit.
-- Result: partial. Lifecycle hardening, immutable patch groundwork, spawn/reflow, scroll/toggle/pin slices, and initial JS parity fixtures are present. Carousel, Helix, complete renderer consumption, complete parity evidence, and release gates remain open.
-- Risks: the old reports overstated progress by treating slices as complete phases. The biggest technical gap is still the generic Flutter renderer contract, not another demo.
-- Next: finish the shared renderer contract and its dirty-check/image/color/visibility behavior, then expand JS-backed parity fixtures before starting Carousel or Helix.
+- Result: partial. Lifecycle hardening, immutable patch groundwork, spawn/reflow, scroll/toggle/pin slices, and initial JS parity fixtures are present. Carousel, Helix, complete renderer consumption, complete parity evidence, and publishable release gates remain open.
+- Risks: the older `docs/IMPLEMENTATION_STATUS.md` still reports the historical Phase 41 Spiral milestone and should not be used as the current source of truth. The biggest technical gap is still the generic Flutter renderer contract, with the Spiral demo also duplicating engine-side visual math.
+- Next: finish the shared renderer contract and its color/visibility/image/CSS/3D/dirty-check behavior, then expand JS-backed parity fixtures before starting Carousel or Helix.
 
 ### 2026-07-31: Phase 6, JS parity fixtures
 
@@ -304,6 +299,10 @@ This is a source and documentation audit against the repository contents and CI 
 
 ### 2026-07-31
 
+- Refreshed the plan against the current `main` tip `502d657`, with file-level evidence for finished work and remaining gaps from Phase 0 through Phase 9.
+- Marked release hardening as partial rather than not started because package metadata, docs, benchmark instructions, and CI checks exist, while publish/security evidence is still missing.
+- Recorded the remaining generic renderer gaps: color, visibility, image frames, CSS values, instances, 3D/depth, cache disposal, and deep dirty checking.
+- Recorded that the Spiral demo still duplicates engine-side visual math and that spawn ordering lacks a shared top-most-first host contract.
 - Audited the repository against every delivery phase from 0 through 9 and replaced the stale progress summary with code-backed statuses and remaining gaps.
 - Added a scroll-agnostic toggle-action state machine and wired it into the viewport binding.
 - Fixed spawn reflow so survivors tween into freed slots instead of teleporting.
