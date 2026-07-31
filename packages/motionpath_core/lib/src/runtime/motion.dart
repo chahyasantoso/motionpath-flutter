@@ -6,11 +6,11 @@ import 'trigger.dart';
 class MotionPathMotionRuntime {
   MotionPathMotionRuntime({
     required this.id,
-    required this.tracks,
+    required List<MotionPathTrackRuntime> tracks,
     this.trigger,
     this.duration = 1,
     this.stagger = 0,
-  });
+  }) : tracks = List<MotionPathTrackRuntime>.unmodifiable(tracks);
 
   final String id;
   final List<MotionPathTrackRuntime> tracks;
@@ -22,7 +22,8 @@ class MotionPathMotionRuntime {
   ObservationGraph? graph;
   void Function(Map<String, Map<String, Object?>> patches)? onPatches;
   double _elapsed = 0;
-  Map<String, Map<String, Object?>> _patches = const <String, Map<String, Object?>>{};
+  Map<String, Map<String, Object?>> _patches =
+      const <String, Map<String, Object?>>{};
 
   Map<String, Map<String, Object?>> get patches => _patches;
   List<String> get graphOrder => graph == null
@@ -30,6 +31,9 @@ class MotionPathMotionRuntime {
       : List<String>.unmodifiable(graph!.order);
 
   void prepare(ObservationGraph nextGraph) {
+    if (graph != null) {
+      throw StateError('Motion "$id" is already prepared.');
+    }
     graph = nextGraph;
     final Map<String, MotionPathTrackRuntime> byId = <String, MotionPathTrackRuntime>{
       for (final MotionPathTrackRuntime track in tracks) track.id: track,
@@ -75,8 +79,10 @@ class MotionPathMotionRuntime {
     final Map<String, MotionPathTrackRuntime> byId = <String, MotionPathTrackRuntime>{
       for (final MotionPathTrackRuntime track in tracks) track.id: track,
     };
-    final Map<MotionPathTrackRuntime, Map<String, Object?>?> context = <MotionPathTrackRuntime, Map<String, Object?>?>{};
-    final Map<String, Map<String, Object?>> composed = <String, Map<String, Object?>>{};
+    final Map<MotionPathTrackRuntime, Map<String, Object?>?> context =
+        <MotionPathTrackRuntime, Map<String, Object?>?>{};
+    final Map<String, Map<String, Object?>> composed =
+        <String, Map<String, Object?>>{};
     for (final String trackId in order) {
       final MotionPathTrackRuntime? track = byId[trackId];
       if (track == null) {
@@ -129,7 +135,6 @@ class MotionPathMotionRuntime {
     for (final MotionPathTrackRuntime track in tracks) {
       track.dispose();
     }
-    tracks.clear();
     graph = null;
     playing = false;
     _patches = const <String, Map<String, Object?>>{};
