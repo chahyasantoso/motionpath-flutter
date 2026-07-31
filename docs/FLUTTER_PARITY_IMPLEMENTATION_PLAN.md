@@ -229,6 +229,23 @@ Exit criteria:
 
 Update this section after every meaningful implementation batch. Keep reports factual and tied to exit criteria.
 
+### Audit snapshot: 2026-07-31, `main` at `2bcf0372f287bc9f184fb46cfc39859bc006af8d`
+
+This is a source and documentation audit against the repository contents and CI configuration. It does not claim that a fresh local Dart or Flutter run was executed here.
+
+| Phase | Status | Finished in code | Still needs attention |
+|---|---|---|---|
+| 0 Baseline and guardrails | Partial | Package boundaries, strict core analysis, Flutter analysis, core and Flutter test jobs, example analysis, parity fixture format, and `PARITY_MATRIX.md`. | No formatting or generated-file hygiene CI gate, no checked-in baseline analyzer/test output, and example tests are not run in CI. |
+| 1 Lifecycle ownership | Partial | Guarded child callbacks, duplicate mount rejection, project replacement rejection, repeated `prepare()` rejection, immutable runtime track lists, explicit trigger/easing validation, finite-value validation, and focused lifecycle tests. | Direct runtime observation wiring still silently ignores an invalid input key; make that API fail explicitly rather than relying only on pre-runtime graph validation. |
+| 2 Immutable patch contract | Partial | Recursive immutable patch snapshots, internal-key filtering, plugin output declarations, renderer-neutral composition, mutation tests, and initial JS/Dart fixture coverage. | Formal public/internal/renderer/plugin key taxonomy is incomplete, there is no dedicated output normalizer/serializer boundary, and parity coverage does not include every supported plugin. |
+| 3 Shared Flutter renderer | Partial | Reusable child wrapper, stable `AnimatedBuilder.child`, shared transform resolver, ARGB and degree-to-radian conversion, blur consumer, diagnostic painter, image/CSS/filter/instance consumer helpers, and renderer tests. | The generic child view does not yet consume color, visibility, image frames, CSS values, z/perspective/3D, or dirty-check patches. Image resolution/cache disposal is also absent. |
+| 4 Dynamic children and spawn lifecycle | Partial | Pure value tweener, spawn/reflow/drain controller, stable keyed instances, shared ticker binding, bounded wave reset support, and reusable spawn view with lifecycle coverage. | Explicit top-most-first hit testing and paint ordering are not implemented or specified in a shared host contract; current ordering is offset-based only. |
+| 5 Scroll capabilities | Partial | Scroll scrub, viewport sampling, pin state, toggle actions, top pinning through `SliverPersistentHeader`, attach/detach/reattach, route teardown, and disposal tests. | Arbitrary pinning still has no host widget or stack implementation. Snap remains intentionally deferred. |
+| 6 Cross-repository parity | Partial | Versioned JS-generated fixtures for easing, transforms/colors, filters, image sequence, and observation graph, with numeric normalization and a documented image/path easing asymmetry. | Lifecycle is only partial; triggers, repeats, yoyo, delay, stagger, path, FK, plugin-specific behavior, malformed diagnostics, trajectories, z-depth, and patch disappearance still need JS-backed fixtures/goldens. |
+| 7 Carousel | Not started | No Carousel schema, renderer, or example exists in the repository. | Port it only after the shared renderer and parity fixtures are complete. |
+| 8 Helix and depth | Not started | Walker FK and 2D rig rendering exist, but that is not Helix or depth rendering. | Add Helix, perspective/3D transform semantics, deterministic depth sorting, and golden coverage. |
+| 9 Release hardening | Not started | API, migration, compatibility, benchmark instructions, changelog, and release checklist docs exist; CI analysis/test commands are defined. | Packages still use `publish_to: none`, Flutter still uses a path dependency, API docs are hand-maintained, no benchmark report is recorded, and publish/security checks are unchecked. |
+
 ### Progress report template
 
 ```md
@@ -243,21 +260,37 @@ Update this section after every meaningful implementation batch. Keep reports fa
 
 ### Current report
 
-### 2026-07-31: Phase 5, toggle-action state machine
+### 2026-07-31: Full code-backed plan audit
 
-- Changed: added `MotionPathToggleStateMachine`, `MotionPathTriggerZone`, and `MotionPathToggleAction` to core; `MotionPathViewportBinding` now exposes `onToggle` and `zone`, resets crossing state on detach, and rejects an inverted authored window at construction.
-- Verified: core and Flutter analysis plus the new `toggle_actions_test.dart` and `viewport_toggle_test.dart` suites, alongside the existing viewport and lifecycle tests.
-- Result: partial. Scrub sampling, pin state, and crossings are now three separate capabilities with no god-class, but pin repositioning still has no host widget.
-- Risks: crossings fire before `onSample`, which is a contract choice a host can depend on; changing it later is breaking. Snap remains deferred by design.
-- Next: pin host widgets, `SliverPersistentHeader` for top pinning and explicit stack math for arbitrary pinning, with reattach and mid-scroll disposal tests.
+- Changed: refreshed this plan's phase-by-phase status from Phase 0 through Phase 9 against `main` at `2bcf0372f287bc9f184fb46cfc39859bc006af8d`.
+- Verified: inspected the core and Flutter source trees, tests, examples, parity fixtures, package metadata, release docs, and CI configuration; no fresh local Dart/Flutter command was run in this audit.
+- Result: partial. Lifecycle hardening, immutable patch groundwork, spawn/reflow, scroll/toggle/pin slices, and initial JS parity fixtures are present. Carousel, Helix, complete renderer consumption, complete parity evidence, and release gates remain open.
+- Risks: the old reports overstated progress by treating slices as complete phases. The biggest technical gap is still the generic Flutter renderer contract, not another demo.
+- Next: finish the shared renderer contract and its dirty-check/image/color/visibility behavior, then expand JS-backed parity fixtures before starting Carousel or Helix.
+
+### 2026-07-31: Phase 6, JS parity fixtures
+
+- Changed: added versioned JS-generated fixtures and Dart coverage for easing, transforms/colors, filters, image sequences, and observation graphs; normalized only renderer-boundary color and image representations.
+- Verified: the repository contains the parity fixture, parity matrix, and fixture test; CI is configured to analyze and test the core package.
+- Result: partial. Five sampled cases are covered, but lifecycle and the broader trigger/plugin/path/FK matrix are not.
+- Risks: `path` and `imageSequence` read raw seek progress instead of applying per-stop easing; this is documented as an intentional tracked gap, not fixed behavior.
+- Next: add repeat/yoyo/delay/stagger, path, FK, plugin, lifecycle-event, and malformed-diagnostic fixtures.
+
+### 2026-07-31: Phase 5, pinned viewport host
+
+- Changed: added `MotionPathPinnedHeaderDelegate` and `MotionPathPinnedHeader` using `SliverPersistentHeader`, plus reattach and mid-scroll disposal coverage.
+- Verified: pinned-header, scroll reattach, viewport lifecycle, route lifecycle, and toggle-action suites are present; CI is configured to run the Flutter package tests.
+- Result: partial. Common top pinning is implemented and pinning stays in the Flutter host, but arbitrary stack pinning is still not implemented.
+- Risks: crossing callbacks fire before `onSample`, which is a host-visible contract choice; snap remains deferred.
+- Next: add the arbitrary pin host only if a real scene needs it, then prioritize the generic renderer and parity fixtures.
 
 ### 2026-07-31: Phase 4, easing-aware spawn reflow
 
 - Changed: `MotionPathSpawnController` now owns one `MotionPathValueTweener` per live child, seeded at spawn and at construction for adopted children, and a reflow retargets it instead of rebuilding it from a settled offset.
-- Verified: `reflow_tween_test.dart`, the spawn controller and spawn view suites, and full CI across core, adapter, and example.
-- Result: pass. Survivors slide into a freed slot over the authored duration and an interrupted reflow continues from the current animated offset.
+- Verified: reflow, spawn controller, spawn view, and shared-ticker suites are present; CI is configured to run the Flutter package tests.
+- Result: partial. Survivors slide into a freed slot over the authored duration and an interrupted reflow continues from the current animated offset, but the overall phase still lacks an explicit top-most-first host contract.
 - Risks: the tweener map is keyed by track identity, so a child detached without a removal callback is only pruned on the next rebuild.
-- Next: Phase 5 scroll capabilities.
+- Next: lock paint/hit-test ordering, then keep spawn behavior generic rather than adding Spiral-only logic.
 
 ### 2026-07-31: Baseline review completed
 
@@ -271,6 +304,7 @@ Update this section after every meaningful implementation batch. Keep reports fa
 
 ### 2026-07-31
 
+- Audited the repository against every delivery phase from 0 through 9 and replaced the stale progress summary with code-backed statuses and remaining gaps.
 - Added a scroll-agnostic toggle-action state machine and wired it into the viewport binding.
 - Fixed spawn reflow so survivors tween into freed slots instead of teleporting.
 - Added the end-to-end Flutter parity implementation plan.
