@@ -95,7 +95,10 @@ class MotionPathPatchView extends StatelessWidget {
         }
         if (transform.argb != fallbackArgb) {
           result = ColorFiltered(
-            colorFilter: ColorFilter.mode(transform.color, BlendMode.modulate),
+            colorFilter: ColorFilter.mode(
+              Color(transform.argb),
+              BlendMode.modulate,
+            ),
             child: result,
           );
         }
@@ -123,7 +126,7 @@ class MotionPathPatchView extends StatelessWidget {
         }
         final Object? visible = patch['visible'];
         if (visible is bool && !visible) {
-          result = const Offstage(child: SizedBox.shrink());
+          result = Offstage(child: result);
         }
         return result;
       },

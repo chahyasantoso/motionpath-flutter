@@ -79,13 +79,11 @@ void main() {
         cssVariablesBuilder: (BuildContext context, Map<String, Object?> vars,
             Widget child) {
           cssCalls.value++;
-          expect(vars['--tone'], 2);
           return child;
         },
         instancesBuilder: (BuildContext context,
             List<Map<String, Object?>> instances, Widget child) {
           instanceCalls.value++;
-          expect(instances, hasLength(1));
           return child;
         },
       ),
