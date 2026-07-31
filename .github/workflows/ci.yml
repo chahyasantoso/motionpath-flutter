@@ -50,11 +50,11 @@ jobs:
         shell: bash
         working-directory: example
     steps:
+      - uses: actions/checkout@v5
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
-      - uses: actions/checkout@v5
       - name: Pub get
         run: flutter pub get
       - name: Analyze
