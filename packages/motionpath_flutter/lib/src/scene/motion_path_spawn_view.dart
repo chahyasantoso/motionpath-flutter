@@ -6,22 +6,25 @@ import '../consumers/motion_path_patch_consumers.dart';
 import '../controllers/motion_path_spawn_controller.dart';
 import '../painters/motion_path_patch_painter.dart';
 
-/// Builds one stable child for each live spawned instance.
 typedef MotionPathSpawnItemBuilder =
     Widget Function(BuildContext context, MotionPathSpawnInstance instance);
+typedef MotionPathSpawnHitTest = bool Function(
+  MotionPathSpawnInstance instance,
+  Offset localPosition,
+);
 
 /// Renders dynamic children from composed spawn patches.
 ///
-/// Controller snapshots remain in ascending-offset order for compatibility.
-/// Flutter paints the ascending list directly, putting the higher-offset
-/// top-most item last in the Stack. Use [motionPathTopMostFirst] when hit-test
-/// traversal needs the front-most child first.
+/// [onHit] is called for the front-most matching instance. The callback owns
+/// the actual removal or interaction decision, so the generic host never
+/// guesses at scene-specific hit geometry.
 class MotionPathSpawnView extends StatelessWidget {
   const MotionPathSpawnView({
     required this.controller,
     required this.itemBuilder,
     this.alignment = Alignment.topLeft,
     this.fallbackArgb = kMotionPathDefaultArgb,
+    this.onHit,
     super.key,
   });
 
@@ -29,10 +32,11 @@ class MotionPathSpawnView extends StatelessWidget {
   final MotionPathSpawnItemBuilder itemBuilder;
   final Alignment alignment;
   final int fallbackArgb;
+  final MotionPathSpawnHitTest? onHit;
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
+    final Widget stack = AnimatedBuilder(
       animation: controller,
       builder: (BuildContext context, Widget? child) {
         return Stack(
@@ -50,6 +54,16 @@ class MotionPathSpawnView extends StatelessWidget {
           ],
         );
       },
+    );
+    final MotionPathSpawnHitTest? hitTest = onHit;
+    if (hitTest == null) return stack;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTapUp: (TapUpDetails details) {
+        motionPathHitTest(controller.instances, (MotionPathSpawnInstance instance) =>
+            hitTest(instance, details.localPosition));
+      },
+      child: stack,
     );
   }
 }
