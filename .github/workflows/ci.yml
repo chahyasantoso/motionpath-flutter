@@ -29,9 +29,18 @@ jobs:
       - name: Format check
         run: dart format --output=none --set-exit-if-changed .
       - name: Analyze
-        run: dart analyze --format machine
+        run: set -o pipefail; dart analyze --format machine 2>&1 | tee dart-analyze.log
       - name: Test
-        run: dart test --reporter expanded
+        run: set -o pipefail; dart test --reporter expanded 2>&1 | tee dart-test.log
+      - name: Upload core baseline logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dart-core-baseline-${{ github.sha }}
+          path: |
+            packages/motionpath_core/dart-analyze.log
+            packages/motionpath_core/dart-test.log
+          if-no-files-found: ignore
 
   flutter-adapter:
     runs-on: ubuntu-latest
