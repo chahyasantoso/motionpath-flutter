@@ -2,21 +2,22 @@
 
 Phase 3 is active after the green Phase 2 merge.
 
-## Completed in current slice
+## Required implementation
 
-- `MotionPathPatchView` now consumes shared color, visibility, CSS variable, image-frame, and spawned-instance payload adapters.
-- Existing transform, opacity, and blur handling remains covered.
-- Child subtree reuse remains covered by `AnimatedBuilder.child`.
+- Make `MotionPathPatchView` consume the shared patch contract for transform, opacity, color, visibility, filters, image frames, instances, CSS values, and supported 3D metadata.
+- Keep child subtrees stable with `AnimatedBuilder.child` or a repaint-driven painter path.
+- Define unsupported-key behavior and a shared transform resolver for translation, rotation, scale, z, perspective, and supported 3D values.
+- Keep image loading, caching, and disposal outside core.
+- Add dirty checking for unchanged patches.
+- Add widget, painter, consumer, and performance tests.
 
-## Remaining required implementation
+## Compatibility constraints
 
-- Shared transform resolver for z, perspective, and supported 3D values.
-- Explicit unsupported-key policy.
-- Image cache and disposal strategy at the host boundary.
-- Dirty checking for unchanged patches.
-- Painter and performance coverage for the complete contract.
-- Full demo migration away from local patch interpretation.
+- Do not change core animation semantics.
+- Do not make demos reinterpret authored keys independently.
+- Preserve the Walker whole-graph path.
+- Do not begin Carousel or Helix until this gate is complete.
 
 ## Exit rule
 
-Phase 3 is complete only when every item has implementation and tests, CI is green, this gate is marked complete, and the PR is merged into `main`.
+Phase 3 is complete only when every item has implementation and tests, CI is green, the implementation plan and phase status are updated, and the PR is merged into `main`.
