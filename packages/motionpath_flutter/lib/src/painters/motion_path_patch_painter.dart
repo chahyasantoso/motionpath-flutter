@@ -2,8 +2,10 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' show Canvas, Color, Paint, Rect, Size;
 
-import 'package:flutter/foundation.dart' show immutable, mapEquals;
+import 'package:flutter/foundation.dart' show immutable;
 import 'package:flutter/rendering.dart' show CustomPainter;
+
+import '../consumers/motion_path_patch_equality.dart';
 
 /// Default diagnostic fill, expressed as plain ARGB data so the renderer
 /// boundary never depends on framework colour helpers.
@@ -200,9 +202,13 @@ class MotionPathPatchPainter extends CustomPainter {
     canvas.restore();
   }
 
+  /// Repaint gating uses deep patch equality.
+  ///
+  /// A shallow compare treats two structurally different nested payloads as
+  /// equal whenever the top-level keys match, which drops legitimate repaints.
   @override
   bool shouldRepaint(covariant MotionPathPatchPainter oldDelegate) =>
       oldDelegate.extent != extent ||
       oldDelegate.fallbackArgb != fallbackArgb ||
-      !mapEquals<String, Object?>(oldDelegate.patch, patch);
+      !motionPathPatchEquals(oldDelegate.patch, patch);
 }
