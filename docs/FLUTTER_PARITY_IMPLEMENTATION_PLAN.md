@@ -86,11 +86,14 @@ Tasks:
 - Add a shared patch normalizer that removes internal keys and applies output serializers before renderer consumption.
 - Add tests proving consumers cannot mutate engine state through returned patches.
 - Add sampled JS/Dart parity fixtures for every currently supported plugin.
+- Add optional interest-scoped composition with `composeGraph({Set<String>? only})`. Filter only the top-level iteration; leave recursive `Track.compose()` dependency resolution unchanged. A filtered call must not overwrite the full-graph `motion.patches` snapshot.
+- Add full-map, filtered-map, transitive dependency, and unrelated-track regression coverage.
 
 Exit criteria:
 
 - Renderer consumers receive a stable, documented snapshot shape.
 - JS and Dart patch outputs agree within the documented tolerance.
+- Interest filtering composes only requested top-level tracks while retaining required dependencies.
 
 ### Phase 3: Shared Flutter renderer
 
@@ -107,12 +110,16 @@ Tasks:
 - Add a shared custom-property consumer for numeric values. Do not pretend CSS variables map directly to Flutter; expose typed values to the host widget.
 - Add filter composition with bounded values and tests for invalid sigma values.
 - Add dirty checking so unchanged patches do not trigger unnecessary paint work.
+- Add `trackPatch(String trackId)` backed by `ValueNotifier<Map<String, Object?>>` for per-track consumers. Preserve full-graph composition whenever a whole-graph listener exists or no per-track listener is registered.
+- Gate frame-driven controller ticks when there are no listeners anywhere, but keep imperative `seek()` and `publish()` behavior explicit rather than silently making them no-ops.
+- Ensure controller updates compose once per frame and prune or dispose per-track notifiers when dynamic tracks disappear.
 
 Exit criteria:
 
 - One generic consumer handles all supported patch keys.
 - No demo reads individual authored keys to reproduce engine behavior.
 - Widget, painter, and performance tests pass.
+- Partially watched motions update only interested per-track listeners, while Walker-style whole-graph consumers receive the unchanged full map.
 
 ### Phase 4: Dynamic children and spawn lifecycle
 
@@ -235,10 +242,10 @@ This is a source and documentation audit against the repository contents, curren
 
 | Phase | Status | Finished in code | Still needs attention |
 |---|---|---|---|
-| 0 Baseline and guardrails | Partial | Package boundaries, strict core analysis, Flutter analysis, core and Flutter test jobs, example analysis, parity fixture format, and `PARITY_MATRIX.md`. | No formatting or generated-file hygiene CI gate, no checked-in baseline analyzer/test output, and example tests are not run in CI. |
+| 0 Baseline and guardrails | **Blocked** | CI now defines format checks, strict analysis, core tests, Flutter tests, example tests, generated-file hygiene, and commit-specific log artifacts. `docs/BASELINE.md` defines the required gate. | The checks could not be executed in this environment because the repository checkout and Dart/Flutter SDKs are unavailable. No passing CI run with retained artifacts has been verified yet. |
 | 1 Lifecycle ownership | Partial | Guarded child callbacks, duplicate mount rejection, project replacement rejection, repeated `prepare()` rejection, immutable runtime track lists, explicit trigger/easing validation, finite-value validation, and focused lifecycle tests. | Direct runtime observation wiring in `MotionPathTrackRuntime.observe()` still silently returns for an input observation with a missing key; make that API fail explicitly rather than relying only on pre-runtime graph validation. |
-| 2 Immutable patch contract | Partial | Recursive immutable patch snapshots, internal-key filtering, plugin output declarations, renderer-neutral composition, mutation tests, and initial JS/Dart fixture coverage. | Formal public/internal/renderer/plugin key taxonomy is incomplete, there is no dedicated output normalizer/serializer boundary, and parity coverage does not include every supported plugin. |
-| 3 Shared Flutter renderer | Partial | Reusable child wrapper, stable `AnimatedBuilder.child`, shared transform resolver, ARGB and degree-to-radian conversion, blur consumer, diagnostic painter, image/CSS/filter/instance consumer helpers, and renderer tests. | `MotionPathPatchView` still does not apply patch color, visibility, image frames, CSS values, instances, z/perspective, or 3D values. Image resolution/cache disposal is absent, and dirty checking is only shallow `mapEquals` on the diagnostic painter. |
+| 2 Immutable patch contract | Partial | Recursive immutable patch snapshots, internal-key filtering, plugin output declarations, renderer-neutral composition, mutation tests, and initial JS/Dart fixture coverage. | Formal public/internal/renderer/plugin key taxonomy is incomplete, there is no dedicated output normalizer/serializer boundary, parity coverage does not include every supported plugin, and interest-scoped composition is planned but not implemented. |
+| 3 Shared Flutter renderer | Partial | Reusable child wrapper, stable `AnimatedBuilder.child`, shared transform resolver, ARGB and degree-to-radian conversion, blur consumer, diagnostic painter, image/CSS/filter/instance consumer helpers, and renderer tests. | `MotionPathPatchView` still does not apply patch color, visibility, image frames, CSS values, instances, z/perspective, or 3D values. Image resolution/cache disposal is absent, dirty checking is only shallow `mapEquals`, and per-track interest consumers are not implemented. |
 | 4 Dynamic children and spawn lifecycle | Partial | Pure value tweener, spawn/reflow/drain controller, stable keyed instances, shared ticker binding, bounded wave reset support, and reusable spawn view with lifecycle coverage. | `MotionPathSpawnController` and `MotionPathSpawnView` order by effective offset only, with no shared top-most-first paint/hit-test contract. The Spiral example still recomputes path position, color, visibility, reflow, and frame updates locally instead of consuming composed patches directly. |
 | 5 Scroll capabilities | Partial | Scroll scrub, viewport sampling, pin state, toggle actions, top pinning through `SliverPersistentHeader`, attach/detach/reattach, route teardown, and disposal tests. | Arbitrary pinning still has no host widget or stack implementation. Snap remains intentionally deferred. |
 | 6 Cross-repository parity | Partial | Versioned JS-generated fixtures for easing, transforms/colors, filters, image sequence, and observation graph, with numeric normalization and a documented image/path easing asymmetry. | Lifecycle is only partial; triggers, repeats, yoyo, delay, stagger, path, FK, plugin-specific behavior, malformed diagnostics, trajectories, z-depth, and patch disappearance still need JS-backed fixtures/goldens. |
@@ -246,14 +253,13 @@ This is a source and documentation audit against the repository contents, curren
 | 8 Helix and depth | Not started | Walker FK and 2D rig rendering exist, but that is not Helix or depth rendering. | Add Helix, perspective/3D transform semantics, deterministic depth sorting, and golden coverage. |
 | 9 Release hardening | Partial | Public API, migration, compatibility, benchmark instructions, changelog, release checklist, package metadata, and CI analysis/test commands exist. | Packages still use `publish_to: none`, Flutter still uses a path dependency, API docs are hand-maintained, no benchmark report is recorded, and publish/security checks are unchecked. |
 
-### Audit evidence reviewed
+### 2026-07-31: Phase 0 verification attempt
 
-- Core contract and lifecycle: `packages/motionpath_core/lib/src/contract/motionpath_types.dart`, `runtime/engine.dart`, `runtime/motion.dart`, `runtime/track.dart`, validation modules, and lifecycle/validation tests.
-- Patch boundary and plugins: `composition/compose_patch.dart`, `composition/immutable_patch.dart`, `plugins/*`, plugin tests, and `js_parity_fixture_test.dart`.
-- Flutter renderer: `scene/motion_path_patch_view.dart`, `painters/motion_path_patch_painter.dart`, `consumers/motion_path_patch_consumers.dart`, renderer tests, and painter tests.
-- Dynamic and scroll hosts: spawn controller/view/ticker sources, viewport bindings, pinned header, scroll lifecycle tests, and spawn lifecycle tests.
-- Demos and release controls: `example/lib/main.dart`, `example/lib/spiral_main.dart`, `example/lib/spiral_project.dart`, `.github/workflows/ci.yml`, both package manifests, and the existing docs/status reports.
-- History: current `main` includes the lifecycle hardening, immutable patch, shared renderer, spawn/reflow, scroll/pinning, and JS fixture batches through commits `#54` to `#65`; the audit baseline is the current tip `502d657`.
+- Changed: no runtime code; Phase 0 guardrails were already added to CI, including formatting, analysis, core/Flutter/example tests, generated-file hygiene, and retained log artifacts.
+- Verified: attempted the complete Phase 0 command matrix locally: environment versions, generated-file hygiene, core format/analyze/test, Flutter format/analyze/test, and example format/analyze/test.
+- Result: **blocked**, not failed by the repository. This execution environment has neither the repository checkout nor Dart/Flutter installed, so none of the project checks could run. A passing GitHub Actions run with retained artifacts is still required before Phase 0 can be marked complete.
+- Risks: treating a non-execution as a pass would create a fake baseline. Phase 1 remains explicitly gated.
+- Next: run the CI workflow on GitHub or from a machine with the repository checkout and Dart/Flutter SDKs; inspect every job and retained artifact, then mark Phase 0 complete only if all checks pass.
 
 ### 2026-07-31: Interest-scoped composition finding
 
@@ -332,6 +338,8 @@ This is a source and documentation audit against the repository contents, curren
 
 ### 2026-07-31
 
+- Recorded the Phase 0 verification attempt as blocked because this environment lacks the repository checkout and Dart/Flutter SDKs; no false pass was recorded.
+- Kept Phase 0 as the hard gate and explicitly prohibited advancing to Phase 1 without a passing CI run and retained artifacts.
 - Added interest-scoped composition as a P0-adjacent Phase 2/3 addition, with full-graph compatibility and dependency-pull-in constraints.
 - Recorded current-source caveats: the patch controller is not on the shipped ticker path, controller tick currently double-composes, and whole-graph plus per-track listeners require full composition.
 - Refreshed the plan against the current `main` tip `502d657`, with file-level evidence for finished work and remaining gaps from Phase 0 through Phase 9.
