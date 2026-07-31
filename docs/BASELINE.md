@@ -17,6 +17,12 @@ This file defines the reproducible baseline for the Flutter parity port. The bas
 | Example tests | `flutter test --reporter expanded` | all tests pass |
 | Generated-file hygiene | `bash tool/verify_generated_files.sh` | no tracked build or undeclared generated files |
 
+## Phase gate workflow
+
+Every implementation phase lands through a pull request. The PR must target `main`, run the complete CI matrix above, and retain analyzer/test logs as artifacts. Phase 0 is complete only when this verification PR is green, its required checks are visible on GitHub, and the retained artifacts confirm the exact commit, SDK channel, and test results.
+
+Do not merge a red or incomplete PR, and do not start Phase 1 until this PR passes all jobs. If CI fails, fix the branch and rerun the same PR rather than bypassing the gate with a direct push to `main`.
+
 ## How to capture a baseline locally
 
 Run the commands from the package directories shown in `.github/workflows/ci.yml`. Save stdout and stderr with the commit SHA, Dart/Flutter versions, operating system, and build mode. CI is the canonical capture path because it runs the same commands on a clean checkout.
