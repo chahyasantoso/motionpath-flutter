@@ -36,7 +36,8 @@ void _validateEase(Object? value, String path, List<MotionPathDiagnostic> diagno
 }
 
 bool _isSupportedEaseSyntax(String value) {
-  final RegExp match = RegExp(r'^back\.(in|out|inOut)\((-?\d+(?:\.\d+)?)\)$')
-      .firstMatch(value.trim()) as RegExp;
+  final RegExpMatch? match = RegExp(
+    r'^back\.(in|out|inOut)\((-?\d+(?:\.\d+)?)\)$',
+  ).firstMatch(value.trim());
   return match != null;
 }
