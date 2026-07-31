@@ -25,6 +25,7 @@ export 'src/plugins/scene_plugin.dart';
 export 'src/runtime/engine.dart';
 export 'src/runtime/motion.dart';
 export 'src/runtime/scroll_binding.dart';
+export 'src/runtime/toggle_actions.dart';
 export 'src/runtime/track.dart';
 export 'src/runtime/trigger.dart';
 export 'src/validation/validate_project.dart';

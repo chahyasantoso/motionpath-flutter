@@ -129,8 +129,6 @@ Tasks:
 - Add a generic spawned-instance widget/painter host.
 - Delete or refactor duplicate frame-triggered rebuild paths in the Spiral example.
 
-**Integration boundary:** `MotionPathLayoutDelegate` exposes settled logical offsets in seconds, while Flutter transforms consume renderer units such as logical pixels. The tweener is now tested as a clock-neutral scalar primitive, but it must not be wired directly to `x`/`y` patch keys. The next implementation slice must define an explicit renderer-neutral visual placement field or host mapping for reflow offsets, then consume the tweener through that contract.
-
 Exit criteria:
 
 - Spawn and reflow behavior is tested without Spiral-specific code.
@@ -245,6 +243,22 @@ Update this section after every meaningful implementation batch. Keep reports fa
 
 ### Current report
 
+### 2026-07-31: Phase 5, toggle-action state machine
+
+- Changed: added `MotionPathToggleStateMachine`, `MotionPathTriggerZone`, and `MotionPathToggleAction` to core; `MotionPathViewportBinding` now exposes `onToggle` and `zone`, resets crossing state on detach, and rejects an inverted authored window at construction.
+- Verified: core and Flutter analysis plus the new `toggle_actions_test.dart` and `viewport_toggle_test.dart` suites, alongside the existing viewport and lifecycle tests.
+- Result: partial. Scrub sampling, pin state, and crossings are now three separate capabilities with no god-class, but pin repositioning still has no host widget.
+- Risks: crossings fire before `onSample`, which is a contract choice a host can depend on; changing it later is breaking. Snap remains deferred by design.
+- Next: pin host widgets, `SliverPersistentHeader` for top pinning and explicit stack math for arbitrary pinning, with reattach and mid-scroll disposal tests.
+
+### 2026-07-31: Phase 4, easing-aware spawn reflow
+
+- Changed: `MotionPathSpawnController` now owns one `MotionPathValueTweener` per live child, seeded at spawn and at construction for adopted children, and a reflow retargets it instead of rebuilding it from a settled offset.
+- Verified: `reflow_tween_test.dart`, the spawn controller and spawn view suites, and full CI across core, adapter, and example.
+- Result: pass. Survivors slide into a freed slot over the authored duration and an interrupted reflow continues from the current animated offset.
+- Risks: the tweener map is keyed by track identity, so a child detached without a removal callback is only pruned on the next rebuild.
+- Next: Phase 5 scroll capabilities.
+
 ### 2026-07-31: Baseline review completed
 
 - Changed: created this implementation plan; no runtime code changed.
@@ -257,6 +271,8 @@ Update this section after every meaningful implementation batch. Keep reports fa
 
 ### 2026-07-31
 
+- Added a scroll-agnostic toggle-action state machine and wired it into the viewport binding.
+- Fixed spawn reflow so survivors tween into freed slots instead of teleporting.
 - Added the end-to-end Flutter parity implementation plan.
 - Recorded the recommended phase order, exit criteria, progress-report format, and release gates.
 - Captured the current parity gaps and architectural guardrails.
