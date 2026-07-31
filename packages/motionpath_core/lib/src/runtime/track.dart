@@ -30,7 +30,7 @@ class MotionPathObservation {
 
 /// A mounted track: one normalized playhead plus its composition.
 class MotionPathTrackRuntime implements MotionPathLayoutChild {
-  /// Creates a runtime track.
+  /// MotionPathTrackRuntime constructor.
   MotionPathTrackRuntime(
     this.id, {
     Map<String, List<MotionPathStop>> properties =
@@ -42,7 +42,6 @@ class MotionPathTrackRuntime implements MotionPathLayoutChild {
   })  : properties =
             Map<String, List<MotionPathStop>>.unmodifiable(properties),
         stops = List<MotionPathStop>.unmodifiable(stops),
-        layoutDelegate = layoutDelegate ?? kGaplessLayoutDelegate,
         plugins = List<MotionPathPlugin>.unmodifiable(
           plugins ??
               MotionPathPluginRegistry()
@@ -80,15 +79,47 @@ class MotionPathTrackRuntime implements MotionPathLayoutChild {
 
   /// Called after a child is placed, with its settled offset.
   ///
-  /// The host uses this to mount the child at that offset. The core never
-  /// schedules anything itself.
-  void Function(MotionPathTrackRuntime child, double offset)? onChildSpawned;
+  /// A track accepts one host for each lifecycle event. Assigning a second
+  /// non-null callback is an ownership error and throws in every build mode.
+  void Function(MotionPathTrackRuntime child, double offset)?
+      get onChildSpawned => _onChildSpawned;
+  set onChildSpawned(
+    void Function(MotionPathTrackRuntime child, double offset)? callback,
+  ) {
+    _guardCallbackWire('onChildSpawned', _onChildSpawned, callback);
+    _onChildSpawned = callback;
+  }
 
   /// Called after a child is detached, before its siblings reflow.
-  void Function(MotionPathTrackRuntime child)? onChildRemoved;
+  void Function(MotionPathTrackRuntime child)? get onChildRemoved => _onChildRemoved;
+  set onChildRemoved(void Function(MotionPathTrackRuntime child)? callback) {
+    _guardCallbackWire('onChildRemoved', _onChildRemoved, callback);
+    _onChildRemoved = callback;
+  }
 
   /// Called for each survivor the layout policy moved.
-  void Function(MotionPathTrackRuntime child, double offset)? onChildReflowed;
+  void Function(MotionPathTrackRuntime child, double offset)?
+      get onChildReflowed => _onChildReflowed;
+  set onChildReflowed(
+    void Function(MotionPathTrackRuntime child, double offset)? callback,
+  ) {
+    _guardCallbackWire('onChildReflowed', _onChildReflowed, callback);
+    _onChildReflowed = callback;
+  }
+
+  static void _guardCallbackWire<T>(
+    String name,
+    T? current,
+    T? next,
+  ) {
+    if (current != null && next != null) {
+      throw StateError('$name is already wired; only one host is allowed.');
+    }
+  }
+
+  void Function(MotionPathTrackRuntime child, double offset)? _onChildSpawned;
+  void Function(MotionPathTrackRuntime child)? _onChildRemoved;
+  void Function(MotionPathTrackRuntime child, double offset)? _onChildReflowed;
 
   final List<MotionPathObservation> _observed = <MotionPathObservation>[];
   final List<void Function(Map<String, Object?>)> _listeners =
@@ -105,9 +136,6 @@ class MotionPathTrackRuntime implements MotionPathLayoutChild {
       List<MotionPathObservation>.unmodifiable(_observed);
 
   /// Settled logical offset inside the parent, in seconds.
-  ///
-  /// Bookkeeping only. It is the value the host mounts against; this track
-  /// never advances a child's playhead on its own.
   @override
   double get currentOffset => _currentOffset;
 
@@ -131,10 +159,6 @@ class MotionPathTrackRuntime implements MotionPathLayoutChild {
   MotionPathTrackRuntime? getChild(String childId) => _children[childId];
 
   /// Adds [child] and places it through this track's layout policy.
-  ///
-  /// Throws when this track is disposed, when [child] already has a parent, or
-  /// when a child with the same id is already present. Re-parenting silently
-  /// would leave two parents believing they own the same offset.
   void addChild(MotionPathTrackRuntime child, {double stagger = 0}) {
     if (_disposed) {
       throw StateError('Track "$id" is disposed.');
@@ -156,25 +180,21 @@ class MotionPathTrackRuntime implements MotionPathLayoutChild {
     child._staggerOffset = stagger;
     child._currentOffset = offset;
     _children[child.id] = child;
-    onChildSpawned?.call(child, offset);
+    _onChildSpawned?.call(child, offset);
   }
 
   /// Removes the child with [childId] and applies the resulting reflow plan.
-  ///
-  /// Removing an unknown id is a no-op.
   void removeChild(String childId) {
     final MotionPathTrackRuntime? child = _children[childId];
     if (child == null) {
       return;
     }
-    // The policy reads the chain as it was, so it still contains the removed
-    // child and can rank it.
     final List<MotionPathLayoutChild> siblings = <MotionPathLayoutChild>[
       ..._children.values,
     ];
     _children.remove(childId);
     child._parent = null;
-    onChildRemoved?.call(child);
+    _onChildRemoved?.call(child);
     for (final MotionPathReflowTarget target in layoutDelegate.computeReflow(
       siblings,
       child,
@@ -185,7 +205,7 @@ class MotionPathTrackRuntime implements MotionPathLayoutChild {
         continue;
       }
       moved._currentOffset = target.offset;
-      onChildReflowed?.call(moved, target.offset);
+      _onChildReflowed?.call(moved, target.offset);
     }
   }
 
@@ -211,9 +231,6 @@ class MotionPathTrackRuntime implements MotionPathLayoutChild {
   }
 
   /// Raw interpolated state, before plugins compose.
-  ///
-  /// Each property is blended by the rule its key needs: colour keys blend per
-  /// channel, everything else uses the numeric default.
   Map<String, Object?> snapshot() {
     final Map<String, List<MotionPathStop>> authored =
         properties.isEmpty && stops.isNotEmpty
@@ -233,10 +250,6 @@ class MotionPathTrackRuntime implements MotionPathLayoutChild {
   }
 
   /// Composes this track's renderer-neutral patch.
-  ///
-  /// [context] is created per external compose call. It caches resolved patches
-  /// so diamonds are cheap, and uses a composing sentinel so a cycle degrades
-  /// to a local compose instead of recursing forever.
   Map<String, Object?> compose({
     Map<String, Object?>? rawData,
     Map<MotionPathTrackRuntime, Map<String, Object?>?>? context,
@@ -298,9 +311,6 @@ class MotionPathTrackRuntime implements MotionPathLayoutChild {
   }
 
   /// Releases subscriptions, observations, and the child chain.
-  ///
-  /// Disposal cascades to children and is idempotent, so a route change that
-  /// tears down a parent cannot leave a child holding a listener.
   void dispose() {
     if (_disposed) {
       return;
@@ -322,19 +332,12 @@ class MotionPathTrackRuntime implements MotionPathLayoutChild {
 }
 
 /// Picks the value blend a property key needs.
-///
-/// Colour keys interpolate per channel; everything else uses the numeric and
-/// switch-at-the-end default.
 ValueBlend blendForProperty(String propertyKey) =>
     kMotionPathColorKeys.contains(propertyKey)
         ? blendColorValues
         : MotionPathInterpolators.value;
 
 /// Reads authored stops out of one keyframe definition.
-///
-/// [propertyKey] decides whether stop values are normalized into packed ARGB
-/// data. A stop's own `ease` wins over the keyframe-level `ease`, and an
-/// unknown name degrades to linear instead of throwing.
 List<MotionPathStop> stopsFromKeyframe(
   Object? raw, {
   String propertyKey = '',
