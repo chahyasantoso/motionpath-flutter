@@ -1,3 +1,8 @@
+// The patch view calls put child last, but the analyzer currently flags the
+// constructor because it also exposes super.key through the generated API.
+// Keep this suppression local to the regression test file, not package-wide.
+// ignore_for_file: sort_child_properties_last
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:motionpath_flutter/motionpath_flutter.dart';
@@ -15,9 +20,6 @@ void main() {
           child: MotionPathPatchView(
             source: source,
             trackId: 'card',
-            // The child is intentionally last. The analyzer reports a false
-            // positive here because the constructor also has a super.key.
-            // ignore: sort_child_properties_last
             child: const SizedBox(key: childKey),
           ),
         ),
@@ -51,8 +53,6 @@ void main() {
           child: MotionPathPatchView(
             source: source,
             trackId: 'card',
-            // The child is intentionally last. See the analyzer note above.
-            // ignore: sort_child_properties_last
             child: const SizedBox(),
           ),
         ),
@@ -84,8 +84,6 @@ void main() {
             source: source,
             trackId: 'card',
             useDiagnosticPainter: true,
-            // The child is intentionally last. See the analyzer note above.
-            // ignore: sort_child_properties_last
             child: const SizedBox(),
           ),
         ),
