@@ -42,6 +42,29 @@ void main() {
     builds.dispose();
   });
 
+  testWidgets('applies rotation and blur from the patch',
+      (WidgetTester tester) async {
+    final MotionPathPatchSource source = MotionPathPatchSource();
+    await tester.pumpWidget(Directionality(
+      textDirection: TextDirection.ltr,
+      child: MotionPathPatchView(
+        source: source,
+        trackId: 'card',
+        child: const SizedBox(),
+      ),
+    ));
+    source.publish(<String, Map<String, Object?>>{
+      'card': <String, Object?>{
+        'rotation': 90,
+        'filter': <String, Object?>{'blur': 4},
+      },
+    });
+    await tester.pump();
+    expect(find.byType(Transform), findsWidgets);
+    expect(find.byType(ImageFiltered), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('consumes color, visibility, CSS, and instance payloads',
       (WidgetTester tester) async {
     final MotionPathPatchSource source = MotionPathPatchSource();
@@ -80,6 +103,22 @@ void main() {
     expect(find.byType(Offstage), findsOneWidget);
     expect(cssCalls.value, greaterThan(0));
     expect(instanceCalls.value, greaterThan(0));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('keeps diagnostic painter opt-in', (WidgetTester tester) async {
+    final MotionPathPatchSource source = MotionPathPatchSource();
+    await tester.pumpWidget(Directionality(
+      textDirection: TextDirection.ltr,
+      child: MotionPathPatchView(
+        source: source,
+        trackId: 'card',
+        useDiagnosticPainter: true,
+        child: const SizedBox(),
+      ),
+    ));
+    expect(find.byType(CustomPaint), findsOneWidget);
+    expect(find.byType(SizedBox), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }
