@@ -2,12 +2,29 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:motionpath_flutter/motionpath_flutter.dart';
 
+class _BuildProbe extends StatefulWidget {
+  const _BuildProbe({required this.builds, super.key});
+
+  final ValueNotifier<int> builds;
+
+  @override
+  State<_BuildProbe> createState() => _BuildProbeState();
+}
+
+class _BuildProbeState extends State<_BuildProbe> {
+  @override
+  Widget build(BuildContext context) {
+    widget.builds.value++;
+    return const SizedBox();
+  }
+}
+
 void main() {
   testWidgets(
-    'reuses the supplied child across patch updates',
+    'reuses the supplied child without rebuilding it on patch updates',
     (WidgetTester tester) async {
       final MotionPathPatchSource source = MotionPathPatchSource();
-      const Key childKey = ValueKey<String>('stable-child');
+      final ValueNotifier<int> builds = ValueNotifier<int>(0);
 
       await tester.pumpWidget(
         Directionality(
@@ -15,10 +32,11 @@ void main() {
           child: MotionPathPatchView(
             source: source,
             trackId: 'card',
-            child: const SizedBox(key: childKey),
+            child: _BuildProbe(builds: builds),
           ),
         ),
       );
+      expect(builds.value, 1);
 
       source.publish(<String, Map<String, Object?>>{
         'card': <String, Object?>{
@@ -29,10 +47,11 @@ void main() {
       });
       await tester.pump();
 
-      expect(find.byKey(childKey), findsOneWidget);
+      expect(builds.value, 1);
       expect(find.byType(Opacity), findsOneWidget);
       expect(find.byType(Transform), findsWidgets);
       expect(tester.takeException(), isNull);
+      builds.dispose();
     },
   );
 
