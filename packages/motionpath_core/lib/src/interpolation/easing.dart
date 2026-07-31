@@ -74,17 +74,22 @@ double _expoInOut(double raw) {
   final double t = _clamp01(raw);
   if (t == 0) return 0;
   if (t == 1) return 1;
-  return t < 0.5 ? _pow(2.0, 20 * t - 10) / 2 : (2 - _pow(2.0, -20 * t + 10)) / 2;
+  return t < 0.5
+      ? _pow(2.0, 20 * t - 10) / 2
+      : (2 - _pow(2.0, -20 * t + 10)) / 2;
 }
 
 double _backIn(double raw) {
   final double t = _clamp01(raw);
-  return (kMotionPathBackOvershoot + 1) * t * t * t - kMotionPathBackOvershoot * t * t;
+  return (kMotionPathBackOvershoot + 1) * t * t * t -
+      kMotionPathBackOvershoot * t * t;
 }
 
 double _backOut(double raw) {
   final double t = _clamp01(raw) - 1;
-  return 1 + (kMotionPathBackOvershoot + 1) * t * t * t + kMotionPathBackOvershoot * t * t;
+  return 1 +
+      (kMotionPathBackOvershoot + 1) * t * t * t +
+      kMotionPathBackOvershoot * t * t;
 }
 
 double _backInOut(double raw) {
@@ -110,7 +115,9 @@ double _elasticOut(double raw) {
   final double t = _clamp01(raw);
   if (t == 0 || t == 1) return t;
   const double angular = 2 * math.pi / kMotionPathElasticPeriod;
-  return _pow(2.0, -10 * t) * math.sin((t - kMotionPathElasticPeriod / 4) * angular) + 1;
+  return _pow(2.0, -10 * t) *
+          math.sin((t - kMotionPathElasticPeriod / 4) * angular) +
+      1;
 }
 
 double _elasticInOut(double raw) {
@@ -144,7 +151,9 @@ double _bounceIn(double raw) => 1 - _bounceOut(1 - _clamp01(raw));
 
 double _bounceInOut(double raw) {
   final double t = _clamp01(raw);
-  return t < 0.5 ? (1 - _bounceOut(1 - 2 * t)) / 2 : (1 + _bounceOut(2 * t - 1)) / 2;
+  return t < 0.5
+      ? (1 - _bounceOut(1 - 2 * t)) / 2
+      : (1 + _bounceOut(2 * t - 1)) / 2;
 }
 
 /// Suffixes an authored ease name may carry, normalized to lower case.
@@ -208,7 +217,8 @@ final Map<String, Easing> _easings = _buildEasings();
 Iterable<String> get motionPathEasingNames => _easings.keys;
 
 /// True when [name] resolves to a real curve rather than the linear fallback.
-bool isKnownEasing(String name) => _easings.containsKey(name.trim().toLowerCase());
+bool isKnownEasing(String name) =>
+    _easings.containsKey(name.trim().toLowerCase());
 
 /// Resolves an authored `stops[].ease` value into an [Easing] curve.
 ///

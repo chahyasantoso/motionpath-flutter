@@ -67,8 +67,7 @@ class MotionPathViewportBinding {
   bool _disposed = false;
   MotionPathViewportSample _sample = _zeroSample;
 
-  static const MotionPathViewportSample _zeroSample =
-      MotionPathViewportSample(
+  static const MotionPathViewportSample _zeroSample = MotionPathViewportSample(
     scrollPixels: 0,
     localOffset: 0,
     progress: 0,
@@ -100,7 +99,8 @@ class MotionPathViewportBinding {
         ? (scrollPixels >= end ? 1 : 0)
         : ((scrollPixels - start) / span).clamp(0.0, 1.0).toDouble();
     final double localOffset = itemStart - scrollPixels;
-    final bool visible = localOffset < viewportExtent &&
+    final bool visible =
+        localOffset < viewportExtent &&
         localOffset + itemExtent > 0 &&
         itemExtent > 0 &&
         viewportExtent > 0;

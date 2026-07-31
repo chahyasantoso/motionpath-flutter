@@ -9,24 +9,23 @@ Widget _host({
   required List<double> progresses,
   double extent = 100,
   double pinExtent = 200,
-}) =>
-    Directionality(
-      textDirection: TextDirection.ltr,
-      child: CustomScrollView(
-        controller: controller,
-        slivers: <Widget>[
-          MotionPathPinnedHeader(
-            extent: extent,
-            pinExtent: pinExtent,
-            builder: (BuildContext context, double progress) {
-              progresses.add(progress);
-              return const SizedBox.expand(key: _pinnedKey);
-            },
-          ),
-          const SliverToBoxAdapter(child: SizedBox(height: 2000)),
-        ],
+}) => Directionality(
+  textDirection: TextDirection.ltr,
+  child: CustomScrollView(
+    controller: controller,
+    slivers: <Widget>[
+      MotionPathPinnedHeader(
+        extent: extent,
+        pinExtent: pinExtent,
+        builder: (BuildContext context, double progress) {
+          progresses.add(progress);
+          return const SizedBox.expand(key: _pinnedKey);
+        },
       ),
-    );
+      const SliverToBoxAdapter(child: SizedBox(height: 2000)),
+    ],
+  ),
+);
 
 void main() {
   test('pin progress normalizes the sliver shrink offset', () {
@@ -55,17 +54,11 @@ void main() {
 
   test('a zero runway reports binary progress instead of dividing by zero', () {
     expect(
-      MotionPathPinnedHeaderDelegate.progressFor(
-        shrinkOffset: 0,
-        pinExtent: 0,
-      ),
+      MotionPathPinnedHeaderDelegate.progressFor(shrinkOffset: 0, pinExtent: 0),
       0,
     );
     expect(
-      MotionPathPinnedHeaderDelegate.progressFor(
-        shrinkOffset: 1,
-        pinExtent: 0,
-      ),
+      MotionPathPinnedHeaderDelegate.progressFor(shrinkOffset: 1, pinExtent: 0),
       1,
     );
   });
@@ -94,17 +87,18 @@ void main() {
   test('the runway is the authored extent plus the pin distance', () {
     final MotionPathPinnedHeaderDelegate delegate =
         MotionPathPinnedHeaderDelegate(
-      extent: 100,
-      pinExtent: 200,
-      builder: (BuildContext context, double progress) => const SizedBox(),
-    );
+          extent: 100,
+          pinExtent: 200,
+          builder: (BuildContext context, double progress) => const SizedBox(),
+        );
 
     expect(delegate.minExtent, 100);
     expect(delegate.maxExtent, 300);
   });
 
-  testWidgets('the section stays at the leading edge across its runway',
-      (WidgetTester tester) async {
+  testWidgets('the section stays at the leading edge across its runway', (
+    WidgetTester tester,
+  ) async {
     final ScrollController controller = ScrollController();
     final List<double> progresses = <double>[];
 

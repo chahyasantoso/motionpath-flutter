@@ -20,8 +20,14 @@ void main() {
     });
 
     test('resolves a bare family name to its out variant', () {
-      expect(resolveEasing('power2')(0.5), closeTo(resolveEasing('power2.out')(0.5), 1e-12));
-      expect(resolveEasing('sine')(0.3), closeTo(resolveEasing('sine.out')(0.3), 1e-12));
+      expect(
+        resolveEasing('power2')(0.5),
+        closeTo(resolveEasing('power2.out')(0.5), 1e-12),
+      );
+      expect(
+        resolveEasing('sine')(0.3),
+        closeTo(resolveEasing('sine.out')(0.3), 1e-12),
+      );
     });
 
     test('is case and whitespace insensitive', () {
@@ -45,7 +51,10 @@ void main() {
     });
 
     test('falls back to linear for an unknown name', () {
-      expect(resolveEasing('definitely-not-an-ease')(0.33), closeTo(0.33, 1e-9));
+      expect(
+        resolveEasing('definitely-not-an-ease')(0.33),
+        closeTo(0.33, 1e-9),
+      );
     });
   });
 
@@ -111,8 +120,10 @@ void main() {
           },
         },
       );
-      final MotionPathTrackRuntime runtime =
-          MotionPathTrackRuntime('chip', properties: propertiesFromTrack(track));
+      final MotionPathTrackRuntime runtime = MotionPathTrackRuntime(
+        'chip',
+        properties: propertiesFromTrack(track),
+      );
       runtime.seek(0.5);
       // A naive lerp of the packed integers would land on 0xFF7F7F7F.
       expect(runtime.compose()['color'], 0xFF808080);

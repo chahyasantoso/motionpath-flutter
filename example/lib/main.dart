@@ -9,10 +9,10 @@ class MotionPathExampleApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData.dark(useMaterial3: true),
-        home: const MotionPathExamplePage(),
-      );
+    debugShowCheckedModeBanner: false,
+    theme: ThemeData.dark(useMaterial3: true),
+    home: const MotionPathExamplePage(),
+  );
 }
 
 class MotionPathExamplePage extends StatefulWidget {
@@ -117,64 +117,64 @@ class _MotionPathExamplePageState extends State<MotionPathExamplePage>
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text('MotionPath Flutter')),
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: _spawn,
-          icon: const Icon(Icons.add),
-          label: const Text('Spawn dot'),
-        ),
-        body: ListView(
-          controller: _scroll,
-          children: <Widget>[
-            const _IntroCard(),
-            SizedBox(
-              height: 420,
-              child: AnimatedBuilder(
-                animation: _source,
-                builder: (BuildContext context, Widget? child) => Stack(
-                  children: <Widget>[
-                    Positioned.fill(
-                      child: CustomPaint(
-                        painter: _ViewportPainter(sample: _viewport.sample),
-                      ),
-                    ),
-                    if (_viewport.sample.pinned)
-                      const Positioned(
-                        top: 16,
-                        right: 16,
-                        child: Chip(label: Text('PINNED')),
-                      ),
-                  ],
+    appBar: AppBar(title: const Text('MotionPath Flutter')),
+    floatingActionButton: FloatingActionButton.extended(
+      onPressed: _spawn,
+      icon: const Icon(Icons.add),
+      label: const Text('Spawn dot'),
+    ),
+    body: ListView(
+      controller: _scroll,
+      children: <Widget>[
+        const _IntroCard(),
+        SizedBox(
+          height: 420,
+          child: AnimatedBuilder(
+            animation: _source,
+            builder: (BuildContext context, Widget? child) => Stack(
+              children: <Widget>[
+                Positioned.fill(
+                  child: CustomPaint(
+                    painter: _ViewportPainter(sample: _viewport.sample),
+                  ),
                 ),
-              ),
+                if (_viewport.sample.pinned)
+                  const Positioned(
+                    top: 16,
+                    right: 16,
+                    child: Chip(label: Text('PINNED')),
+                  ),
+              ],
             ),
-            SizedBox(
-              height: 360,
-              child: AnimatedBuilder(
-                animation: _spawns,
-                builder: (BuildContext context, Widget? child) => Stack(
-                  children: <Widget>[
-                    Positioned.fill(
-                      child: CustomPaint(
-                        painter: _SpawnPainter(instances: _spawns.instances),
-                      ),
-                    ),
-                    Positioned(
-                      top: 16,
-                      left: 20,
-                      child: Text(
-                        '${_spawns.liveCount} dots in the chain',
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 600),
-          ],
+          ),
         ),
-      );
+        SizedBox(
+          height: 360,
+          child: AnimatedBuilder(
+            animation: _spawns,
+            builder: (BuildContext context, Widget? child) => Stack(
+              children: <Widget>[
+                Positioned.fill(
+                  child: CustomPaint(
+                    painter: _SpawnPainter(instances: _spawns.instances),
+                  ),
+                ),
+                Positioned(
+                  top: 16,
+                  left: 20,
+                  child: Text(
+                    '${_spawns.liveCount} dots in the chain',
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 600),
+      ],
+    ),
+  );
 }
 
 class _IntroCard extends StatelessWidget {
@@ -182,12 +182,12 @@ class _IntroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => const Padding(
-        padding: EdgeInsets.all(24),
-        child: Text(
-          'Scroll to observe viewport progress and pin state. Tap Spawn dot to build a visible chain. Dots stay mounted here so the instance count is easy to inspect.',
-          style: TextStyle(fontSize: 18),
-        ),
-      );
+    padding: EdgeInsets.all(24),
+    child: Text(
+      'Scroll to observe viewport progress and pin state. Tap Spawn dot to build a visible chain. Dots stay mounted here so the instance count is easy to inspect.',
+      style: TextStyle(fontSize: 18),
+    ),
+  );
 }
 
 class _ViewportPainter extends CustomPainter {
@@ -196,19 +196,39 @@ class _ViewportPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    canvas.drawRect(Offset.zero & size, Paint()..color = const Color(0xFF151A2B));
-    final double y = sample.pinned ? 60 : sample.localOffset.clamp(0, size.height);
-    final Paint card = Paint()..color = Color.lerp(const Color(0xFF384A80), const Color(0xFF6E82FF), sample.progress)!;
-    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(24, y, size.width - 48, 220), const Radius.circular(24)), card);
+    canvas.drawRect(
+      Offset.zero & size,
+      Paint()..color = const Color(0xFF151A2B),
+    );
+    final double y = sample.pinned
+        ? 60
+        : sample.localOffset.clamp(0, size.height);
+    final Paint card = Paint()
+      ..color = Color.lerp(
+        const Color(0xFF384A80),
+        const Color(0xFF6E82FF),
+        sample.progress,
+      )!;
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(24, y, size.width - 48, 220),
+        const Radius.circular(24),
+      ),
+      card,
+    );
     final TextPainter text = TextPainter(
-      text: TextSpan(text: 'progress ${(sample.progress * 100).round()}%', style: const TextStyle(color: Colors.white, fontSize: 22)),
+      text: TextSpan(
+        text: 'progress ${(sample.progress * 100).round()}%',
+        style: const TextStyle(color: Colors.white, fontSize: 22),
+      ),
       textDirection: TextDirection.ltr,
     )..layout();
     text.paint(canvas, const Offset(48, 84));
   }
 
   @override
-  bool shouldRepaint(covariant _ViewportPainter oldDelegate) => oldDelegate.sample != sample;
+  bool shouldRepaint(covariant _ViewportPainter oldDelegate) =>
+      oldDelegate.sample != sample;
 }
 
 class _SpawnPainter extends CustomPainter {
@@ -217,16 +237,29 @@ class _SpawnPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    canvas.drawRect(Offset.zero & size, Paint()..color = const Color(0xFF0B0D16));
+    canvas.drawRect(
+      Offset.zero & size,
+      Paint()..color = const Color(0xFF0B0D16),
+    );
     final double span = size.width - 72;
     for (final MotionPathSpawnInstance instance in instances) {
       final double x = 36 + (instance.offset * 78) % span;
       final double y = size.height / 2 + (instance.offset * 24) % 90 - 45;
       final double radius = 10 + instance.progress * 8;
-      canvas.drawCircle(Offset(x, y), radius, Paint()..color = Color.lerp(const Color(0xFFFF8F55), const Color(0xFF6E82FF), instance.progress)!);
+      canvas.drawCircle(
+        Offset(x, y),
+        radius,
+        Paint()
+          ..color = Color.lerp(
+            const Color(0xFFFF8F55),
+            const Color(0xFF6E82FF),
+            instance.progress,
+          )!,
+      );
     }
   }
 
   @override
-  bool shouldRepaint(covariant _SpawnPainter oldDelegate) => oldDelegate.instances != instances;
+  bool shouldRepaint(covariant _SpawnPainter oldDelegate) =>
+      oldDelegate.instances != instances;
 }

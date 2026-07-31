@@ -44,22 +44,24 @@ void main() {
       id: 'graph',
       tracks: <MotionPathTrackRuntime>[child, root],
     );
-    motion.prepare(const ObservationGraph(
-      nodes: <ObservationNode>[
-        ObservationNode('root'),
-        ObservationNode('child', index: 1),
-      ],
-      edges: <ObservationEdge>[
-        ObservationEdge(
-          source: 'root',
-          target: 'child',
-          role: 'input',
-          input: 'parentWorld',
-        ),
-      ],
-      order: <String>['root', 'child'],
-      errors: <MotionPathDiagnostic>[],
-    ));
+    motion.prepare(
+      const ObservationGraph(
+        nodes: <ObservationNode>[
+          ObservationNode('root'),
+          ObservationNode('child', index: 1),
+        ],
+        edges: <ObservationEdge>[
+          ObservationEdge(
+            source: 'root',
+            target: 'child',
+            role: 'input',
+            input: 'parentWorld',
+          ),
+        ],
+        order: <String>['root', 'child'],
+        errors: <MotionPathDiagnostic>[],
+      ),
+    );
     final Map<String, Map<String, Object?>> patches = motion.composeGraph();
     expect(patches.keys, <String>['root', 'child']);
     expect(motion.graphOrder, <String>['root', 'child']);

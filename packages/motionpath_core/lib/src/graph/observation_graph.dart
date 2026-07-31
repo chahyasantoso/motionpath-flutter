@@ -97,11 +97,13 @@ class ObservationGraph {
 
   /// Input edges pointing at [trackId].
   Iterable<ObservationEdge> inputsFor(String trackId) => edges.where(
-      (ObservationEdge edge) => edge.target == trackId && edge.isInput);
+    (ObservationEdge edge) => edge.target == trackId && edge.isInput,
+  );
 
   /// Output edges pointing at [trackId].
   Iterable<ObservationEdge> outputsFor(String trackId) => edges.where(
-      (ObservationEdge edge) => edge.target == trackId && !edge.isInput);
+    (ObservationEdge edge) => edge.target == trackId && !edge.isInput,
+  );
 }
 
 /// Returns a copy of the compiled order.
@@ -117,19 +119,23 @@ ObservationGraph normalizeObservationGraph(MotionPathMotion motion) {
   for (int index = 0; index < motion.tracks.length; index++) {
     final String id = motion.tracks[index].id;
     if (id.isEmpty) {
-      errors.add(MotionPathDiagnostic(
-        path: 'tracks[$index].id',
-        code: 'track-observations',
-        message: 'Track id must be a non-empty string.',
-      ));
+      errors.add(
+        MotionPathDiagnostic(
+          path: 'tracks[$index].id',
+          code: 'track-observations',
+          message: 'Track id must be a non-empty string.',
+        ),
+      );
       continue;
     }
     if (nodeIndexes.containsKey(id)) {
-      errors.add(MotionPathDiagnostic(
-        path: 'tracks[$index].id',
-        code: 'track-observations-duplicate-node',
-        message: "Track '$id' is declared more than once.",
-      ));
+      errors.add(
+        MotionPathDiagnostic(
+          path: 'tracks[$index].id',
+          code: 'track-observations-duplicate-node',
+          message: "Track '$id' is declared more than once.",
+        ),
+      );
       continue;
     }
     nodeIndexes[id] = index;
@@ -144,94 +150,113 @@ ObservationGraph normalizeObservationGraph(MotionPathMotion motion) {
       final Map<String, Object?> observation = track.observes[edgeIndex];
       final String path = 'tracks[$trackIndex].observes[$edgeIndex]';
       if (observation.isEmpty) {
-        errors.add(MotionPathDiagnostic(
-          path: path,
-          code: 'track-observations',
-          message: 'Observation must be an object.',
-        ));
+        errors.add(
+          MotionPathDiagnostic(
+            path: path,
+            code: 'track-observations',
+            message: 'Observation must be an object.',
+          ),
+        );
         continue;
       }
       final String targetNode = track.id;
       if (!nodeIndexes.containsKey(targetNode)) {
-        errors.add(MotionPathDiagnostic(
-          path: '$path.target',
-          code: 'track-observations',
-          message: "Unknown target track '$targetNode'.",
-        ));
+        errors.add(
+          MotionPathDiagnostic(
+            path: '$path.target',
+            code: 'track-observations',
+            message: "Unknown target track '$targetNode'.",
+          ),
+        );
         continue;
       }
       final Object? source = observation['source'];
       if (source is! String || !nodeIndexes.containsKey(source)) {
-        errors.add(MotionPathDiagnostic(
-          path: '$path.source',
-          code: 'track-observations',
-          message: "Unknown source track '$source'.",
-        ));
+        errors.add(
+          MotionPathDiagnostic(
+            path: '$path.source',
+            code: 'track-observations',
+            message: "Unknown source track '$source'.",
+          ),
+        );
         continue;
       }
       if (source == targetNode) {
-        errors.add(MotionPathDiagnostic(
-          path: '$path.source',
-          code: 'track-observations-cycle',
-          message: "Track '$targetNode' cannot observe itself.",
-        ));
+        errors.add(
+          MotionPathDiagnostic(
+            path: '$path.source',
+            code: 'track-observations-cycle',
+            message: "Track '$targetNode' cannot observe itself.",
+          ),
+        );
         continue;
       }
       final Object? rawRole = observation['role'];
-      final String role =
-          rawRole == null ? 'output' : (rawRole is String ? rawRole : '');
+      final String role = rawRole == null
+          ? 'output'
+          : (rawRole is String ? rawRole : '');
       if (role != 'input' && role != 'output') {
-        errors.add(MotionPathDiagnostic(
-          path: '$path.role',
-          code: 'track-observations',
-          message: "Observation role must be 'input' or 'output'.",
-        ));
+        errors.add(
+          MotionPathDiagnostic(
+            path: '$path.role',
+            code: 'track-observations',
+            message: "Observation role must be 'input' or 'output'.",
+          ),
+        );
         continue;
       }
       final Object? target = observation['target'];
       String? inputKey;
       if (role == 'input') {
         if (target is! String || target.isEmpty) {
-          errors.add(MotionPathDiagnostic(
-            path: '$path.target',
-            code: 'track-observations',
-            message: 'Input observations require a non-empty target.',
-          ));
+          errors.add(
+            MotionPathDiagnostic(
+              path: '$path.target',
+              code: 'track-observations',
+              message: 'Input observations require a non-empty target.',
+            ),
+          );
           continue;
         }
         inputKey = target;
       } else if (target != null) {
-        errors.add(MotionPathDiagnostic(
-          path: '$path.target',
-          code: 'track-observations',
-          message: 'Output observations cannot define target.',
-        ));
+        errors.add(
+          MotionPathDiagnostic(
+            path: '$path.target',
+            code: 'track-observations',
+            message: 'Output observations cannot define target.',
+          ),
+        );
         continue;
       }
       final String key = '$source|$targetNode|$role|${inputKey ?? ''}';
       if (!edgeKeys.add(key)) {
-        errors.add(MotionPathDiagnostic(
-          path: path,
-          code: 'track-observations-duplicate-edge',
-          message:
-              "Duplicate observation edge from '$source' to '$targetNode'.",
-        ));
+        errors.add(
+          MotionPathDiagnostic(
+            path: path,
+            code: 'track-observations-duplicate-edge',
+            message:
+                "Duplicate observation edge from '$source' to '$targetNode'.",
+          ),
+        );
         continue;
       }
-      edges.add(ObservationEdge(
-        source: source,
-        target: targetNode,
-        role: role,
-        input: inputKey,
-        path: path,
-      ));
+      edges.add(
+        ObservationEdge(
+          source: source,
+          target: targetNode,
+          role: role,
+          input: inputKey,
+          path: path,
+        ),
+      );
     }
   }
 
   final Map<String, List<ObservationEdge>> outgoing =
       <String, List<ObservationEdge>>{
-    for (final ObservationNode node in nodes) node.id: <ObservationEdge>[],
-  };
+        for (final ObservationNode node in nodes) node.id: <ObservationEdge>[],
+      };
   final Map<String, int> indegree = <String, int>{
     for (final ObservationNode node in nodes) node.id: 0,
   };
@@ -265,11 +290,13 @@ ObservationGraph normalizeObservationGraph(MotionPathMotion motion) {
     }
   }
   if (order.length != nodes.length) {
-    errors.add(const MotionPathDiagnostic(
-      path: 'tracks',
-      code: 'track-observations-cycle',
-      message: 'Observation graph contains a cycle.',
-    ));
+    errors.add(
+      const MotionPathDiagnostic(
+        path: 'tracks',
+        code: 'track-observations-cycle',
+        message: 'Observation graph contains a cycle.',
+      ),
+    );
   }
 
   return ObservationGraph(

@@ -7,8 +7,14 @@ void main() {
       'sprite',
       properties: <String, List<MotionPathStop>>{
         'imageSequence': const <MotionPathStop>[
-          MotionPathStop(progress: 0, value: <Object?>['a.png', 'b.png', 'c.png']),
-          MotionPathStop(progress: 1, value: <Object?>['a.png', 'b.png', 'c.png']),
+          MotionPathStop(
+            progress: 0,
+            value: <Object?>['a.png', 'b.png', 'c.png'],
+          ),
+          MotionPathStop(
+            progress: 1,
+            value: <Object?>['a.png', 'b.png', 'c.png'],
+          ),
         ],
       },
       plugins: <MotionPathPlugin>[imageSequencePlugin],

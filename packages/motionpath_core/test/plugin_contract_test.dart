@@ -7,8 +7,9 @@ void main() {
       name: 'custom',
       compose: (Map<String, Object?> raw) => raw,
     );
-    final MotionPathPluginRegistry registry =
-        MotionPathPluginRegistry(plugins: <MotionPathPlugin>[plugin]);
+    final MotionPathPluginRegistry registry = MotionPathPluginRegistry(
+      plugins: <MotionPathPlugin>[plugin],
+    );
     expect(() => registry.register(plugin), throwsStateError);
   });
 

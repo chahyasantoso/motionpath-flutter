@@ -18,15 +18,11 @@ MotionPathSpawnController _controller({
   double childDuration = 10,
   bool drainOnComplete = false,
   MotionPathLayoutDelegate? layoutDelegate,
-}) =>
-    MotionPathSpawnController(
-      parent: MotionPathTrackRuntime(
-        'parent',
-        layoutDelegate: layoutDelegate,
-      ),
-      childDuration: childDuration,
-      drainOnComplete: drainOnComplete,
-    );
+}) => MotionPathSpawnController(
+  parent: MotionPathTrackRuntime('parent', layoutDelegate: layoutDelegate),
+  childDuration: childDuration,
+  drainOnComplete: drainOnComplete,
+);
 
 /// A chain whose first child outlives its siblings, so the child that finishes
 /// first sits in the middle of the chain and its removal has to reflow.
@@ -63,36 +59,39 @@ void main() {
     controller.dispose();
   });
 
-  test('a playhead is driven from the settled offset, not the motion start',
-      () {
-    final MotionPathSpawnController controller = _controller();
-    controller.spawn(_child('a'), stagger: 5);
-    controller.spawn(_child('b'), stagger: 5);
+  test(
+    'a playhead is driven from the settled offset, not the motion start',
+    () {
+      final MotionPathSpawnController controller = _controller();
+      controller.spawn(_child('a'), stagger: 5);
+      controller.spawn(_child('b'), stagger: 5);
 
-    controller.advanceTo(10);
+      controller.advanceTo(10);
 
-    expect(controller.instances[0].progress, closeTo(1, 1e-9));
-    expect(controller.instances[1].progress, closeTo(0.5, 1e-9));
-    controller.dispose();
-  });
+      expect(controller.instances[0].progress, closeTo(1, 1e-9));
+      expect(controller.instances[1].progress, closeTo(0.5, 1e-9));
+      controller.dispose();
+    },
+  );
 
   test(
-      'an unstarted child is distinguishable from one sitting at its first stop',
-      () {
-    final MotionPathSpawnController controller = _controller();
-    controller.spawn(_child('a'), stagger: 5);
-    controller.spawn(_child('b'), stagger: 5);
+    'an unstarted child is distinguishable from one sitting at its first stop',
+    () {
+      final MotionPathSpawnController controller = _controller();
+      controller.spawn(_child('a'), stagger: 5);
+      controller.spawn(_child('b'), stagger: 5);
 
-    controller.advanceTo(0);
-    expect(controller.instances[0].hasStarted, isTrue);
-    expect(controller.instances[0].progress, 0);
-    expect(controller.instances[1].hasStarted, isFalse);
-    expect(controller.instances[1].progress, 0);
+      controller.advanceTo(0);
+      expect(controller.instances[0].hasStarted, isTrue);
+      expect(controller.instances[0].progress, 0);
+      expect(controller.instances[1].hasStarted, isFalse);
+      expect(controller.instances[1].progress, 0);
 
-    controller.advanceTo(5);
-    expect(controller.instances[1].hasStarted, isTrue);
-    controller.dispose();
-  });
+      controller.advanceTo(5);
+      expect(controller.instances[1].hasStarted, isTrue);
+      controller.dispose();
+    },
+  );
 
   test('patches arrive composed, not raw', () {
     final MotionPathSpawnController controller = _controller();
@@ -131,8 +130,9 @@ void main() {
   });
 
   test('draining removes completed children', () {
-    final MotionPathSpawnController controller =
-        _controller(drainOnComplete: true);
+    final MotionPathSpawnController controller = _controller(
+      drainOnComplete: true,
+    );
     for (final String id in <String>['a', 'b', 'c']) {
       controller.spawn(_child(id), stagger: 10);
     }
@@ -148,8 +148,9 @@ void main() {
   });
 
   test('draining the front of a uniform chain never avalanches survivors', () {
-    final MotionPathSpawnController controller =
-        _controller(drainOnComplete: true);
+    final MotionPathSpawnController controller = _controller(
+      drainOnComplete: true,
+    );
     for (final String id in <String>['a', 'b', 'c']) {
       controller.spawn(_child(id), stagger: 10);
     }
@@ -185,8 +186,9 @@ void main() {
   });
 
   test('the static policy leaves the drained gap open', () {
-    final MotionPathSpawnController controller =
-        _midChainDrainRig(layoutDelegate: kStaticLayoutDelegate);
+    final MotionPathSpawnController controller = _midChainDrainRig(
+      layoutDelegate: kStaticLayoutDelegate,
+    );
 
     controller.advanceTo(20);
 
@@ -201,22 +203,26 @@ void main() {
 
   test('a second controller on the same parent fails fast', () {
     final MotionPathTrackRuntime parent = MotionPathTrackRuntime('parent');
-    final MotionPathSpawnController first =
-        MotionPathSpawnController(parent: parent);
+    final MotionPathSpawnController first = MotionPathSpawnController(
+      parent: parent,
+    );
 
     expect(() => MotionPathSpawnController(parent: parent), throwsStateError);
 
     first.dispose();
-    final MotionPathSpawnController second =
-        MotionPathSpawnController(parent: parent);
+    final MotionPathSpawnController second = MotionPathSpawnController(
+      parent: parent,
+    );
     expect(second.liveCount, 0);
     second.dispose();
   });
 
   test('dispose unwires the hooks, is idempotent, and blocks later work', () {
     final MotionPathTrackRuntime parent = MotionPathTrackRuntime('parent');
-    final MotionPathSpawnController controller =
-        MotionPathSpawnController(parent: parent, childDuration: 10);
+    final MotionPathSpawnController controller = MotionPathSpawnController(
+      parent: parent,
+      childDuration: 10,
+    );
     controller.spawn(_child('a'));
     int notifications = 0;
     controller.addListener(() => notifications++);

@@ -34,10 +34,10 @@ enum MotionPathWalkerTone {
 /// Paint order: the far side sits behind the torso, the near side in front.
 const List<MotionPathWalkerTone> kMotionPathWalkerToneOrder =
     <MotionPathWalkerTone>[
-  MotionPathWalkerTone.far,
-  MotionPathWalkerTone.core,
-  MotionPathWalkerTone.near,
-];
+      MotionPathWalkerTone.far,
+      MotionPathWalkerTone.core,
+      MotionPathWalkerTone.near,
+    ];
 
 /// How a tone is painted.
 @immutable
@@ -61,13 +61,22 @@ class MotionPathWalkerToneStyle {
 
 /// Tone styling, flattened from the reference CSS gradients into solid strokes.
 const Map<MotionPathWalkerTone, MotionPathWalkerToneStyle>
-    kMotionPathWalkerToneStyles = <MotionPathWalkerTone, MotionPathWalkerToneStyle>{
-  MotionPathWalkerTone.core:
-      MotionPathWalkerToneStyle(argb: 0xFF6E82FF, thickness: 24, opacity: 1),
-  MotionPathWalkerTone.near:
-      MotionPathWalkerToneStyle(argb: 0xFFFF8F55, thickness: 16, opacity: 1),
-  MotionPathWalkerTone.far:
-      MotionPathWalkerToneStyle(argb: 0xFF8C9ED0, thickness: 13, opacity: 0.62),
+kMotionPathWalkerToneStyles = <MotionPathWalkerTone, MotionPathWalkerToneStyle>{
+  MotionPathWalkerTone.core: MotionPathWalkerToneStyle(
+    argb: 0xFF6E82FF,
+    thickness: 24,
+    opacity: 1,
+  ),
+  MotionPathWalkerTone.near: MotionPathWalkerToneStyle(
+    argb: 0xFFFF8F55,
+    thickness: 16,
+    opacity: 1,
+  ),
+  MotionPathWalkerTone.far: MotionPathWalkerToneStyle(
+    argb: 0xFF8C9ED0,
+    thickness: 13,
+    opacity: 0.62,
+  ),
 };
 
 /// One drawn segment of the rig.
@@ -124,30 +133,84 @@ class MotionPathWalkerJoint {
 }
 
 /// The Walker skeleton, ported from the reference `BONES` table.
-const List<MotionPathWalkerBone> kMotionPathWalkerBones = <MotionPathWalkerBone>[
-  MotionPathWalkerBone(id: 'spine', drawLength: 78, tone: MotionPathWalkerTone.core),
-  MotionPathWalkerBone(id: 'chest', drawLength: 0, tone: MotionPathWalkerTone.core),
-  MotionPathWalkerBone(id: 'head', drawLength: 0, tone: MotionPathWalkerTone.core),
-  MotionPathWalkerBone(id: 'arm-far-upper', drawLength: 44, tone: MotionPathWalkerTone.far),
-  MotionPathWalkerBone(id: 'arm-far-fore', drawLength: 40, tone: MotionPathWalkerTone.far),
-  MotionPathWalkerBone(id: 'leg-far-thigh', drawLength: 62, tone: MotionPathWalkerTone.far),
-  MotionPathWalkerBone(id: 'leg-far-shin', drawLength: 56, tone: MotionPathWalkerTone.far),
-  MotionPathWalkerBone(id: 'leg-far-foot', drawLength: 26, tone: MotionPathWalkerTone.far),
-  MotionPathWalkerBone(id: 'arm-near-upper', drawLength: 44, tone: MotionPathWalkerTone.near),
-  MotionPathWalkerBone(id: 'arm-near-fore', drawLength: 40, tone: MotionPathWalkerTone.near),
-  MotionPathWalkerBone(id: 'leg-near-thigh', drawLength: 62, tone: MotionPathWalkerTone.near),
-  MotionPathWalkerBone(id: 'leg-near-shin', drawLength: 56, tone: MotionPathWalkerTone.near),
-  MotionPathWalkerBone(id: 'leg-near-foot', drawLength: 26, tone: MotionPathWalkerTone.near),
-];
+const List<MotionPathWalkerBone> kMotionPathWalkerBones =
+    <MotionPathWalkerBone>[
+      MotionPathWalkerBone(
+        id: 'spine',
+        drawLength: 78,
+        tone: MotionPathWalkerTone.core,
+      ),
+      MotionPathWalkerBone(
+        id: 'chest',
+        drawLength: 0,
+        tone: MotionPathWalkerTone.core,
+      ),
+      MotionPathWalkerBone(
+        id: 'head',
+        drawLength: 0,
+        tone: MotionPathWalkerTone.core,
+      ),
+      MotionPathWalkerBone(
+        id: 'arm-far-upper',
+        drawLength: 44,
+        tone: MotionPathWalkerTone.far,
+      ),
+      MotionPathWalkerBone(
+        id: 'arm-far-fore',
+        drawLength: 40,
+        tone: MotionPathWalkerTone.far,
+      ),
+      MotionPathWalkerBone(
+        id: 'leg-far-thigh',
+        drawLength: 62,
+        tone: MotionPathWalkerTone.far,
+      ),
+      MotionPathWalkerBone(
+        id: 'leg-far-shin',
+        drawLength: 56,
+        tone: MotionPathWalkerTone.far,
+      ),
+      MotionPathWalkerBone(
+        id: 'leg-far-foot',
+        drawLength: 26,
+        tone: MotionPathWalkerTone.far,
+      ),
+      MotionPathWalkerBone(
+        id: 'arm-near-upper',
+        drawLength: 44,
+        tone: MotionPathWalkerTone.near,
+      ),
+      MotionPathWalkerBone(
+        id: 'arm-near-fore',
+        drawLength: 40,
+        tone: MotionPathWalkerTone.near,
+      ),
+      MotionPathWalkerBone(
+        id: 'leg-near-thigh',
+        drawLength: 62,
+        tone: MotionPathWalkerTone.near,
+      ),
+      MotionPathWalkerBone(
+        id: 'leg-near-shin',
+        drawLength: 56,
+        tone: MotionPathWalkerTone.near,
+      ),
+      MotionPathWalkerBone(
+        id: 'leg-near-foot',
+        drawLength: 26,
+        tone: MotionPathWalkerTone.near,
+      ),
+    ];
 
 /// The joints the reference demo draws dots on.
-const List<MotionPathWalkerJoint> kMotionPathWalkerJoints = <MotionPathWalkerJoint>[
-  MotionPathWalkerJoint(id: 'pelvis', size: 16),
-  MotionPathWalkerJoint(id: 'chest', size: 14),
-  MotionPathWalkerJoint(id: 'leg-near-shin', size: 12),
-  MotionPathWalkerJoint(id: 'leg-near-foot', size: 10),
-  MotionPathWalkerJoint(id: 'arm-near-fore', size: 10),
-];
+const List<MotionPathWalkerJoint> kMotionPathWalkerJoints =
+    <MotionPathWalkerJoint>[
+      MotionPathWalkerJoint(id: 'pelvis', size: 16),
+      MotionPathWalkerJoint(id: 'chest', size: 14),
+      MotionPathWalkerJoint(id: 'leg-near-shin', size: 12),
+      MotionPathWalkerJoint(id: 'leg-near-foot', size: 10),
+      MotionPathWalkerJoint(id: 'arm-near-fore', size: 10),
+    ];
 
 /// A bone resolved into world space for one composed frame.
 @immutable
@@ -184,7 +247,12 @@ Color motionPathArgbWithOpacity(int argb, double opacity) {
   } else if (alpha > 255) {
     alpha = 255;
   }
-  return Color.fromARGB(alpha, (argb >> 16) & 0xFF, (argb >> 8) & 0xFF, argb & 0xFF);
+  return Color.fromARGB(
+    alpha,
+    (argb >> 16) & 0xFF,
+    (argb >> 8) & 0xFF,
+    argb & 0xFF,
+  );
 }
 
 /// Resolves the drawn bones for one frame of composed patches.
@@ -210,7 +278,8 @@ List<MotionPathWalkerSegment> resolveWalkerSegments(
       MotionPathWalkerSegment(
         bone: bone,
         origin: origin,
-        tip: origin +
+        tip:
+            origin +
             Offset(math.cos(radians), math.sin(radians)) * bone.drawLength,
       ),
     );
@@ -303,8 +372,10 @@ class MotionPathWalkerPainter extends CustomPainter {
       for (final MotionPathWalkerBone bone in bones)
         if (bone.tone == tone) bone,
     ];
-    for (final MotionPathWalkerSegment segment
-        in resolveWalkerSegments(patches, bones: toned)) {
+    for (final MotionPathWalkerSegment segment in resolveWalkerSegments(
+      patches,
+      bones: toned,
+    )) {
       canvas.drawLine(segment.origin, segment.tip, stroke);
     }
   }
@@ -315,7 +386,11 @@ class MotionPathWalkerPainter extends CustomPainter {
     final MotionPathPatchTransform transform =
         MotionPathPatchTransform.fromPatch(head);
     final Offset centre = Offset(transform.translateX, transform.translateY);
-    canvas.drawCircle(centre, _headRadius, Paint()..color = const Color(0xFFDCE4FF));
+    canvas.drawCircle(
+      centre,
+      _headRadius,
+      Paint()..color = const Color(0xFFDCE4FF),
+    );
     // The head track's world rotation points UP the neck while the sprite faces
     // right, so the eye is placed a quarter turn on from the composed angle.
     final double facing = transform.rotationRadians + math.pi / 2;
@@ -385,7 +460,11 @@ class MotionPathWalkerScene extends StatelessWidget {
   Widget build(BuildContext context) {
     return CustomPaint(
       size: size,
-      painter: MotionPathWalkerPainter(source: source, bones: bones, joints: joints),
+      painter: MotionPathWalkerPainter(
+        source: source,
+        bones: bones,
+        joints: joints,
+      ),
     );
   }
 }

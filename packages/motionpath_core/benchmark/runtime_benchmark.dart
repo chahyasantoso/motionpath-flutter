@@ -6,33 +6,39 @@ import 'package:motionpath_core/motionpath_core.dart';
 MotionPathMotionRuntime buildMotion(int count) {
   final List<MotionPathTrackRuntime> tracks = <MotionPathTrackRuntime>[];
   for (int index = 0; index < count; index++) {
-    tracks.add(MotionPathTrackRuntime(
-      'track-$index',
-      properties: <String, List<MotionPathStop>>{
-        'x': const <MotionPathStop>[
-          MotionPathStop(progress: 0, value: 0),
-          MotionPathStop(progress: 1, value: 100),
-        ],
-        'opacity': const <MotionPathStop>[
-          MotionPathStop(progress: 0, value: 0),
-          MotionPathStop(progress: 1, value: 1),
-        ],
-      },
-    ));
+    tracks.add(
+      MotionPathTrackRuntime(
+        'track-$index',
+        properties: <String, List<MotionPathStop>>{
+          'x': const <MotionPathStop>[
+            MotionPathStop(progress: 0, value: 0),
+            MotionPathStop(progress: 1, value: 100),
+          ],
+          'opacity': const <MotionPathStop>[
+            MotionPathStop(progress: 0, value: 0),
+            MotionPathStop(progress: 1, value: 1),
+          ],
+        },
+      ),
+    );
   }
   final MotionPathMotionRuntime motion = MotionPathMotionRuntime(
     id: 'benchmark',
     tracks: tracks,
   );
-  motion.prepare(ObservationGraph(
-    nodes: <ObservationNode>[
-      for (int index = 0; index < count; index++)
-        ObservationNode('track-$index', index: index),
-    ],
-    edges: const <ObservationEdge>[],
-    order: <String>[for (int index = 0; index < count; index++) 'track-$index'],
-    errors: const <MotionPathDiagnostic>[],
-  ));
+  motion.prepare(
+    ObservationGraph(
+      nodes: <ObservationNode>[
+        for (int index = 0; index < count; index++)
+          ObservationNode('track-$index', index: index),
+      ],
+      edges: const <ObservationEdge>[],
+      order: <String>[
+        for (int index = 0; index < count; index++) 'track-$index',
+      ],
+      errors: const <MotionPathDiagnostic>[],
+    ),
+  );
   return motion;
 }
 
@@ -54,14 +60,14 @@ class BenchmarkResult {
   double get mean => runs.reduce((int a, int b) => a + b) / runs.length;
 
   Map<String, Object> toJson() => <String, Object>{
-        'tracks': tracks,
-        'warmupSamples': warmupSamples,
-        'samples': samples,
-        'runsMicroseconds': runs,
-        'minMicroseconds': minimum,
-        'meanMicroseconds': mean,
-        'maxMicroseconds': maximum,
-      };
+    'tracks': tracks,
+    'warmupSamples': warmupSamples,
+    'samples': samples,
+    'runsMicroseconds': runs,
+    'minMicroseconds': minimum,
+    'meanMicroseconds': mean,
+    'maxMicroseconds': maximum,
+  };
 }
 
 BenchmarkResult runBenchmark({
@@ -71,7 +77,9 @@ BenchmarkResult runBenchmark({
   int runs = 5,
 }) {
   if (warmupSamples < 0 || samples <= 0 || runs <= 0) {
-    throw ArgumentError('warmupSamples must be >= 0; samples and runs must be > 0.');
+    throw ArgumentError(
+      'warmupSamples must be >= 0; samples and runs must be > 0.',
+    );
   }
   final MotionPathMotionRuntime motion = buildMotion(tracks);
   for (int sample = 0; sample < warmupSamples; sample++) {
@@ -104,12 +112,14 @@ void main(List<String> args) {
     for (final int size in sizes) runBenchmark(tracks: size),
   ];
   if (json) {
-    stdout.writeln(jsonEncode(<String, Object>{
-      'dartVersion': Platform.version,
-      'results': <Map<String, Object>>[
-        for (final BenchmarkResult result in results) result.toJson(),
-      ],
-    }));
+    stdout.writeln(
+      jsonEncode(<String, Object>{
+        'dartVersion': Platform.version,
+        'results': <Map<String, Object>>[
+          for (final BenchmarkResult result in results) result.toJson(),
+        ],
+      }),
+    );
     return;
   }
   stdout.writeln('MotionPath runtime benchmark');

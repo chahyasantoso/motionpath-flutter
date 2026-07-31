@@ -130,10 +130,10 @@ int lerpArgb(int from, int to, double t) {
   final double clamped = t.isNaN
       ? 0
       : t < 0
-          ? 0
-          : t > 1
-              ? 1
-              : t;
+      ? 0
+      : t > 1
+      ? 1
+      : t;
   return (_lerpChannel((from >> 24) & 0xFF, (to >> 24) & 0xFF, clamped) << 24) |
       (_lerpChannel((from >> 16) & 0xFF, (to >> 16) & 0xFF, clamped) << 16) |
       (_lerpChannel((from >> 8) & 0xFF, (to >> 8) & 0xFF, clamped) << 8) |

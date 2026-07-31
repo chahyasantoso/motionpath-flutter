@@ -12,11 +12,7 @@ import '../contract/motionpath_types.dart';
 @immutable
 class MotionPathWorldTransform {
   /// Creates a transform.
-  const MotionPathWorldTransform({
-    this.x = 0,
-    this.y = 0,
-    this.rotation = 0,
-  });
+  const MotionPathWorldTransform({this.x = 0, this.y = 0, this.rotation = 0});
 
   /// Reads `x`, `y`, and `rotation` from a renderer-neutral patch.
   factory MotionPathWorldTransform.fromPatch(Map<String, Object?> patch) =>
@@ -37,10 +33,10 @@ class MotionPathWorldTransform {
 
   /// Serializes back into a renderer-neutral patch fragment.
   Map<String, Object?> toPatch() => <String, Object?>{
-        'x': x,
-        'y': y,
-        'rotation': rotation,
-      };
+    'x': x,
+    'y': y,
+    'rotation': rotation,
+  };
 
   /// Distance to [other] in world space.
   double distanceTo(MotionPathWorldTransform other) {
@@ -88,8 +84,9 @@ MotionPathWorldTransform composeWorld(
 
 /// Distance between two composed patches, for FK invariant assertions.
 double patchDistance(Map<String, Object?> a, Map<String, Object?> b) =>
-    MotionPathWorldTransform.fromPatch(a)
-        .distanceTo(MotionPathWorldTransform.fromPatch(b));
+    MotionPathWorldTransform.fromPatch(
+      a,
+    ).distanceTo(MotionPathWorldTransform.fromPatch(b));
 
 /// Reads a world transform out of an observation input value.
 MotionPathWorldTransform worldFromInput(Object? value) =>

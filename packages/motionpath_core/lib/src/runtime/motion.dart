@@ -35,9 +35,10 @@ class MotionPathMotionRuntime {
       throw StateError('Motion "$id" is already prepared.');
     }
     graph = nextGraph;
-    final Map<String, MotionPathTrackRuntime> byId = <String, MotionPathTrackRuntime>{
-      for (final MotionPathTrackRuntime track in tracks) track.id: track,
-    };
+    final Map<String, MotionPathTrackRuntime> byId =
+        <String, MotionPathTrackRuntime>{
+          for (final MotionPathTrackRuntime track in tracks) track.id: track,
+        };
     for (final ObservationEdge edge in nextGraph.edges) {
       final MotionPathTrackRuntime? target = byId[edge.target];
       final MotionPathTrackRuntime? source = byId[edge.source];
@@ -64,8 +65,9 @@ class MotionPathMotionRuntime {
       for (int index = 0; index < order.length; index++) order[index]: index,
     };
     for (final MotionPathTrackRuntime track in tracks) {
-      final double delay =
-          stagger > 0 ? (indexById[track.id] ?? 0) * stagger : 0;
+      final double delay = stagger > 0
+          ? (indexById[track.id] ?? 0) * stagger
+          : 0;
       final double span = track.duration > 0
           ? track.duration
           : (duration <= 0 ? 1 : duration);
@@ -76,9 +78,10 @@ class MotionPathMotionRuntime {
 
   Map<String, Map<String, Object?>> composeGraph() {
     final List<String> order = graphOrder;
-    final Map<String, MotionPathTrackRuntime> byId = <String, MotionPathTrackRuntime>{
-      for (final MotionPathTrackRuntime track in tracks) track.id: track,
-    };
+    final Map<String, MotionPathTrackRuntime> byId =
+        <String, MotionPathTrackRuntime>{
+          for (final MotionPathTrackRuntime track in tracks) track.id: track,
+        };
     final Map<MotionPathTrackRuntime, Map<String, Object?>?> context =
         <MotionPathTrackRuntime, Map<String, Object?>?>{};
     final Map<String, Map<String, Object?>> composed =

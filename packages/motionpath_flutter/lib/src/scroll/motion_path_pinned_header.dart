@@ -1,10 +1,8 @@
 import 'package:flutter/widgets.dart';
 
 /// Builds pinned content for the current normalized pin progress.
-typedef MotionPathPinnedBuilder = Widget Function(
-  BuildContext context,
-  double progress,
-);
+typedef MotionPathPinnedBuilder =
+    Widget Function(BuildContext context, double progress);
 
 /// Pins a section at the viewport's leading edge for a fixed scroll distance.
 ///
@@ -71,11 +69,10 @@ class MotionPathPinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
     BuildContext context,
     double shrinkOffset,
     bool overlapsContent,
-  ) =>
-      builder(
-        context,
-        progressFor(shrinkOffset: shrinkOffset, pinExtent: pinExtent),
-      );
+  ) => builder(
+    context,
+    progressFor(shrinkOffset: shrinkOffset, pinExtent: pinExtent),
+  );
 
   @override
   bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) =>
@@ -111,11 +108,11 @@ class MotionPathPinnedHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SliverPersistentHeader(
-        pinned: true,
-        delegate: MotionPathPinnedHeaderDelegate(
-          extent: extent,
-          pinExtent: pinExtent,
-          builder: builder,
-        ),
-      );
+    pinned: true,
+    delegate: MotionPathPinnedHeaderDelegate(
+      extent: extent,
+      pinExtent: pinExtent,
+      builder: builder,
+    ),
+  );
 }

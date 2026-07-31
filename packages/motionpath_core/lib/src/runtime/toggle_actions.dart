@@ -105,41 +105,39 @@ class MotionPathToggleStateMachine {
   static List<MotionPathToggleAction> actionsBetween(
     MotionPathTriggerZone previous,
     MotionPathTriggerZone next,
-  ) =>
-      switch ((previous, next)) {
-        (MotionPathTriggerZone.before, MotionPathTriggerZone.before) =>
-          const <MotionPathToggleAction>[],
-        (MotionPathTriggerZone.before, MotionPathTriggerZone.inside) =>
-          const <MotionPathToggleAction>[MotionPathToggleAction.enter],
-        (MotionPathTriggerZone.before, MotionPathTriggerZone.after) =>
-          const <MotionPathToggleAction>[
-            MotionPathToggleAction.enter,
-            MotionPathToggleAction.leave,
-          ],
-        (MotionPathTriggerZone.inside, MotionPathTriggerZone.before) =>
-          const <MotionPathToggleAction>[MotionPathToggleAction.leaveBack],
-        (MotionPathTriggerZone.inside, MotionPathTriggerZone.inside) =>
-          const <MotionPathToggleAction>[],
-        (MotionPathTriggerZone.inside, MotionPathTriggerZone.after) =>
-          const <MotionPathToggleAction>[MotionPathToggleAction.leave],
-        (MotionPathTriggerZone.after, MotionPathTriggerZone.before) =>
-          const <MotionPathToggleAction>[
-            MotionPathToggleAction.enterBack,
-            MotionPathToggleAction.leaveBack,
-          ],
-        (MotionPathTriggerZone.after, MotionPathTriggerZone.inside) =>
-          const <MotionPathToggleAction>[MotionPathToggleAction.enterBack],
-        (MotionPathTriggerZone.after, MotionPathTriggerZone.after) =>
-          const <MotionPathToggleAction>[],
-      };
+  ) => switch ((previous, next)) {
+    (MotionPathTriggerZone.before, MotionPathTriggerZone.before) =>
+      const <MotionPathToggleAction>[],
+    (MotionPathTriggerZone.before, MotionPathTriggerZone.inside) =>
+      const <MotionPathToggleAction>[MotionPathToggleAction.enter],
+    (MotionPathTriggerZone.before, MotionPathTriggerZone.after) =>
+      const <MotionPathToggleAction>[
+        MotionPathToggleAction.enter,
+        MotionPathToggleAction.leave,
+      ],
+    (MotionPathTriggerZone.inside, MotionPathTriggerZone.before) =>
+      const <MotionPathToggleAction>[MotionPathToggleAction.leaveBack],
+    (MotionPathTriggerZone.inside, MotionPathTriggerZone.inside) =>
+      const <MotionPathToggleAction>[],
+    (MotionPathTriggerZone.inside, MotionPathTriggerZone.after) =>
+      const <MotionPathToggleAction>[MotionPathToggleAction.leave],
+    (MotionPathTriggerZone.after, MotionPathTriggerZone.before) =>
+      const <MotionPathToggleAction>[
+        MotionPathToggleAction.enterBack,
+        MotionPathToggleAction.leaveBack,
+      ],
+    (MotionPathTriggerZone.after, MotionPathTriggerZone.inside) =>
+      const <MotionPathToggleAction>[MotionPathToggleAction.enterBack],
+    (MotionPathTriggerZone.after, MotionPathTriggerZone.after) =>
+      const <MotionPathToggleAction>[],
+  };
 
   /// Records [next] and reports the crossings it caused.
   List<MotionPathToggleAction> update(MotionPathTriggerZone next) {
     final MotionPathTriggerZone? previous = _zone;
     _zone = next;
     if (previous == null) return const <MotionPathToggleAction>[];
-    final List<MotionPathToggleAction> actions =
-        actionsBetween(previous, next);
+    final List<MotionPathToggleAction> actions = actionsBetween(previous, next);
     final void Function(MotionPathToggleAction action)? callback = onAction;
     if (callback != null) {
       for (final MotionPathToggleAction action in actions) {
@@ -154,8 +152,7 @@ class MotionPathToggleStateMachine {
     required double value,
     required double start,
     required double end,
-  }) =>
-      update(zoneFor(value: value, start: start, end: end));
+  }) => update(zoneFor(value: value, start: start, end: end));
 
   /// Drops the seeded zone so the next sample seeds silently again.
   void reset() {

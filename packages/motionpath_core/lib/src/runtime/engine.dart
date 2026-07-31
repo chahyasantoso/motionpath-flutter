@@ -9,7 +9,7 @@ import 'trigger.dart';
 /// Owns a loaded project and every runtime object created from it.
 class MotionPathEngine {
   MotionPathEngine({MotionPathPluginRegistry? registry})
-      : registry = registry ?? MotionPathPluginRegistry();
+    : registry = registry ?? MotionPathPluginRegistry();
 
   final MotionPathPluginRegistry registry;
   MotionPathProject? project;
@@ -44,25 +44,31 @@ class MotionPathEngine {
     if (!graph.isValid) {
       throw MotionPathValidationException(graph.errors);
     }
-    final List<MotionPathTrackRuntime> runtimeTracks = <MotionPathTrackRuntime>[];
+    final List<MotionPathTrackRuntime> runtimeTracks =
+        <MotionPathTrackRuntime>[];
     double longest = 0;
     for (final MotionPathTrack track in source.tracks) {
-      final Map<String, List<MotionPathStop>> properties =
-          propertiesFromTrack(track);
+      final Map<String, List<MotionPathStop>> properties = propertiesFromTrack(
+        track,
+      );
       final List<MotionPathPlugin> plugins = registry.resolve(properties.keys);
       assertOutputCompatibility(track.id, plugins);
       final double trackDuration = track.duration?.toDouble() ?? 0;
       if (trackDuration > longest) {
         longest = trackDuration;
       }
-      runtimeTracks.add(MotionPathTrackRuntime(
-        track.id,
-        properties: properties,
-        plugins: plugins,
-        duration: trackDuration,
-      ));
+      runtimeTracks.add(
+        MotionPathTrackRuntime(
+          track.id,
+          properties: properties,
+          plugins: plugins,
+          duration: trackDuration,
+        ),
+      );
     }
-    final MotionPathTrigger trigger = MotionPathTrigger.fromJson(source.trigger);
+    final MotionPathTrigger trigger = MotionPathTrigger.fromJson(
+      source.trigger,
+    );
     final MotionPathMotionRuntime runtime = MotionPathMotionRuntime(
       id: id,
       tracks: runtimeTracks,

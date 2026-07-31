@@ -2,18 +2,18 @@ import 'package:motionpath_core/motionpath_core.dart';
 import 'package:test/test.dart';
 
 Map<String, Object?> _hold(num value) => <String, Object?>{
-      'stops': <Object?>[
-        <String, Object?>{'p': 0, 'v': value},
-        <String, Object?>{'p': 1, 'v': value},
-      ],
-    };
+  'stops': <Object?>[
+    <String, Object?>{'p': 0, 'v': value},
+    <String, Object?>{'p': 1, 'v': value},
+  ],
+};
 
 Map<String, Object?> _ramp(num from, num to) => <String, Object?>{
-      'stops': <Object?>[
-        <String, Object?>{'p': 0, 'v': from},
-        <String, Object?>{'p': 1, 'v': to},
-      ],
-    };
+  'stops': <Object?>[
+    <String, Object?>{'p': 0, 'v': from},
+    <String, Object?>{'p': 1, 'v': to},
+  ],
+};
 
 Map<String, Object?> _bone(
   String id,
@@ -21,46 +21,45 @@ Map<String, Object?> _bone(
   num length,
   num from,
   num to,
-) =>
+) => <String, Object?>{
+  'id': id,
+  'duration': 1,
+  'observes': <Object?>[
     <String, Object?>{
-      'id': id,
-      'duration': 1,
-      'observes': <Object?>[
-        <String, Object?>{
-          'source': parent,
-          'role': 'input',
-          'target': 'parentWorld',
-        },
-      ],
-      'keyframes': <String, Object?>{
-        'boneLength': _hold(length),
-        'boneRotation': _ramp(from, to),
-      },
-    };
+      'source': parent,
+      'role': 'input',
+      'target': 'parentWorld',
+    },
+  ],
+  'keyframes': <String, Object?>{
+    'boneLength': _hold(length),
+    'boneRotation': _ramp(from, to),
+  },
+};
 
 MotionPathProject _rig() => MotionPathProject.fromJson(<String, Object?>{
-      'schemaVersion': 4,
-      'projectId': 'walker',
-      'motions': <Object?>[
+  'schemaVersion': 4,
+  'projectId': 'walker',
+  'motions': <Object?>[
+    <String, Object?>{
+      'id': 'rig',
+      'trigger': <String, Object?>{'type': 'manual'},
+      'tracks': <Object?>[
         <String, Object?>{
-          'id': 'rig',
-          'trigger': <String, Object?>{'type': 'manual'},
-          'tracks': <Object?>[
-            <String, Object?>{
-              'id': 'pelvis',
-              'duration': 1,
-              'keyframes': <String, Object?>{
-                'x': _ramp(0, 120),
-                'y': _ramp(0, -20),
-                'rotation': _ramp(0, 45),
-              },
-            },
-            _bone('thigh', 'pelvis', 70, 10, 40),
-            _bone('shin', 'thigh', 56, 20, 35),
-          ],
+          'id': 'pelvis',
+          'duration': 1,
+          'keyframes': <String, Object?>{
+            'x': _ramp(0, 120),
+            'y': _ramp(0, -20),
+            'rotation': _ramp(0, 45),
+          },
         },
+        _bone('thigh', 'pelvis', 70, 10, 40),
+        _bone('shin', 'thigh', 56, 20, 35),
       ],
-    });
+    },
+  ],
+});
 
 void main() {
   test('compiles the rig parent-before-child', () {
@@ -100,29 +99,30 @@ void main() {
   });
 
   test('resolves a diamond from one shared parent', () {
-    final MotionPathProject project =
-        MotionPathProject.fromJson(<String, Object?>{
-      'schemaVersion': 4,
-      'motions': <Object?>[
-        <String, Object?>{
-          'id': 'diamond',
-          'trigger': <String, Object?>{'type': 'manual'},
-          'tracks': <Object?>[
-            <String, Object?>{
-              'id': 'root',
-              'duration': 1,
-              'keyframes': <String, Object?>{
-                'x': _ramp(0, 10),
-                'y': _hold(0),
-                'rotation': _hold(0),
+    final MotionPathProject project = MotionPathProject.fromJson(
+      <String, Object?>{
+        'schemaVersion': 4,
+        'motions': <Object?>[
+          <String, Object?>{
+            'id': 'diamond',
+            'trigger': <String, Object?>{'type': 'manual'},
+            'tracks': <Object?>[
+              <String, Object?>{
+                'id': 'root',
+                'duration': 1,
+                'keyframes': <String, Object?>{
+                  'x': _ramp(0, 10),
+                  'y': _hold(0),
+                  'rotation': _hold(0),
+                },
               },
-            },
-            _bone('left', 'root', 30, 0, 0),
-            _bone('right', 'root', 40, 0, 0),
-          ],
-        },
-      ],
-    });
+              _bone('left', 'root', 30, 0, 0),
+              _bone('right', 'root', 40, 0, 0),
+            ],
+          },
+        ],
+      },
+    );
     final MotionPathEngine engine = MotionPathEngine()..loadProject(project);
     final MotionPathMotionRuntime motion = engine.mountMotion('diamond');
     motion.seek(1);
@@ -133,26 +133,27 @@ void main() {
   });
 
   test('rejects an output collision on one track', () {
-    final MotionPathProject project =
-        MotionPathProject.fromJson(<String, Object?>{
-      'schemaVersion': 4,
-      'motions': <Object?>[
-        <String, Object?>{
-          'id': 'collide',
-          'trigger': <String, Object?>{'type': 'manual'},
-          'tracks': <Object?>[
-            <String, Object?>{
-              'id': 'elbow',
-              'duration': 1,
-              'keyframes': <String, Object?>{
-                'boneLength': _hold(10),
-                'rotation': _ramp(0, 90),
+    final MotionPathProject project = MotionPathProject.fromJson(
+      <String, Object?>{
+        'schemaVersion': 4,
+        'motions': <Object?>[
+          <String, Object?>{
+            'id': 'collide',
+            'trigger': <String, Object?>{'type': 'manual'},
+            'tracks': <Object?>[
+              <String, Object?>{
+                'id': 'elbow',
+                'duration': 1,
+                'keyframes': <String, Object?>{
+                  'boneLength': _hold(10),
+                  'rotation': _ramp(0, 90),
+                },
               },
-            },
-          ],
-        },
-      ],
-    });
+            ],
+          },
+        ],
+      },
+    );
     final MotionPathEngine engine = MotionPathEngine()..loadProject(project);
     expect(() => engine.mountMotion('collide'), throwsStateError);
     engine.destroy();

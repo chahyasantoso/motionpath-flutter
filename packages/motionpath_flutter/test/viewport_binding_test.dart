@@ -4,8 +4,7 @@ import 'package:motionpath_flutter/motionpath_flutter.dart';
 
 void main() {
   test('samples visibility, progress, and local geometry', () {
-    final MotionPathViewportSample sample =
-        MotionPathViewportBinding.sampleAt(
+    final MotionPathViewportSample sample = MotionPathViewportBinding.sampleAt(
       scrollPixels: 120,
       itemStart: 100,
       itemExtent: 80,
@@ -22,8 +21,7 @@ void main() {
   });
 
   test('pins only inside the authored scroll window', () {
-    final MotionPathViewportSample before =
-        MotionPathViewportBinding.sampleAt(
+    final MotionPathViewportSample before = MotionPathViewportBinding.sampleAt(
       scrollPixels: 0,
       itemStart: 100,
       itemExtent: 40,
@@ -32,8 +30,7 @@ void main() {
       end: 150,
       pin: true,
     );
-    final MotionPathViewportSample during =
-        MotionPathViewportBinding.sampleAt(
+    final MotionPathViewportSample during = MotionPathViewportBinding.sampleAt(
       scrollPixels: 100,
       itemStart: 100,
       itemExtent: 40,
@@ -42,8 +39,7 @@ void main() {
       end: 150,
       pin: true,
     );
-    final MotionPathViewportSample after =
-        MotionPathViewportBinding.sampleAt(
+    final MotionPathViewportSample after = MotionPathViewportBinding.sampleAt(
       scrollPixels: 200,
       itemStart: 100,
       itemExtent: 40,

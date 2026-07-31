@@ -3,14 +3,14 @@ import 'package:motionpath_core/motionpath_core.dart';
 import 'package:motionpath_flutter/motionpath_flutter.dart';
 
 MotionPathTrackRuntime _child(String id) => MotionPathTrackRuntime(
-      id,
-      properties: <String, List<MotionPathStop>>{
-        'x': const <MotionPathStop>[
-          MotionPathStop(progress: 0, value: 0),
-          MotionPathStop(progress: 1, value: 100),
-        ],
-      },
-    );
+  id,
+  properties: <String, List<MotionPathStop>>{
+    'x': const <MotionPathStop>[
+      MotionPathStop(progress: 0, value: 0),
+      MotionPathStop(progress: 1, value: 100),
+    ],
+  },
+);
 
 void main() {
   test('reflow uses the authored duration instead of jumping immediately', () {

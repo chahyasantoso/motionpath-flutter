@@ -4,9 +4,18 @@ import 'package:motionpath_flutter/motionpath_flutter.dart';
 void main() {
   test('walker tone styles and ground remain stable', () {
     expect(kMotionPathWalkerGroundY, 266);
-    expect(kMotionPathWalkerToneStyles[MotionPathWalkerTone.core]!.thickness, 24);
-    expect(kMotionPathWalkerToneStyles[MotionPathWalkerTone.near]!.thickness, 16);
-    expect(kMotionPathWalkerToneStyles[MotionPathWalkerTone.far]!.opacity, 0.62);
+    expect(
+      kMotionPathWalkerToneStyles[MotionPathWalkerTone.core]!.thickness,
+      24,
+    );
+    expect(
+      kMotionPathWalkerToneStyles[MotionPathWalkerTone.near]!.thickness,
+      16,
+    );
+    expect(
+      kMotionPathWalkerToneStyles[MotionPathWalkerTone.far]!.opacity,
+      0.62,
+    );
   });
 
   test('walker segment length is preserved at a right angle', () {

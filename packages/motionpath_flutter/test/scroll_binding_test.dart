@@ -52,8 +52,9 @@ void main() {
       id: 'scrubbed',
       tracks: <MotionPathTrackRuntime>[MotionPathTrackRuntime('a')],
     );
-    final MotionPathMotionScrollBinding binding =
-        MotionPathMotionScrollBinding(motion: motion);
+    final MotionPathMotionScrollBinding binding = MotionPathMotionScrollBinding(
+      motion: motion,
+    );
     binding.seekFromOffset(pixels: 150, maxScrollExtent: 300);
     expect(motion.progress, 0.5);
     expect(motion.playing, isFalse);
@@ -63,38 +64,38 @@ void main() {
     binding.dispose();
   });
 
-  test('applies scrub smoothing only when the caller supplies elapsed time', () {
-    final MotionPathMotionRuntime motion = MotionPathMotionRuntime(
-      id: 'scrubbed',
-      tracks: <MotionPathTrackRuntime>[MotionPathTrackRuntime('a')],
-    );
-    final MotionPathMotionScrollBinding binding =
-        MotionPathMotionScrollBinding(motion: motion, scrub: 1);
+  test(
+    'applies scrub smoothing only when the caller supplies elapsed time',
+    () {
+      final MotionPathMotionRuntime motion = MotionPathMotionRuntime(
+        id: 'scrubbed',
+        tracks: <MotionPathTrackRuntime>[MotionPathTrackRuntime('a')],
+      );
+      final MotionPathMotionScrollBinding binding =
+          MotionPathMotionScrollBinding(motion: motion, scrub: 1);
 
-    binding.seekFromOffset(
-      pixels: 0,
-      maxScrollExtent: 100,
-      deltaSeconds: 0,
-    );
-    binding.seekFromOffset(
-      pixels: 100,
-      maxScrollExtent: 100,
-      deltaSeconds: 0.1,
-    );
+      binding.seekFromOffset(pixels: 0, maxScrollExtent: 100, deltaSeconds: 0);
+      binding.seekFromOffset(
+        pixels: 100,
+        maxScrollExtent: 100,
+        deltaSeconds: 0.1,
+      );
 
-    expect(binding.targetProgress, 1);
-    expect(binding.progress, closeTo(1 - 0.904837, 1e-5));
-    expect(motion.progress, closeTo(binding.progress, 1e-9));
-    binding.dispose();
-  });
+      expect(binding.targetProgress, 1);
+      expect(binding.progress, closeTo(1 - 0.904837, 1e-5));
+      expect(motion.progress, closeTo(binding.progress, 1e-9));
+      binding.dispose();
+    },
+  );
 
   test('detach resets progress so a reused position starts clean', () {
     final MotionPathMotionRuntime motion = MotionPathMotionRuntime(
       id: 'scrubbed',
       tracks: <MotionPathTrackRuntime>[MotionPathTrackRuntime('a')],
     );
-    final MotionPathMotionScrollBinding binding =
-        MotionPathMotionScrollBinding(motion: motion);
+    final MotionPathMotionScrollBinding binding = MotionPathMotionScrollBinding(
+      motion: motion,
+    );
     binding.seekFromOffset(pixels: 80, maxScrollExtent: 100);
     binding.detach();
     expect(binding.progress, 0);

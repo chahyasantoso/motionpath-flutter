@@ -7,10 +7,8 @@ import '../controllers/motion_path_spawn_controller.dart';
 import '../painters/motion_path_patch_painter.dart';
 
 /// Builds one stable child for each live spawned instance.
-typedef MotionPathSpawnItemBuilder = Widget Function(
-  BuildContext context,
-  MotionPathSpawnInstance instance,
-);
+typedef MotionPathSpawnItemBuilder =
+    Widget Function(BuildContext context, MotionPathSpawnInstance instance);
 
 /// Renders dynamic children from composed spawn patches.
 ///
@@ -78,14 +76,16 @@ class _MotionPathSpawnItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final MotionPathPatchTransform transform =
         MotionPathPatchTransform.fromPatch(
-      instance.patch,
-      fallbackArgb: fallbackArgb,
-    );
+          instance.patch,
+          fallbackArgb: fallbackArgb,
+        );
     Widget result = child;
     if (transform.opacity != 1) {
       result = Opacity(opacity: transform.opacity, child: result);
     }
-    final ImageFilter? filter = MotionPathPatchConsumers.blurFilter(instance.patch);
+    final ImageFilter? filter = MotionPathPatchConsumers.blurFilter(
+      instance.patch,
+    );
     if (filter != null) {
       result = ImageFiltered(imageFilter: filter, child: result);
     }
@@ -97,7 +97,10 @@ class _MotionPathSpawnItem extends StatelessWidget {
       );
     }
     if (transform.rotationRadians != 0) {
-      result = Transform.rotate(angle: transform.rotationRadians, child: result);
+      result = Transform.rotate(
+        angle: transform.rotationRadians,
+        child: result,
+      );
     }
     if (transform.translateX != 0 || transform.translateY != 0) {
       result = Transform.translate(

@@ -3,14 +3,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:motionpath_flutter/motionpath_flutter.dart';
 
 MotionPathRigPainter _painter(double childX) => MotionPathRigPainter(
-      patches: <String, Map<String, Object?>>{
-        'root': <String, Object?>{'x': 0, 'y': 0, 'rotation': 0},
-        'bone': <String, Object?>{'x': childX, 'y': 0, 'rotation': 0},
-      },
-      bones: const <MotionPathBone>[
-        MotionPathBone(parent: 'root', child: 'bone'),
-      ],
-    );
+  patches: <String, Map<String, Object?>>{
+    'root': <String, Object?>{'x': 0, 'y': 0, 'rotation': 0},
+    'bone': <String, Object?>{'x': childX, 'y': 0, 'rotation': 0},
+  },
+  bones: const <MotionPathBone>[MotionPathBone(parent: 'root', child: 'bone')],
+);
 
 void main() {
   test('reads joint positions out of composed patches', () {
@@ -26,10 +24,7 @@ void main() {
   testWidgets('paints a rig without throwing', (WidgetTester tester) async {
     await tester.pumpWidget(
       Center(
-        child: CustomPaint(
-          size: const Size(200, 200),
-          painter: _painter(60),
-        ),
+        child: CustomPaint(size: const Size(200, 200), painter: _painter(60)),
       ),
     );
     expect(tester.takeException(), isNull);
