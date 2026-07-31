@@ -39,7 +39,7 @@ jobs:
       - name: Pub get
         run: flutter pub get
       - name: Analyze
-        run: flutter analyze --machine
+        run: flutter analyze --machine --verbose
       - name: Test
         run: flutter test --reporter expanded
 
@@ -58,4 +58,4 @@ jobs:
       - name: Pub get
         run: flutter pub get
       - name: Analyze
-        run: flutter analyze --machine
+        run: flutter analyze --machine --verbose
