@@ -1,4 +1,5 @@
 import '../interpolation/easing.dart';
+import '../interpolation/interpolator.dart';
 
 /// Samples one numeric value toward a fixed target over a finite duration.
 ///
@@ -11,14 +12,16 @@ class MotionPathValueTweener {
     required double initial,
     required double target,
     required double duration,
-    Easing ease = resolveEasingDefault,
-  })  : _value = initial,
+    Easing ease = MotionPathInterpolators.linear,
+  })  : _start = initial,
+        _value = initial,
         _target = target,
         _duration = duration,
         _ease = ease;
 
   final double _duration;
   final Easing _ease;
+  double _start;
   double _value;
   double _target;
   double _elapsed = 0;
@@ -34,6 +37,7 @@ class MotionPathValueTweener {
 
   /// Changes the endpoint and restarts the finite tween from the current value.
   void retarget(double target) {
+    _start = _value;
     _target = target;
     _elapsed = 0;
     if (_duration <= 0) _value = target;
@@ -47,11 +51,8 @@ class MotionPathValueTweener {
     }
     _elapsed = (_elapsed + delta).clamp(0.0, _duration).toDouble();
     final double progress = _elapsed / _duration;
-    _value = _value + (_target - _value) * _ease(progress);
+    _value = _start + (_target - _start) * _ease(progress);
     if (_elapsed >= _duration) _value = _target;
     return _value;
   }
 }
-
-/// Default linear easing for a value tween.
-final Easing resolveEasingDefault = resolveEasing('none');
