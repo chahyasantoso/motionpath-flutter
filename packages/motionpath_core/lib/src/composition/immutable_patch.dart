@@ -15,9 +15,15 @@ Object? _freeze(Object? value) {
     return Map<String, Object?>.unmodifiable(result);
   }
   if (value is List<Object?>) {
-    return List<Object?>.unmodifiable(<Object?>[
+    final List<Object?> frozen = <Object?>[
       for (final Object? entry in value) _freeze(entry),
-    ]);
+    ];
+    if (frozen.every((Object? entry) => entry is Map<String, Object?>)) {
+      return List<Map<String, Object?>>.unmodifiable(
+        frozen.cast<Map<String, Object?>>(),
+      );
+    }
+    return List<Object?>.unmodifiable(frozen);
   }
   return value;
 }
