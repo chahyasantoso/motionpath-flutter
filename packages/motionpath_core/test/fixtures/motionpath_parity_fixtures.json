@@ -1,0 +1,44 @@
+{
+  "format": "motionpath-parity-fixtures",
+  "formatVersion": 1,
+  "source": "chahyasantoso/motionpath",
+  "sampleProgress": [0, 0.25, 0.5, 0.75, 1],
+  "tolerance": 1e-9,
+  "cases": {
+    "easing": {
+      "0": {"easing": {"x": 0}},
+      "0.25": {"easing": {"x": 1.5625}},
+      "0.5": {"easing": {"x": 12.5}},
+      "0.75": {"easing": {"x": 42.1875}},
+      "1": {"easing": {"x": 100}}
+    },
+    "transformsAndColors": {
+      "0": {"render-contract": {"x": 0, "y": 40, "rotation": 0, "scale": 1, "opacity": 0, "color": "#000000"}},
+      "0.25": {"render-contract": {"x": 12.5, "y": 30, "rotation": 11.25, "scale": 1.125, "opacity": 0.125, "color": "rgba(32,32,32,1)"}},
+      "0.5": {"render-contract": {"x": 50, "y": 0, "rotation": 45, "scale": 1.5, "opacity": 0.5, "color": "rgba(128,128,128,1)"}},
+      "0.75": {"render-contract": {"x": 87.5, "y": -30, "rotation": 78.75, "scale": 1.875, "opacity": 0.875, "color": "rgba(223,223,223,1)"}},
+      "1": {"render-contract": {"x": 100, "y": -40, "rotation": 90, "scale": 2, "opacity": 1, "color": "#ffffff"}}
+    },
+    "filters": {
+      "0": {"filters": {"filter": {"blur": 0, "brightness": 1}}},
+      "0.25": {"filters": {"filter": {"blur": 1, "brightness": 1.0625}}},
+      "0.5": {"filters": {"filter": {"blur": 4, "brightness": 1.25}}},
+      "0.75": {"filters": {"filter": {"blur": 7, "brightness": 1.4375}}},
+      "1": {"filters": {"filter": {"blur": 8, "brightness": 1.5}}}
+    },
+    "imageSequence": {
+      "0": {"images": {"backgroundImage": "url(frame-0.png)"}},
+      "0.25": {"images": {"backgroundImage": "url(frame-0.png)"}},
+      "0.5": {"images": {"backgroundImage": "url(frame-2.png)"}},
+      "0.75": {"images": {"backgroundImage": "url(frame-3.png)"}},
+      "1": {"images": {"backgroundImage": "url(frame-3.png)"}}
+    },
+    "observationGraph": {
+      "0": {"source": {"x": 0}, "consumer": {"opacity": 0.2, "x": 0}},
+      "0.25": {"source": {"x": 12.5}, "consumer": {"opacity": 0.3, "x": 12.5}},
+      "0.5": {"source": {"x": 50}, "consumer": {"opacity": 0.6, "x": 50}},
+      "0.75": {"source": {"x": 87.5}, "consumer": {"opacity": 0.9, "x": 87.5}},
+      "1": {"source": {"x": 100}, "consumer": {"opacity": 1, "x": 100}}
+    }
+  }
+}
