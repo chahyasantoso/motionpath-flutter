@@ -54,12 +54,14 @@ void main() {
       imageSequencePlugin,
       cssVariablePlugin,
       filterPlugin,
-      scenePlugin,
+      overlayPlugin,
+      spawnerPlugin,
     ];
     for (final MotionPathPlugin plugin in plugins) {
       final Map<String, Object?> patch = MotionPathPatchContract.normalize(
         <String, Object?>{
-          for (final String key in plugin.outputs) key: <String, Object?>{'value': 1},
+          for (final String key in plugin.outputs)
+            key: <String, Object?>{'value': 1},
           for (final String key in plugin.internalKeys) key: 1,
         },
         plugins: <MotionPathPlugin>[plugin],

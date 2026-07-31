@@ -1,5 +1,4 @@
 import '../plugins/motionpath_plugin.dart';
-import 'immutable_patch.dart';
 import 'patch_contract.dart';
 
 /// Merges [b] over [a], shallow-merging nested object values.
