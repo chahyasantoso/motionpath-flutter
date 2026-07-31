@@ -61,22 +61,17 @@ class MotionPathValueTweener {
   }
 
   /// Advances by [delta] seconds and returns the sampled value.
-  double advance(double delta) {
-    if (!delta.isFinite || delta < 0) {
-      throw ArgumentError.value(
-        delta,
-        'delta',
-        'must be finite and non-negative',
-      );
+  void advance(double delta) {
+    if (!delta.isFinite) {
+      throw ArgumentError.value(delta, 'delta', 'must be finite');
     }
-    if (_duration <= 0 || delta == 0) {
+    if (_duration <= 0 || delta <= 0) {
       if (_duration <= 0) _value = _target;
-      return _value;
+      return;
     }
     _elapsed = (_elapsed + delta).clamp(0.0, _duration).toDouble();
     final double progress = _elapsed / _duration;
     _value = _start + (_target - _start) * _ease(progress);
     if (_elapsed >= _duration) _value = _target;
-    return _value;
   }
 }
