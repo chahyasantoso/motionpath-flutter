@@ -9,6 +9,7 @@ export 'src/bindings/motion_path_scroll_binding.dart';
 export 'src/bindings/motion_path_viewport_binding.dart';
 export 'src/consumers/motion_path_patch_consumers.dart';
 export 'src/consumers/motion_path_patch_equality.dart';
+export 'src/consumers/motion_path_image_cache.dart';
 export 'src/controllers/motion_path_patch_controller.dart';
 export 'src/controllers/motion_path_spawn_controller.dart';
 export 'src/controllers/motion_path_spawn_ticker_binding.dart';
