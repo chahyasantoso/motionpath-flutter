@@ -12,3 +12,34 @@ Source fixture: `packages/motionpath_core/test/fixtures/motionpath_parity_fixtur
 | `lifecycle` | existing lifecycle suites | behavioral, not sampled | partial |
 
 The JS and Flutter renderer contracts intentionally serialize colors and image frames differently: JS emits CSS strings, while Flutter core emits packed ARGB values and frame names. The test normalizes only those renderer-boundary representations; it does not loosen numeric comparison or ignore missing keys.
+
+## Known contract asymmetry: per-stop `ease` is not universally consumed
+
+Discovered while stabilizing `js_parity_fixture_test.dart` (2026-07-31, post-merge of PR #65).
+
+Most properties (`x`, `y`, `rotation`, `scale`, `opacity`, `color`, `filter`) are eased through
+the standard stop-interpolation path in `track.dart`: the `ease` attached to a `MotionPathStop`
+is applied when interpolating between stops, and `compose()` reads the already-eased value.
+
+`path` (`path_plugin.dart`) and `imageSequence` (`image_sequence_plugin.dart`) do **not** follow
+this path. Both plugins read `raw['progress']` directly — the track's raw seek value — and derive
+their own output from it (arc-length sample position, frame index) rather than from a
+stop-interpolated property value. Concretely: **attaching `ease:` to a `path` or `imageSequence`
+stop is currently a silent no-op.** No validation error, no warning — the property will simply
+behave as if `ease: 'none'` was authored, which is exactly the "silently allowed" failure mode
+the JS engine's own architecture docs call out as something to actively avoid (see
+`motionpath` — "validator/build-time rules must throw, never silently strip").
+
+This was masked during initial fixture parity work: `js_parity_fixture_test.dart`'s
+`imageSequence` case needed the JS reference's `power1.inOut` curve applied to the **seek
+progress passed into `track.seek()`** rather than to the stop, to reproduce the correct frame
+index at each sample point. That workaround is correct for a test that already knows the curve,
+but it is not a fix for the underlying contract gap — a schema author (or an LLM generating a
+project) has no way to discover this asymmetry from the schema shape alone.
+
+**Action item, not yet implemented:** either (a) make `MotionPathTrackRuntime` validate/warn
+when a non-terminal-consuming plugin (`path`, `imageSequence`) receives a stop with a non-default
+`ease`, or (b) extend both plugins to accept and apply per-stop easing the same way the standard
+interpolation path does, for full authoring parity with transform/filter/color tracks. Until one
+of these lands, treat `ease` on `path`/`imageSequence` keyframes as unsupported and avoid
+authoring it in production schemas.
