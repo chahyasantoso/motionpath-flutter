@@ -1,5 +1,11 @@
 import 'dart:ui' show ImageFilter;
 
+/// Maximum blur sigma accepted at the renderer boundary.
+///
+/// Large or non-finite values can create excessive GPU work. The renderer
+/// ignores invalid values and clamps valid values to this bound.
+const double kMotionPathMaxBlurSigma = 100;
+
 /// A renderer-ready view of the non-visual patch payloads.
 class MotionPathPatchConsumers {
   const MotionPathPatchConsumers._();
@@ -20,6 +26,11 @@ class MotionPathPatchConsumers {
     return result;
   }
 
+  /// Resolves a bounded blur filter.
+  ///
+  /// Missing, negative, NaN, and infinite values mean no blur. Finite values
+  /// above [kMotionPathMaxBlurSigma] are clamped rather than passed unchecked
+  /// to the compositor.
   static ImageFilter? blurFilter(Map<String, Object?> patch) {
     final Object? raw = patch['filter'];
     if (raw is! Map<Object?, Object?>) {
@@ -30,7 +41,13 @@ class MotionPathPatchConsumers {
       return null;
     }
     final double sigma = value.toDouble();
-    return sigma > 0 ? ImageFilter.blur(sigmaX: sigma, sigmaY: sigma) : null;
+    if (!sigma.isFinite || sigma <= 0) {
+      return null;
+    }
+    return ImageFilter.blur(
+      sigmaX: sigma.clamp(0, kMotionPathMaxBlurSigma).toDouble(),
+      sigmaY: sigma.clamp(0, kMotionPathMaxBlurSigma).toDouble(),
+    );
   }
 
   static List<Map<String, Object?>> instances(Map<String, Object?> patch) {
