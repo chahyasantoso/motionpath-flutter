@@ -20,6 +20,7 @@ jobs:
       - name: Pub get
         run: dart pub get
       - name: Analyze
+        # Machine output preserves file, line, severity, and message in CI logs.
         run: dart analyze --format machine
       - name: Test
         run: dart test --reporter expanded
