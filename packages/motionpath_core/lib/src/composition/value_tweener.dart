@@ -12,11 +12,29 @@ class MotionPathValueTweener {
     required double target,
     required double duration,
     required Easing ease,
-  }) : _start = initial,
-       _value = initial,
-       _target = target,
-       _duration = duration,
-       _ease = ease;
+  })  : _start = _finite(initial, 'initial'),
+        _value = _finite(initial, 'initial'),
+        _target = _finite(target, 'target'),
+        _duration = _finiteNonNegative(duration, 'duration'),
+        _ease = ease;
+
+  static double _finite(double value, String name) {
+    if (!value.isFinite) {
+      throw ArgumentError.value(value, name, 'must be finite');
+    }
+    return value;
+  }
+
+  static double _finiteNonNegative(double value, String name) {
+    if (!value.isFinite || value < 0) {
+      throw ArgumentError.value(
+        value,
+        name,
+        'must be finite and non-negative',
+      );
+    }
+    return value;
+  }
 
   final double _duration;
   final Easing _ease;
@@ -37,14 +55,21 @@ class MotionPathValueTweener {
   /// Changes the endpoint and restarts the finite tween from the current value.
   void retarget(double target) {
     _start = _value;
-    _target = target;
+    _target = _finite(target, 'target');
     _elapsed = 0;
-    if (_duration <= 0) _value = target;
+    if (_duration <= 0) _value = _target;
   }
 
   /// Advances by [delta] seconds and returns the sampled value.
   double advance(double delta) {
-    if (_duration <= 0 || delta <= 0) {
+    if (!delta.isFinite || delta < 0) {
+      throw ArgumentError.value(
+        delta,
+        'delta',
+        'must be finite and non-negative',
+      );
+    }
+    if (_duration <= 0 || delta == 0) {
       if (_duration <= 0) _value = _target;
       return _value;
     }

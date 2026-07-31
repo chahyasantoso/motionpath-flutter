@@ -28,7 +28,7 @@ class MotionPathTrackRuntime implements MotionPathLayoutChild {
     List<MotionPathStop> stops = const <MotionPathStop>[],
     List<MotionPathPlugin>? plugins,
     MotionPathLayoutDelegate? layoutDelegate,
-    this.duration = 0,
+    double duration = 0,
   }) : properties = Map<String, List<MotionPathStop>>.unmodifiable(properties),
        stops = List<MotionPathStop>.unmodifiable(stops),
        layoutDelegate = layoutDelegate ?? kGaplessLayoutDelegate,
@@ -37,7 +37,8 @@ class MotionPathTrackRuntime implements MotionPathLayoutChild {
              MotionPathPluginRegistry().resolve(
                _authoredKeys(properties, stops),
              ),
-       );
+       ),
+       duration = _finiteNonNegative(duration, 'duration');
 
   static Iterable<String> _authoredKeys(
     Map<String, List<MotionPathStop>> properties,
@@ -46,13 +47,32 @@ class MotionPathTrackRuntime implements MotionPathLayoutChild {
       ? const <String>['value']
       : properties.keys;
 
+  static double _finiteNonNegative(double value, String name) {
+    if (!value.isFinite || value < 0) {
+      throw ArgumentError.value(
+        value,
+        name,
+        'must be finite and non-negative',
+      );
+    }
+    return value;
+  }
+
   final String id;
   final Map<String, List<MotionPathStop>> properties;
   final List<MotionPathStop> stops;
   final List<MotionPathPlugin> plugins;
   final MotionPathLayoutDelegate layoutDelegate;
   final double duration;
-  double progress = 0;
+  double _progress = 0;
+
+  double get progress => _progress;
+  set progress(double value) {
+    if (!value.isFinite) {
+      throw ArgumentError.value(value, 'progress', 'must be finite');
+    }
+    _progress = value.clamp(0.0, 1.0).toDouble();
+  }
 
   void Function(MotionPathTrackRuntime child, double offset)?
   get onChildSpawned => _onChildSpawned;
@@ -112,14 +132,16 @@ class MotionPathTrackRuntime implements MotionPathLayoutChild {
 
   void addChild(MotionPathTrackRuntime child, {double stagger = 0}) {
     if (_disposed) throw StateError('Track "$id" is disposed.');
+    _finiteNonNegative(stagger, 'stagger');
     final MotionPathTrackRuntime? existingParent = child._parent;
     if (existingParent != null) {
       throw StateError(
         'Track "${child.id}" is already a child of "${existingParent.id}".',
       );
     }
-    if (_children.containsKey(child.id))
+    if (_children.containsKey(child.id)) {
       throw StateError('Track "$id" already has a child "${child.id}".');
+    }
     final double offset = layoutDelegate.computeSpawnOffset(
       <MotionPathLayoutChild>[..._children.values],
       stagger: stagger,
@@ -152,12 +174,29 @@ class MotionPathTrackRuntime implements MotionPathLayoutChild {
     }
   }
 
+  /// Wires an observation, rejecting malformed direct runtime calls.
   void observe(
     MotionPathTrackRuntime source, {
     String role = 'output',
     String? input,
   }) {
-    if (role == 'input' && (input == null || input.isEmpty)) return;
+    if (role != 'input' && role != 'output') {
+      throw ArgumentError.value(role, 'role', 'must be input or output');
+    }
+    if (role == 'input' && (input == null || input.isEmpty)) {
+      throw ArgumentError.value(
+        input,
+        'input',
+        'is required for an input observation',
+      );
+    }
+    if (role == 'output' && input != null) {
+      throw ArgumentError.value(
+        input,
+        'input',
+        'must be omitted for an output observation',
+      );
+    }
     _observed.add(
       MotionPathObservation(source: source, role: role, input: input),
     );
@@ -203,7 +242,11 @@ class MotionPathTrackRuntime implements MotionPathLayoutChild {
     for (final MotionPathObservation observation in _observed) {
       if (!observation.isInput) continue;
       final String? key = observation.input;
-      if (key == null || key.isEmpty) continue;
+      if (key == null || key.isEmpty) {
+        throw StateError(
+          'Track "$id" contains an input observation without a target key.',
+        );
+      }
       raw = <String, Object?>{
         ...raw,
         key: observation.source.compose(context: ctx),
@@ -219,7 +262,10 @@ class MotionPathTrackRuntime implements MotionPathLayoutChild {
   }
 
   void seek(double value) {
-    progress = value.clamp(0.0, 1.0).toDouble();
+    if (!value.isFinite) {
+      throw ArgumentError.value(value, 'value', 'must be finite');
+    }
+    progress = value;
     if (_listeners.isEmpty) return;
     final Map<String, Object?> patch = compose();
     for (final void Function(Map<String, Object?>) listener
@@ -229,6 +275,9 @@ class MotionPathTrackRuntime implements MotionPathLayoutChild {
   }
 
   void Function() subscribe(void Function(Map<String, Object?>) listener) {
+    if (_disposed) {
+      throw StateError('Track "$id" is disposed.');
+    }
     _listeners.add(listener);
     return () => _listeners.remove(listener);
   }

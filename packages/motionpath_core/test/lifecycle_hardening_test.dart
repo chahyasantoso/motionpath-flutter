@@ -40,6 +40,88 @@ void main() {
     engine.destroy();
   });
 
+  test('motion preparation rejects an invalid graph before wiring', () {
+    final MotionPathMotionRuntime motion = MotionPathMotionRuntime(
+      id: 'hero',
+      tracks: <MotionPathTrackRuntime>[MotionPathTrackRuntime('track')],
+    );
+    const ObservationGraph invalid = ObservationGraph(
+      nodes: <ObservationNode>[],
+      edges: <ObservationEdge>[],
+      order: <String>[],
+      errors: <MotionPathDiagnostic>[
+        MotionPathDiagnostic(
+          path: 'tracks',
+          code: 'track-observations',
+          message: 'invalid graph',
+        ),
+      ],
+    );
+
+    expect(
+      () => motion.prepare(invalid),
+      throwsA(isA<MotionPathValidationException>()),
+    );
+    expect(motion.graph, isNull);
+  });
+
+  test('direct input observation wiring rejects a missing key', () {
+    final MotionPathTrackRuntime target = MotionPathTrackRuntime('target');
+    final MotionPathTrackRuntime source = MotionPathTrackRuntime('source');
+
+    expect(
+      () => target.observe(source, role: 'input'),
+      throwsA(isA<ArgumentError>()),
+    );
+    expect(
+      () => target.observe(source, role: 'sideways'),
+      throwsA(isA<ArgumentError>()),
+    );
+    expect(
+      () => target.observe(source, role: 'output', input: 'x'),
+      throwsA(isA<ArgumentError>()),
+    );
+    expect(target.observations, isEmpty);
+  });
+
+  test('runtime boundaries reject non-finite values', () {
+    expect(
+      () => MotionPathTrackRuntime('track', duration: double.nan),
+      throwsA(isA<ArgumentError>()),
+    );
+    expect(
+      () => MotionPathMotionRuntime(
+        id: 'motion',
+        tracks: <MotionPathTrackRuntime>[],
+        duration: double.infinity,
+      ),
+      throwsA(isA<ArgumentError>()),
+    );
+    final MotionPathMotionRuntime motion = MotionPathMotionRuntime(
+      id: 'motion',
+      tracks: <MotionPathTrackRuntime>[MotionPathTrackRuntime('track')],
+    );
+    expect(() => motion.seek(double.nan), throwsA(isA<ArgumentError>()));
+    expect(() => motion.tick(double.infinity), throwsA(isA<ArgumentError>()));
+    expect(
+      () => motion.tracks.single.seek(double.nan),
+      throwsA(isA<ArgumentError>()),
+    );
+  });
+
+  test('runtime ownership rejects duplicate track ids', () {
+    expect(
+      () => MotionPathMotionRuntime(
+        id: 'motion',
+        tracks: <MotionPathTrackRuntime>[
+          MotionPathTrackRuntime('same'),
+          MotionPathTrackRuntime('same'),
+        ],
+      ),
+      throwsA(isA<StateError>()),
+    );
+  });
+
   test('engine rejects duplicate mounts instead of replacing live runtime', () {
     final MotionPathEngine engine = MotionPathEngine()..loadProject(_project());
     final MotionPathMotionRuntime original = engine.mountMotion('hero');
