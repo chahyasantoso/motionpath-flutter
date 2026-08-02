@@ -1,6 +1,8 @@
 import '../contract/motionpath_types.dart';
+import '../graph/observation_graph.dart';
 import 'easing_rules.dart';
 import 'finite_number_rules.dart';
+import 'payload_rules.dart';
 import 'project_rules.dart';
 
 /// Validates a decoded v4 project and collects every diagnostic.
@@ -27,8 +29,10 @@ List<MotionPathDiagnostic> validateProject(Map<String, Object?> json) {
     for (int trackIndex = 0; trackIndex < parsed.tracks.length; trackIndex++) {
       final MotionPathTrack track = parsed.tracks[trackIndex];
       final Map<String, Object?> trackJson = <String, Object?>{'id': track.id, 'keyframes': track.keyframes};
-      diagnostics.addAll(trackKeyframeRules(trackJson, '$motionPath.tracks[$trackIndex]'));
-      diagnostics.addAll(easingRules(trackJson, '$motionPath.tracks[$trackIndex]'));
+      final String trackPath = '$motionPath.tracks[$trackIndex]';
+      diagnostics.addAll(trackKeyframeRules(trackJson, trackPath));
+      diagnostics.addAll(keyframePayloadRules(track.keyframes, trackPath));
+      diagnostics.addAll(easingRules(trackJson, trackPath));
     }
     diagnostics.addAll(trackObservationsRule(parsed, motionPath));
   }
@@ -38,8 +42,10 @@ List<MotionPathDiagnostic> validateProject(Map<String, Object?> json) {
     for (int index = 0; index < rawTracks.length; index++) {
       final MotionPathTrack track = MotionPathTrack.fromJson(asStringKeyedMap(rawTracks[index]), templates: templates);
       final Map<String, Object?> trackJson = <String, Object?>{'id': track.id, 'keyframes': track.keyframes};
-      diagnostics.addAll(trackKeyframeRules(trackJson, 'tracks[$index]'));
-      diagnostics.addAll(easingRules(trackJson, 'tracks[$index]'));
+      final String trackPath = 'tracks[$index]';
+      diagnostics.addAll(trackKeyframeRules(trackJson, trackPath));
+      diagnostics.addAll(keyframePayloadRules(track.keyframes, trackPath));
+      diagnostics.addAll(easingRules(trackJson, trackPath));
     }
   }
   return List<MotionPathDiagnostic>.unmodifiable(diagnostics);
