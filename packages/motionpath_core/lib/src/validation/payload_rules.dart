@@ -1,10 +1,6 @@
 import '../contract/motionpath_types.dart';
 
 /// Validates plugin-owned keyframe payloads before runtime composition.
-///
-/// These checks belong at the project boundary. A malformed path or frame list
-/// otherwise reaches a plugin that can only return an empty patch, which makes
-/// an authored scene silently disappear.
 List<MotionPathDiagnostic> keyframePayloadRules(
   Map<String, Object?> keyframes,
   String path,
@@ -26,56 +22,65 @@ List<MotionPathDiagnostic> _pathRules(
   Map<String, Object?> config,
   String path,
 ) {
+  final List<MotionPathDiagnostic> diagnostics = <MotionPathDiagnostic>[];
+  final Object? anchor = config['anchor'];
+  if (anchor != null &&
+      anchor != 'center' &&
+      anchor != 'none' &&
+      !(anchor is Map<Object?, Object?> &&
+          asStringKeyedMap(anchor)['xPercent'] is num &&
+          asStringKeyedMap(anchor)['yPercent'] is num)) {
+    diagnostics.add(
+      MotionPathDiagnostic(
+        path: '$path.anchor',
+        code: 'path-shape',
+        message: 'path.anchor must be "center", "none", or numeric xPercent/yPercent.',
+      ),
+    );
+  }
   final Object? rawPoints = config['points'];
   if (rawPoints is! List<Object?> || rawPoints.length < 2) {
-    return <MotionPathDiagnostic>[
+    diagnostics.add(
       MotionPathDiagnostic(
         path: '$path.points',
         code: 'path-shape',
         message: 'path.points must be an array with at least 2 points.',
       ),
-    ];
+    );
+    return diagnostics;
   }
-  final List<MotionPathDiagnostic> diagnostics = <MotionPathDiagnostic>[];
   for (int index = 0; index < rawPoints.length; index++) {
     final Map<String, Object?> point = asStringKeyedMap(rawPoints[index]);
-    if (point['x'] is! num) {
+    if (point['x'] is! num || point['y'] is! num) {
       diagnostics.add(
         MotionPathDiagnostic(
-          path: '$path.points[$index].x',
+          path: '$path.points[$index]',
           code: 'path-shape',
-          message: 'Path point x must be numeric.',
+          message: 'Each path point requires numeric x and y.',
         ),
       );
     }
-    if (point['y'] is! num) {
+    final bool hasCtrlX = point.containsKey('ctrlX');
+    final bool hasCtrlY = point.containsKey('ctrlY');
+    if (hasCtrlX != hasCtrlY) {
       diagnostics.add(
         MotionPathDiagnostic(
-          path: '$path.points[$index].y',
+          path: '$path.points[$index]',
           code: 'path-shape',
-          message: 'Path point y must be numeric.',
+          message: 'ctrlX and ctrlY must be provided together.',
         ),
       );
     }
-    for (final String control in <String>['ctrlX', 'ctrlY', 'ctrlZ']) {
+    for (final String control in <String>['ctrlX', 'ctrlY', 'ctrlZ', 'z']) {
       if (point.containsKey(control) && point[control] is! num) {
         diagnostics.add(
           MotionPathDiagnostic(
             path: '$path.points[$index].$control',
             code: 'path-shape',
-            message: 'Path control $control must be numeric when present.',
+            message: 'Path coordinate $control must be numeric when present.',
           ),
         );
       }
-    }
-    if (point.containsKey('z') && point['z'] is! num) {
-      diagnostics.add(
-        MotionPathDiagnostic(
-          path: '$path.points[$index].z',
-          code: 'path-shape',
-          message: 'Path point z must be numeric when present.',
-        ),
-      );
     }
   }
   return diagnostics;
@@ -97,8 +102,7 @@ List<MotionPathDiagnostic> _imageSequenceRules(
   }
   final List<MotionPathDiagnostic> diagnostics = <MotionPathDiagnostic>[];
   for (int index = 0; index < rawFrames.length; index++) {
-    final Object? frame = rawFrames[index];
-    if (frame is! String || frame.isEmpty) {
+    if (rawFrames[index] is! String || (rawFrames[index]! as String).isEmpty) {
       diagnostics.add(
         MotionPathDiagnostic(
           path: '$path.frames[$index]',

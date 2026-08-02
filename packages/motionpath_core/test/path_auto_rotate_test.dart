@@ -6,7 +6,7 @@ double _n(Object? value) => (value! as num).toDouble();
 Map<String, Object?> _projectJson(Map<String, Object?> pathKeyframe) =>
     <String, Object?>{
       'schemaVersion': 4,
-      'projectId': 'auto-rotate',
+      'projectId': 'path-contract',
       'motions': <Object?>[
         <String, Object?>{
           'id': 'scene',
@@ -32,95 +32,63 @@ MotionPathTrackRuntime _authored(Map<String, Object?> pathKeyframe) {
   );
 }
 
-List<Object?> _ramp({String? ease}) => <Object?>[
+List<Object?> _ramp() => <Object?>[
   <String, Object?>{'p': 0, 'v': 0},
-  <String, Object?>{'p': 1, 'v': 1, if (ease != null) 'ease': ease},
+  <String, Object?>{'p': 1, 'v': 1},
 ];
 
 void main() {
-  test('a rightward path reports a zero heading', () {
+  test('a center anchor emits percentage alignment', () {
     final MotionPathTrackRuntime track = _authored(<String, Object?>{
       'points': <Object?>[
         <String, Object?>{'x': 0, 'y': 0},
         <String, Object?>{'x': 20, 'y': 0},
       ],
-      'autoRotate': true,
+      'anchor': 'center',
       'stops': _ramp(),
     });
-    track.seek(0.5);
-    expect(_n(track.compose()['rotation']), closeTo(0, 1e-6));
-  });
-
-  test('a downward path reports a quarter turn', () {
-    final MotionPathTrackRuntime track = _authored(<String, Object?>{
-      'points': <Object?>[
-        <String, Object?>{'x': 0, 'y': 0},
-        <String, Object?>{'x': 0, 'y': 20},
-      ],
-      'autoRotate': true,
-      'stops': _ramp(),
-    });
-    track.seek(0.5);
-    expect(_n(track.compose()['rotation']), closeTo(90, 1e-6));
-  });
-
-  test('the heading turns with the curve', () {
-    final MotionPathTrackRuntime track = _authored(<String, Object?>{
-      'points': <Object?>[
-        <String, Object?>{'x': 0, 'y': 0},
-        <String, Object?>{'x': 100, 'y': 100, 'ctrlX': 100, 'ctrlY': 0},
-      ],
-      'autoRotate': true,
-      'stops': _ramp(),
-    });
-    track.seek(0);
-    final double start = _n(track.compose()['rotation']);
-    track.seek(1);
-    final double end = _n(track.compose()['rotation']);
-    expect(start, closeTo(0, 1e-6));
-    expect(end, closeTo(90, 1e-6));
-  });
-
-  test('an eased path uses the authored stop pace before sampling', () {
-    final MotionPathTrackRuntime track = _authored(<String, Object?>{
-      'points': <Object?>[
-        <String, Object?>{'x': 0, 'y': 0},
-        <String, Object?>{'x': 100, 'y': 0},
-      ],
-      'stops': _ramp(ease: 'power1.in'),
-    });
-    track.seek(0.5);
-    expect(_n(track.compose()['x']), closeTo(25, 1e-6));
-  });
-
-  test('a path without autoRotate emits no rotation at all', () {
-    final MotionPathTrackRuntime track = _authored(<String, Object?>{
-      'points': <Object?>[
-        <String, Object?>{'x': 0, 'y': 0},
-        <String, Object?>{'x': 0, 'y': 20},
-      ],
-      'stops': _ramp(),
-    });
-    track.seek(0.5);
     final Map<String, Object?> patch = track.compose();
-    expect(patch.containsKey('rotation'), isFalse);
-    expect(_n(patch['y']), closeTo(10, 1e-6));
+    expect(patch['xPercent'], -50);
+    expect(patch['yPercent'], -50);
   });
 
-  test('position is unchanged by the autoRotate payload shape', () {
-    Map<String, Object?> at(bool autoRotate) {
-      final MotionPathTrackRuntime track = _authored(<String, Object?>{
+  test('none anchor emits no percentage alignment', () {
+    final MotionPathTrackRuntime track = _authored(<String, Object?>{
+      'points': <Object?>[
+        <String, Object?>{'x': 0, 'y': 0},
+        <String, Object?>{'x': 20, 'y': 0},
+      ],
+      'anchor': 'none',
+      'stops': _ramp(),
+    });
+    expect(track.compose().containsKey('xPercent'), isFalse);
+  });
+
+  test('object anchor emits authored percentages', () {
+    final MotionPathTrackRuntime track = _authored(<String, Object?>{
+      'points': <Object?>[
+        <String, Object?>{'x': 0, 'y': 0},
+        <String, Object?>{'x': 20, 'y': 0},
+      ],
+      'anchor': <String, Object?>{'xPercent': 0, 'yPercent': -100},
+      'stops': _ramp(),
+    });
+    final Map<String, Object?> patch = track.compose();
+    expect(patch['xPercent'], 0);
+    expect(patch['yPercent'], -100);
+  });
+
+  test('rejects an invalid anchor at project load', () {
+    expect(
+      () => MotionPathProject.fromJson(_projectJson(<String, Object?>{
         'points': <Object?>[
           <String, Object?>{'x': 0, 'y': 0},
-          <String, Object?>{'x': 40, 'y': 0},
+          <String, Object?>{'x': 20, 'y': 0},
         ],
-        if (autoRotate) 'autoRotate': true,
+        'anchor': <String, Object?>{'xPercent': 0},
         'stops': _ramp(),
-      });
-      track.seek(0.25);
-      return track.compose();
-    }
-
-    expect(_n(at(true)['x']), closeTo(_n(at(false)['x']), 1e-9));
+      })),
+      throwsA(isA<MotionPathValidationException>()),
+    );
   });
 }
