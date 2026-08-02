@@ -1,6 +1,6 @@
 # Phase status
 
-Updated 2026-08-02 against `main`.
+Updated 2026-08-02 against `main` after the green CI gates.
 
 | Phase | Status | Evidence | Gate |
 |---|---|---|---|
@@ -9,9 +9,9 @@ Updated 2026-08-02 against `main`.
 | 2 Immutable patch contract | Complete | PR #69 and PR #71 merged; interest-scoped composition, key taxonomy, normalizer, immutability tests, plugin coverage, and contract docs are complete. | Closed |
 | 3 Shared Flutter renderer | Complete | PRs #73 through #80 merged; shared payload consumption, stable child rendering, interest-scoped consumers, bounded filters, z/perspective/3D transforms, image cache lifecycle, performance coverage, Spiral migration, explicit renderer key policy, and green CI are complete. | Closed |
 | 4 Dynamic children and spawn lifecycle | Complete | PRs #81 through #86 merged; deterministic ordering, host paint order, front-most hit testing, reflow/drain, lifecycle coverage, and Spiral rebuild cleanup are complete. | Closed |
-| 5 Scroll capabilities | Active | PR #88 merged the arbitrary pin host. This PR keeps pinned samples visible while they are held at the leading edge, gives `MotionPathViewportSample` value equality so the host skips unchanged frames, and adds real `ScrollPosition` integration coverage. Exit criteria live in `docs/PHASE_5_ACCEPTANCE.md`. | Ready to close. Snap remains deferred by design; needs green CI |
+| 5 Scroll capabilities | Complete | PR #88 and PR #89 merged; scrub sampling, the toggle state machine, `SliverPersistentHeader` top pinning, the arbitrary pin host, pinned-sample visibility, `MotionPathViewportSample` value equality, and real `ScrollPosition` integration coverage are complete with green CI. Exit criteria live in `docs/PHASE_5_ACCEPTANCE.md`. | Closed. Snap is a deliberate exclusion, not a gap |
 | 6 Cross-repository parity | Partial | Initial JS fixtures plus plugin contract coverage pass. | Broader lifecycle, trigger, path, FK, trajectory, and diagnostics fixtures remain |
-| 7 Carousel | Not started | No Carousel implementation. | Blocked until Phase 5 is complete |
+| 7 Carousel | Not started | No Carousel implementation. | Unblocked. Phases 3, 4, and 5 are closed |
 | 8 Helix and depth | Not started | No Helix/depth renderer. | Blocked until shared renderer is complete |
 | 9 Release hardening | Partial | Docs, metadata, CI, and benchmark harness exist. | Publish/security/API-doc evidence remains |
 

@@ -1,9 +1,9 @@
 # Phase 5 acceptance gate
 
-**Gate state: READY TO CLOSE.**
+**Gate state: CLOSED.**
 
 Phase 5 scroll capabilities are implemented and covered end to end across
-PR #88 and this PR. Close the phase when this change is green and merged.
+PR #88 and PR #89. Both are green and merged into `main`.
 
 ## Completed scope
 
@@ -41,4 +41,6 @@ PR #88 and this PR. Close the phase when this change is green and merged.
   `scroll_reattach_test.dart`, `viewport_binding_test.dart`,
   `viewport_toggle_test.dart`, `viewport_lifecycle_test.dart`, and
   `route_lifecycle_test.dart` stay green.
-- Phase 7 Carousel unblocks once this gate closes.
+- The `hygiene`, `dart-core`, `flutter-adapter`, and `flutter-example` CI jobs
+  all passed on PR #89 before it merged.
+- Phase 7 Carousel is unblocked.
