@@ -22,27 +22,61 @@ class MotionPathSpawnInstance {
       'MotionPathSpawnInstance($id, offset: $offset, progress: $progress)';
 }
 
-List<MotionPathSpawnInstance> motionPathTopMostFirst(
-  Iterable<MotionPathSpawnInstance> instances,
-) {
-  final List<MotionPathSpawnInstance> ordered = instances.toList()
-    ..sort((MotionPathSpawnInstance a, MotionPathSpawnInstance b) {
-      final int byOffset = b.offset.compareTo(a.offset);
-      return byOffset != 0 ? byOffset : 0;
-    });
-  return List<MotionPathSpawnInstance>.unmodifiable(ordered);
+double motionPathSpawnDepth(MotionPathSpawnInstance instance) {
+  final Object? value = instance.patch['z'] ?? instance.patch['translateZ'];
+  return value is num && value.toDouble().isFinite
+      ? value.toDouble()
+      : instance.offset;
 }
 
-/// Returns the first instance hit by [contains], traversing front-most first.
+/// Returns back-to-front paint order.
+///
+/// Explicit `z` wins. Missing depth preserves the historical offset order.
+/// Equal-depth items retain their authored/controller order.
+List<MotionPathSpawnInstance> motionPathPaintOrder(
+  Iterable<MotionPathSpawnInstance> instances,
+) {
+  final List<_IndexedSpawn> indexed = <_IndexedSpawn>[
+    for (int index = 0; index < instances.length; index++)
+      _IndexedSpawn(index, instances.elementAt(index)),
+  ];
+  indexed.sort((_IndexedSpawn a, _IndexedSpawn b) {
+    final int byDepth = motionPathSpawnDepth(a.instance)
+        .compareTo(motionPathSpawnDepth(b.instance));
+    return byDepth != 0 ? byDepth : a.index.compareTo(b.index);
+  });
+  return List<MotionPathSpawnInstance>.unmodifiable(
+    indexed.map((_IndexedSpawn item) => item.instance),
+  );
+}
+
+/// Returns front-to-back order for hit testing.
 MotionPathSpawnInstance? motionPathHitTest(
   Iterable<MotionPathSpawnInstance> instances,
   bool Function(MotionPathSpawnInstance instance) contains,
 ) {
-  for (final MotionPathSpawnInstance instance
-      in motionPathTopMostFirst(instances)) {
+  final List<MotionPathSpawnInstance> painted =
+      motionPathPaintOrder(instances).toList();
+  for (final MotionPathSpawnInstance instance in painted.reversed) {
     if (contains(instance)) return instance;
   }
   return null;
+}
+
+/// Backward-compatible name for front-most traversal.
+List<MotionPathSpawnInstance> motionPathTopMostFirst(
+  Iterable<MotionPathSpawnInstance> instances,
+) {
+  final List<MotionPathSpawnInstance> painted =
+      motionPathPaintOrder(instances).toList();
+  return List<MotionPathSpawnInstance>.unmodifiable(painted.reversed);
+}
+
+class _IndexedSpawn {
+  const _IndexedSpawn(this.index, this.instance);
+
+  final int index;
+  final MotionPathSpawnInstance instance;
 }
 
 /// Mounts a track's children at their settled offsets and drains them.

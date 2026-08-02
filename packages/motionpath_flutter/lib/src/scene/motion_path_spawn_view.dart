@@ -79,7 +79,7 @@ class _MotionPathSpawnViewState extends State<MotionPathSpawnView> {
           alignment: widget.alignment,
           children: <Widget>[
             for (final MotionPathSpawnInstance instance
-                in widget.controller.instances)
+                in motionPathPaintOrder(widget.controller.instances))
               _MotionPathSpawnItem(
                 key: ValueKey<String>(instance.id),
                 instance: instance,
@@ -134,21 +134,37 @@ class _MotionPathSpawnItem extends StatelessWidget {
     if (filter != null) {
       result = ImageFiltered(imageFilter: filter, child: result);
     }
-    if (transform.scaleX != 1 || transform.scaleY != 1) {
-      result = Transform.scale(
-        scaleX: transform.scaleX,
-        scaleY: transform.scaleY,
+    final bool has3dTransform = transform.translateZ != 0 ||
+        transform.rotationX != 0 ||
+        transform.rotationY != 0 ||
+        transform.scaleZ != 1 ||
+        transform.perspective != 0;
+    if (has3dTransform) {
+      result = Transform(
+        alignment: Alignment.center,
+        transform: Matrix4.fromFloat64List(transform.toMatrix4Storage()),
         child: result,
       );
-    }
-    if (transform.rotationRadians != 0) {
-      result = Transform.rotate(angle: transform.rotationRadians, child: result);
-    }
-    if (transform.translateX != 0 || transform.translateY != 0) {
-      result = Transform.translate(
-        offset: Offset(transform.translateX, transform.translateY),
-        child: result,
-      );
+    } else {
+      if (transform.scaleX != 1 || transform.scaleY != 1) {
+        result = Transform.scale(
+          scaleX: transform.scaleX,
+          scaleY: transform.scaleY,
+          child: result,
+        );
+      }
+      if (transform.rotationRadians != 0) {
+        result = Transform.rotate(
+          angle: transform.rotationRadians,
+          child: result,
+        );
+      }
+      if (transform.translateX != 0 || transform.translateY != 0) {
+        result = Transform.translate(
+          offset: Offset(transform.translateX, transform.translateY),
+          child: result,
+        );
+      }
     }
     return result;
   }
