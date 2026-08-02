@@ -57,6 +57,18 @@ These are deliberate Flutter-side choices, closed as part of the Phase 7 gate. N
 | Host interaction tests drive `ScrollPosition` directly instead of synthesizing drags | Gesture touch slop is a Flutter framework artifact with no reference analogue; letting it offset the scrub window would make authored progress assertions untestable | chahyasantoso | PR #121 |
 | Authored end-boundary opacity is asserted at scene and geometry level, not in the host | The demo stage leaves the viewport before a card reaches progress 1, so the host covers the start boundary and both fade ramps | chahyasantoso | PRs #118, #119, and #121 |
 
+## Motorcycle asset decision
+
+The JS `/moto` route composes bitmap imagery for the motorcycle, its shadow, the clouds, and the speed streaks. The Flutter example ships **no bitmap assets at all**: Carousel, Helix, Walker, and Burst all render authored motion onto vector art drawn in `example/lib`, and `example/pubspec.yaml` declares no asset bundle.
+
+The Motorcycle host follows that precedent. Every JS image layer has a one-to-one Flutter host consumer painted with `CustomPaint` and decorated boxes, so no authored track is dropped and no image-frame payload goes unconsumed. This is an example-app presentation choice, not an engine capability gap: `motionpath_core` still composes authored image payloads, and that contract stays covered by PR #91.
+
+| Difference | Reason | Owner | Regression evidence |
+|---|---|---|---|
+| Motorcycle imagery is vector art, not ported bitmaps | Keeps the example asset-free and consistent with every other ported demo; avoids vendoring reference-repo binaries | chahyasantoso | `motorcycle_demo_test.dart` |
+| Track layering is owned by the host, not the scene contract | The JS page inherits stacking from DOM order; the Dart scene contract intentionally authors motion only | chahyasantoso | `motorcycle_demo_test.dart` paint-order test |
+| Scroll spends the authored ride duration, not the longest track duration | Preserves the authored duration tiers as relative speeds: clouds stay mid-drift and streaks finish early, exactly as in the reference | chahyasantoso | `motorcycle_scene_contract_test.dart` |
+
 ## Stable subtree identity tradeoff
 
 PR #115 uses a per-card `GlobalKey` as a scoped identity anchor so patch-driven wrapper rebuilds preserve the expensive card subtree. This is the safest closeout fix for the current wrapper architecture, not the only possible design. A future stable host, `AnimatedWidget`, or render-object layer could avoid GlobalKey overhead; that refactor is intentionally separate from parity closeout.
