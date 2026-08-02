@@ -8,14 +8,18 @@ import 'support/fixture_support.dart';
 const String _fixtureDirectory = 'test/fixtures';
 const String _indexFile = 'motionpath_fixture_index.json';
 
-List<Map<String, Object?>> _entries(Map<String, Object?> index) => <Map<String, Object?>>[
+List<Map<String, Object?>> _entries(Map<String, Object?> index) =>
+    <Map<String, Object?>>[
       for (final Object? raw in index['fixtures']! as List<Object?>)
         raw! as Map<String, Object?>,
     ];
 
 List<String> _jsonFixtureFiles() => <String>[
-      for (final FileSystemEntity entity in Directory(_fixtureDirectory).listSync())
-        if (entity is File && entity.path.endsWith('.json'))
+      for (final FileSystemEntity entity
+          in Directory(_fixtureDirectory).listSync())
+        if (entity is File &&
+            entity.path.endsWith('.json') &&
+            !entity.path.endsWith('/$_indexFile'))
           entity.path.substring(entity.path.lastIndexOf('/') + 1),
     ];
 
@@ -27,8 +31,14 @@ void main() {
     expect(index['format'], 'motionpath-fixture-index');
     expect(index['formatVersion'], 1);
     expect(entries, isNotEmpty);
-    expect(entries.map((Map<String, Object?> entry) => entry['file']).toSet(), hasLength(entries.length));
-    expect(entries.map((Map<String, Object?> entry) => entry['test']).toSet(), hasLength(entries.length));
+    expect(
+      entries.map((Map<String, Object?> entry) => entry['file']).toSet(),
+      hasLength(entries.length),
+    );
+    expect(
+      entries.map((Map<String, Object?> entry) => entry['test']).toSet(),
+      hasLength(entries.length),
+    );
   });
 
   test('every JSON fixture is indexed exactly once', () {
@@ -49,18 +59,33 @@ void main() {
       expect(fixture['formatVersion'], 1);
       expect(fixture['cases'], isA<Map<String, Object?>>());
       final Object? tolerance = entry['tolerance'];
-      expect(tolerance == null || tolerance is num, isTrue);
+      expect(tolerance == null || (tolerance is num && tolerance > 0), isTrue);
       final List<Object?> cases = entry['cases']! as List<Object?>;
-      final Map<String, Object?> actualCases = fixture['cases']! as Map<String, Object?>;
+      final Map<String, Object?> actualCases =
+          fixture['cases']! as Map<String, Object?>;
       expect(cases, isNotEmpty);
       for (final Object? caseName in cases) {
         expect(caseName, isA<String>());
-        expect(actualCases.containsKey(caseName), isTrue, reason: '$file is missing case $caseName');
+        expect(
+          actualCases.containsKey(caseName),
+          isTrue,
+          reason: '$file is missing case $caseName',
+        );
+      }
+      if (tolerance != null) {
+        final List<Object?> samples = fixture['sampleProgress']! as List<Object?>;
+        expect(samples, isNotEmpty);
+        expect(samples.every((Object? sample) => sample is num), isTrue);
       }
     });
   }
 
   test('fixture index is valid JSON', () {
-    expect(() => jsonDecode(File('$_fixtureDirectory/$_indexFile').readAsStringSync()), returnsNormally);
+    expect(
+      () => jsonDecode(
+        File('$_fixtureDirectory/$_indexFile').readAsStringSync(),
+      ),
+      returnsNormally,
+    );
   });
 }
