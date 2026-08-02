@@ -38,7 +38,7 @@ void main() {
     );
   });
 
-  testWidgets('paints the explicit depth order in the generic host',
+  testWidgets('paints explicit depth order and applies Matrix4 transforms',
       (WidgetTester tester) async {
     final MotionPathSpawnController controller = MotionPathSpawnController(
       parent: MotionPathTrackRuntime('parent'),
@@ -80,10 +80,10 @@ void main() {
     final Stack stack = tester.widget<Stack>(find.byType(Stack));
     final List<String> ids = <String>[
       for (final Widget child in stack.children)
-        (child.key! as ValueKey<String>).value.replaceFirst('content-', ''),
+        (child.key! as ValueKey<String>).value,
     ];
     expect(ids, <String>['far', 'near']);
-    expect(find.byType(Transform), findsNothing);
+    expect(find.byType(Transform), findsNWidgets(2));
 
     controller.dispose();
   });
