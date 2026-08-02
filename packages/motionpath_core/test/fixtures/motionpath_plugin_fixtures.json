@@ -1,0 +1,35 @@
+{
+  "format": "motionpath-plugin-fixtures",
+  "formatVersion": 1,
+  "source": "chahyasantoso/motionpath v4 plugin output contract",
+  "sampleProgress": [0, 0.25, 0.5, 0.75, 1],
+  "tolerance": 1e-9,
+  "cases": {
+    "filter": {
+      "stops": [
+        {"p": 0, "v": {"blur": 0, "brightness": 1, "contrast": 1, "unknown": 9}},
+        {"p": 1, "v": {"blur": 8, "brightness": 1.5, "contrast": 2, "unknown": 9}}
+      ],
+      "samples": [
+        {"progress": 0, "patch": {"filter": {"blur": 0, "brightness": 1, "contrast": 1}}},
+        {"progress": 0.25, "patch": {"filter": {"blur": 2, "brightness": 1.125, "contrast": 1.25}}},
+        {"progress": 0.5, "patch": {"filter": {"blur": 4, "brightness": 1.25, "contrast": 1.5}}},
+        {"progress": 0.75, "patch": {"filter": {"blur": 6, "brightness": 1.375, "contrast": 1.75}}},
+        {"progress": 1, "patch": {"filter": {"blur": 8, "brightness": 1.5, "contrast": 2}}}
+      ]
+    },
+    "cssVariables": {
+      "stops": [
+        {"p": 0, "v": {"--opacity": 0, "--scale": 1, "color": "red"}},
+        {"p": 1, "v": {"--opacity": 1, "--scale": 2, "color": "blue"}}
+      ],
+      "samples": [
+        {"progress": 0, "patch": {"cssVariables": {"--opacity": 0, "--scale": 1}}},
+        {"progress": 0.25, "patch": {"cssVariables": {"--opacity": 0.25, "--scale": 1.25}}},
+        {"progress": 0.5, "patch": {"cssVariables": {"--opacity": 0.5, "--scale": 1.5}}},
+        {"progress": 0.75, "patch": {"cssVariables": {"--opacity": 0.75, "--scale": 1.75}}},
+        {"progress": 1, "patch": {"cssVariables": {"--opacity": 1, "--scale": 2}}}
+      ]
+    }
+  }
+}
