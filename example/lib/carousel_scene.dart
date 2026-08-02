@@ -1,3 +1,5 @@
+import 'dart:ui' show Path;
+
 import 'package:motionpath_core/motionpath_core.dart';
 
 const List<Object?> carouselPathPoints = <Object?>[
@@ -54,3 +56,31 @@ MotionPathTrackRuntime carouselCardTrack(String id) => MotionPathTrackRuntime(
     );
 
 const double carouselCardStagger = 0.1;
+
+/// The stage guide drawn behind the cards.
+///
+/// Built from [carouselPathPoints] with the same quadratic control semantics
+/// the engine samples, so the painted guide cannot drift from the authored
+/// scene. Demo chrome reads the scene; it never restates it.
+Path carouselGuidePath() {
+  final Path path = Path();
+  final Map<String, Object?> start =
+      carouselPathPoints.first! as Map<String, Object?>;
+  path.moveTo(
+    (start['x']! as num).toDouble(),
+    (start['y']! as num).toDouble(),
+  );
+  for (final Object? raw in carouselPathPoints.skip(1)) {
+    final Map<String, Object?> point = raw! as Map<String, Object?>;
+    final double x = (point['x']! as num).toDouble();
+    final double y = (point['y']! as num).toDouble();
+    final num? ctrlX = point['ctrlX'] as num?;
+    final num? ctrlY = point['ctrlY'] as num?;
+    if (ctrlX == null || ctrlY == null) {
+      path.lineTo(x, y);
+    } else {
+      path.quadraticBezierTo(ctrlX.toDouble(), ctrlY.toDouble(), x, y);
+    }
+  }
+  return path;
+}

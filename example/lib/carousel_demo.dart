@@ -210,8 +210,7 @@ class _CarouselGuidePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     canvas.drawRect(Offset.zero & size, Paint()..color = const Color(0xFF10101D));
     final Paint line = Paint()..color = const Color(0x337C5CFF)..style = PaintingStyle.stroke..strokeWidth = 2;
-    final Path path = Path()..moveTo(-260, 310)..cubicTo(-20, 70, -20, 70, 200, 130)..cubicTo(520, 180, 520, 180, 660, 360)..cubicTo(900, 560, 900, 560, 1120, 150)..cubicTo(1320, -80, 1320, -80, 1520, 300);
-    canvas.drawPath(path, line);
+    canvas.drawPath(carouselGuidePath(), line);
   }
 
   @override
