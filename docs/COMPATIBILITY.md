@@ -12,7 +12,7 @@ The `chahyasantoso/motionpath` v4.2 repository is the reference implementation.
 - compile-time plugin contribution and frame-time composition
 - normalized renderer-neutral patches
 - Engine ownership, mount, unmount, and destroy behavior
-- `play`, `pause`, `seek`, `reverse`, repeat, yoyo, delay, and scrub semantics
+- `play`, `pause`, `seek`, `reverse`, repeat, yoyo, delay, repeat-delay, and scrub semantics
 
 ## Current parity status
 
@@ -33,10 +33,13 @@ The following reference behaviors are now covered in `main`:
 | Observation, lifecycle, repeat/stagger, plugin, and diagnostics fixtures | PRs #107 through #113 | Covered |
 | Carousel interaction and geometry slices | PRs #114 through #119 | Covered |
 | Carousel host interaction and scene-derived chrome | PRs #121 and #122 | Covered |
+| Eased overshoot blend semantics | PR #123 | Covered |
 
-## Suspected divergence, not yet accepted
+## Eased overshoot parity
 
-Eased overshoot is clamped away. `MotionPathInterpolators.number()` clamps `t` to `[0, 1]` before blending, so `back.*` and `elastic.*` resolve to the correct curve and then lose their overshoot at the value boundary. The JS reference is expected to overshoot. This remains an explicit open decision, not an accepted difference. Confirm against the JS reference, then either fix the clamp or document it with an owner and a regression test.
+The JavaScript reference clamps the playhead to `[0, 1]` before interpolation, then lets the authored `back.*` and `elastic.*` curves produce the raw blend factor. Those curves intentionally overshoot numeric values.
+
+Dart now matches this contract: `MotionPathInterpolators.linear()` clamps playhead progress, while `number()` preserves the raw eased factor. Authored endpoints and out-of-range playhead progress remain pinned by `interpolateStops`, and colour interpolation keeps its channel clamp. Regression coverage lives in `eased_overshoot_test.dart` from PR #123.
 
 ## Carousel scene mapping
 
