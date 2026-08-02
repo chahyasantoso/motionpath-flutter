@@ -1,7 +1,6 @@
 import 'dart:ui' show ImageFilter, Offset;
 
 import 'package:flutter/widgets.dart';
-import 'package:vector_math/vector_math_64.dart' show Matrix4;
 
 import '../consumers/motion_path_patch_consumers.dart';
 import '../controllers/motion_path_spawn_controller.dart';
@@ -155,7 +154,10 @@ class _MotionPathSpawnItem extends StatelessWidget {
         );
       }
       if (transform.rotationRadians != 0) {
-        result = Transform.rotate(angle: transform.rotationRadians, child: result);
+        result = Transform.rotate(
+          angle: transform.rotationRadians,
+          child: result,
+        );
       }
       if (transform.translateX != 0 || transform.translateY != 0) {
         result = Transform.translate(
