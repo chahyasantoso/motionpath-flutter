@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:motionpath_core/motionpath_core.dart';
 import 'package:motionpath_flutter_example/pasar_malam_scene.dart';
 
 void main() {
