@@ -13,6 +13,34 @@ Source fixture: `packages/motionpath_core/test/fixtures/motionpath_parity_fixtur
 
 The JS and Flutter renderer contracts intentionally serialize colors and image frames differently: JS emits CSS strings, while Flutter core emits packed ARGB values and frame names. The test normalizes only those renderer-boundary representations; it does not loosen numeric comparison or ignore missing keys.
 
+## Trajectory fixtures
+
+Source fixture: `packages/motionpath_core/test/fixtures/motionpath_trajectory_fixtures.json`, consumed by `packages/motionpath_core/test/js_trajectory_parity_test.dart`. The five-point grid above catches a wrong curve, but it does not catch drift in arc-length pacing, color channel rounding, frame-index boundaries, or the exact moment a key leaves the patch. These cases sample nine progress points across a full normalized timeline and assert every sample, including the complete key set.
+
+| JS case | Flutter coverage | Comparison rule | Status |
+|---|---|---|---|
+| `card` | position `x`/`y`/`z`, `opacity`, `scale`, `color` | numeric `1e-9`, colors normalized to ARGB, exact key set | covered |
+| `rotation3d` | `rotation`, `rotationX`, `rotationY`, depth metadata `z` | numeric `1e-9`, exact key set | covered |
+| `rig` | three-bone forward-kinematics world transforms | numeric `1e-9`, exact key set per track | covered |
+| `sprite` | image frame selection | frame URL normalized to frame name | covered |
+| `badge` | patch disappearance | exact key set per sample, payload equality while present | covered |
+
+Each track resolves plugins through the default registry rather than an explicit list, so these cases also cover registry resolution for `path`, `imageSequence`, `overlay`, and the property passthrough. The `rig` case runs through `MotionPathEngine`, so it additionally covers project parsing, graph ordering, and input observation wiring.
+
+### Provenance, stated plainly
+
+These expectations are hand-derived closed form from the JS v4 contract. They are not generator output, which is weaker evidence than `motionpath_parity_fixtures.json`, so every case is built to make its expected values exactly computable rather than approximated:
+
+- The three path segments are axis-aligned and exactly 100 units each, so total arc length is 300 and progress `p` samples distance `300p`.
+- A straight cubic with evenly spaced control points is exactly linear in `t`, so arc-length reparameterization contributes no approximation error to the expected position.
+- Color channels are `round(255p)`, and the frame index is `round(p * (frames - 1))`.
+- Every `rotation3d` property is a single linear segment, so `rotation` is `180p`, `rotationX` is `90p`, `rotationY` is `-45 + 90p`, and `z` is `-100 + 200p`.
+- The sample grid uses eighths, so every intermediate value is exact in binary floating point and the residual is bounded by accumulated segment-length error, far inside the `1e-9` tolerance.
+
+The `rig` case is the one exception: world transforms accumulate through `cos` and `sin` of non-right angles, so its expected values are derived from the documented FK formula rather than closed form, and agree only within the `1e-9` tolerance. Its endpoint rotations match the invariants `fk_test.dart` already asserts independently, which is what keeps the derivation honest.
+
+Replace these with exported samples when the JS side ships a trajectory generator. Until then, treat a failure here as a real behavioral drift and re-derive the closed form before touching the fixture.
+
 ## Known contract asymmetry: per-stop `ease` is not universally consumed
 
 Discovered while stabilizing `js_parity_fixture_test.dart` (2026-07-31, post-merge of PR #65).
@@ -37,9 +65,30 @@ index at each sample point. That workaround is correct for a test that already k
 but it is not a fix for the underlying contract gap — a schema author (or an LLM generating a
 project) has no way to discover this asymmetry from the schema shape alone.
 
+**Partially addressed by PR #98.** `path` now applies authored pacing through its own payload:
+`_pacedProgress` reads the `stops` and `ease` carried inside the `path` config and remaps raw
+progress before sampling, so path timing is authorable. The gap above still stands for
+`imageSequence`, and for an `ease` attached to a `path` *keyframe* stop rather than to the
+payload's pacing stops.
+
 **Action item, not yet implemented:** either (a) make `MotionPathTrackRuntime` validate/warn
 when a non-terminal-consuming plugin (`path`, `imageSequence`) receives a stop with a non-default
 `ease`, or (b) extend both plugins to accept and apply per-stop easing the same way the standard
 interpolation path does, for full authoring parity with transform/filter/color tracks. Until one
-of these lands, treat `ease` on `path`/`imageSequence` keyframes as unsupported and avoid
+of these lands, treat `ease` on `imageSequence` keyframes as unsupported and avoid
 authoring it in production schemas.
+
+## Known divergence candidate: eased overshoot is clamped away
+
+Found while deriving the trajectory fixtures (2026-08-02).
+
+`MotionPathInterpolators.number()` multiplies by `linear(t)`, which clamps `t` to `[0, 1]`
+before blending. Curves that legitimately leave that range — `back.*` and `elastic.*` — are
+resolved correctly by `resolveEasing`, then have their overshoot discarded at the value
+boundary. An authored `back.out` therefore eases in but never overshoots its target value.
+
+The JS reference is expected to overshoot here, so this is a suspected behavioral divergence
+rather than a documented one. It has no regression test yet, deliberately: pinning the current
+behavior would freeze a probable bug. Confirm against the JS reference, then either fix the
+clamp or record the divergence in `docs/COMPATIBILITY.md` with a reason and an owner. Until
+then, trajectory fixtures avoid overshooting curves so they measure sampling, not clamping.
