@@ -169,14 +169,6 @@ class MotionPathTrackRuntime implements MotionPathLayoutChild {
 
 ValueBlend blendForProperty(String propertyKey) => kMotionPathColorKeys.contains(propertyKey) ? blendColorValues : MotionPathInterpolators.value;
 
-/// Keyframe keys whose plugin samples a static authored payload.
-///
-/// These keyframes carry their data outside `stops`: a `path` owns `points`
-/// and an `imageSequence` owns `frames`. Their stops describe the authored
-/// progress ramp, which this runtime already takes from the track playhead, so
-/// the payload is what has to survive interpolation and reach the plugin.
-/// Interpolating the stop values instead handed the plugin a bare number, and
-/// the track then composed no position and no frame at all.
 const Map<String, String> kMotionPathStaticPayloadKeys = <String, String>{
   'path': 'points',
   'imageSequence': 'frames',
@@ -188,11 +180,13 @@ Object _keyframePayload(Map<String, Object?> config, String propertyKey, String 
     throw ArgumentError.value(payload, payloadKey, 'A "$propertyKey" keyframe requires a non-empty "$payloadKey" list');
   }
   final List<Object?> entries = List<Object?>.unmodifiable(payload);
-  // autoRotate has to ride along with the geometry: the plugin reads one raw
-  // value and needs both to emit a tangent. Plain geometry stays a bare list so
-  // a host can still hand the plugin nodes directly.
-  if (propertyKey != 'path' || config['autoRotate'] != true) return entries;
-  return Map<String, Object?>.unmodifiable(<String, Object?>{'points': entries, 'autoRotate': true});
+  if (propertyKey != 'path') return entries;
+  return Map<String, Object?>.unmodifiable(<String, Object?>{
+    'points': entries,
+    'stops': config['stops'],
+    if (config['autoRotate'] == true) 'autoRotate': true,
+    if (config.containsKey('ease')) 'ease': config['ease'],
+  });
 }
 
 List<MotionPathStop> stopsFromKeyframe(Object? raw, {String propertyKey = ''}) {
