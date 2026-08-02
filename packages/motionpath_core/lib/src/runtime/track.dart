@@ -173,12 +173,17 @@ const Map<String, String> kMotionPathStaticPayloadKeys = <String, String>{
   'imageSequence': 'frames',
 };
 
-List<Object?> _staticPayload(Map<String, Object?> config, String propertyKey, String payloadKey) {
+Object _keyframePayload(Map<String, Object?> config, String propertyKey, String payloadKey) {
   final Object? payload = config[payloadKey];
   if (payload is! List<Object?> || payload.isEmpty) {
     throw ArgumentError.value(payload, payloadKey, 'A "$propertyKey" keyframe requires a non-empty "$payloadKey" list');
   }
-  return List<Object?>.unmodifiable(payload);
+  final List<Object?> entries = List<Object?>.unmodifiable(payload);
+  // autoRotate has to ride along with the geometry: the plugin reads one raw
+  // value and needs both to emit a tangent. Plain geometry stays a bare list so
+  // a host can still hand the plugin nodes directly.
+  if (propertyKey != 'path' || config['autoRotate'] != true) return entries;
+  return Map<String, Object?>.unmodifiable(<String, Object?>{'points': entries, 'autoRotate': true});
 }
 
 List<MotionPathStop> stopsFromKeyframe(Object? raw, {String propertyKey = ''}) {
@@ -188,7 +193,7 @@ List<MotionPathStop> stopsFromKeyframe(Object? raw, {String propertyKey = ''}) {
   final Easing keyframeEase = resolveEasing(config['ease']);
   final bool isColor = kMotionPathColorKeys.contains(propertyKey);
   final String? payloadKey = kMotionPathStaticPayloadKeys[propertyKey];
-  final List<Object?>? payload = payloadKey == null ? null : _staticPayload(config, propertyKey, payloadKey);
+  final Object? payload = payloadKey == null ? null : _keyframePayload(config, propertyKey, payloadKey);
   final List<MotionPathStop> result = <MotionPathStop>[];
   for (final Object? candidate in rawStops) {
     final Map<String, Object?> stop = asStringKeyedMap(candidate);
