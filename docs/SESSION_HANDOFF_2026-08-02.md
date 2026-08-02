@@ -1,6 +1,6 @@
 # MotionPath Flutter session handoff
 
-Updated 2026-08-02 after PR #106 merged green.
+Updated 2026-08-02 after PR #110 merged green.
 
 ## Repo and workflow
 
@@ -12,8 +12,8 @@ Updated 2026-08-02 after PR #106 merged green.
 ## Current phase state
 
 - Phases 0 through 5: Complete.
-- Phase 6 Cross-repository parity: Partial and active.
-- Phase 7 Carousel: Active, initial implementation and mount/scrub coverage merged.
+- Phase 6 Cross-repository parity: Partial and active, but now close to closeout.
+- Phase 7 Carousel: Active, initial implementation and mount/scrub coverage merged. Untouched this session.
 - Phase 8 Helix/depth: Blocked until Phase 6 and Phase 7 mature.
 - Phase 9 release hardening: Partial.
 
@@ -42,18 +42,20 @@ Authoritative closeout docs:
 - #104: added Overlay and Spawner plugin edge coverage.
 - #105: added ImageSequence stop type and frame-index validation.
 - #106: added whole-timeline trajectory fixtures with exact key-set assertions, covering path position, depth, opacity, scale, colour, 2D/3D rotation, three-bone FK world transforms, frame selection, and patch disappearance.
+- #107: added observation graph parity fixtures for input edges, output merges, diamonds, cycles, missing sources, and deterministic order.
+- #108: added the lifecycle parity fixture matrix across mount, prepare, play, pause, seek, reverse, completion, unmount, and destroy.
+- #109: added repeat, yoyo, delay, repeat delay, stagger, and completion fixtures across multiple track durations.
+- #110: added the malformed-project diagnostics matrix: twelve malformed projects with exact code, severity, JSON path, and message assertions, no surplus diagnostics allowed, plus fatality assertions against `hasFatalErrors` and the `MotionPathProject.fromJson` trust boundary.
 
 ## Next work, in order
 
 ### Phase 6 parity closeout
 
-1. Add observation fixtures for input edges, output merges, diamonds, cycles, missing sources, and graph ordering.
-2. Expand lifecycle fixtures to cover mount, prepare, play, pause, seek, reverse, completion, unmount, and destroy as one mapped matrix.
-3. Add repeat, yoyo, delay, repeat delay, and stagger fixtures across multiple track durations.
-4. Build the malformed-project diagnostics matrix: codes, severity, JSON paths, and error categories against JS.
-5. Add the fixture index/tooling, extract the duplicated fixture-loading helpers into one support file, and record intentional divergences in `docs/COMPATIBILITY.md`.
-6. Resolve the eased-overshoot divergence candidate: confirm against JS, then fix the clamp or document it with an owner and a test.
-7. Close Phase 6 only when every remaining item is green or explicitly documented as excluded.
+1. Add plugin output fixtures for `filter` and CSS variables. This is the last plugin gap: Overlay and Spawner landed in #104, image sequence, path, and FK outputs landed in #106, and malformed plugin diagnostics landed in #110.
+2. Extract the duplicated fixture-loading helpers into one shared support file. Six `js_*_fixture_test.dart` files now repeat the same `jsonDecode`/`File.readAsStringSync` preamble.
+3. Add the fixture index mapping each JS case to its Dart test and tolerance rule, and make CI fail when a fixture is missing, malformed, or outside tolerance.
+4. Resolve the eased-overshoot divergence candidate: confirm against JS, then fix the clamp or document it in `docs/COMPATIBILITY.md` with an owner and a test.
+5. Close Phase 6 only when every remaining item is green or explicitly documented as excluded.
 
 ### Phase 7 Carousel closeout
 
@@ -74,9 +76,12 @@ Authoritative closeout docs:
 - Preserve existing test coverage when adding validation cases. Do not replace a whole test file with a reduced subset.
 - Analyzer is strict and CI runs `dart analyze --format machine` plus all tests. Fix unused imports and curly-brace lint findings before waiting on CI.
 - `repeat` is repeat count, so total cycles are `repeat + 1`; repeat delays occur only between cycles.
-- Value interpolation clamps `t` to `[0, 1]`, so overshooting eases never overshoot. Avoid `back.*` and `elastic.*` in fixtures until that is resolved.
+- Value interpolation clamps `t` to `[0, 1]`, so overshooting eases never overshoot. Avoid `back.*` and `elastic.*` in value fixtures until that is resolved. Validation fixtures may still assert that `back.out(1.7)` is accepted as valid ease syntax, because that asserts no interpolated value.
+- Any keyframe payload with fewer than two `stops` also trips `stop-count` plus the missing `p: 0` and `p: 1` warnings, including `path` and `imageSequence` payloads. Give payload fixtures real `p: 0`/`p: 1` stops unless the noise is the thing under test.
+- Diagnostic paths are prefixed by their caller. Observation graph errors come out of `normalizeObservationGraph` as `tracks[i]...` and are re-emitted as `motions[m].tracks[i]...`.
+- JSON cannot encode `Infinity` or `NaN`. The diagnostics fixture uses `@Infinity`, `@-Infinity`, and `@NaN` sentinels that the harness hydrates.
 - Docs-only changes go straight to `main`; code changes need the full four-job gate.
 
 ## Session result
 
-Parity now has sampled trajectory evidence, not just endpoint checks: nine points across a full timeline, exact key sets, and an honest provenance note separating closed-form cases from the formula-derived FK case. The next meaningful move is the observation and lifecycle fixture matrix, then the diagnostics matrix, before returning to the Carousel interaction and geometry work.
+Phase 6 moved from sampled trajectory evidence to a near-complete parity suite. Observation, lifecycle, and trigger matrices landed in #107 through #109, and #110 closed the diagnostics item with an exact-match matrix that fails on surplus diagnostics as well as missing ones, plus a guard test that blocks any new diagnostic code from landing without a fixture. What is left in Phase 6 is small and well-bounded: two plugin fixture families, the shared fixture tooling, and one honest divergence decision. After that, the work returns to Phase 7 Carousel interaction and geometry coverage.
