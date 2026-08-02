@@ -58,14 +58,18 @@ void main() {
 
   test('requires scrub on a scroll trigger', () {
     final List<MotionPathDiagnostic> diagnostics = validateProject(
-      _project(const <String, Object?>{} )
-        ..['motions'] = <Object?>[
+      <String, Object?>{
+        'schemaVersion': 4,
+        'motions': <Object?>[
           <String, Object?>{
             'id': 'scrolled',
             'trigger': <String, Object?>{'type': 'scroll'},
-            'tracks': <Object?>[<String, Object?>{'id': 'a'}],
+            'tracks': <Object?>[
+              <String, Object?>{'id': 'a'},
+            ],
           },
         ],
+      },
     );
     expect(
       diagnostics.map((MotionPathDiagnostic d) => d.path),
