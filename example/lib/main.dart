@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'helix_demo.dart';
+import 'walker_demo.dart';
 
 void main() => runApp(const MotionPathExampleApp());
 
@@ -11,6 +11,6 @@ class MotionPathExampleApp extends StatelessWidget {
   Widget build(BuildContext context) => MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: ThemeData.dark(useMaterial3: true),
-        home: const HelixDemoPage(),
+        home: const WalkerDemoPage(),
       );
 }
