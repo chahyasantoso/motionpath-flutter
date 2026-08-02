@@ -79,7 +79,7 @@ class _MotionPathSpawnViewState extends State<MotionPathSpawnView> {
           alignment: widget.alignment,
           children: <Widget>[
             for (final MotionPathSpawnInstance instance
-                in widget.controller.instances)
+                in motionPathPaintOrder(widget.controller.instances))
               _MotionPathSpawnItem(
                 key: ValueKey<String>(instance.id),
                 instance: instance,
