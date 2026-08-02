@@ -1,8 +1,8 @@
 # Phase 6 acceptance gate
 
-**Gate state: OPEN.**
+**Gate state: CLOSED.**
 
-Phase 6 proves behavioral parity against the JavaScript reference. It is not complete because a feature exists. It is complete when the Dart suite covers the contract boundary, sampled behavior, lifecycle events, and intentional divergences.
+Phase 6 proves behavioral parity against the JavaScript reference. It is complete when the Dart suite covers the contract boundary, sampled behavior, lifecycle events, and intentional divergences.
 
 ## Completed evidence on `main`
 
@@ -10,12 +10,13 @@ Phase 6 proves behavioral parity against the JavaScript reference. It is not com
 - PR #111 extracts the shared JSON fixture loader.
 - PR #112 adds dedicated filter and CSS variable output fixtures.
 - PR #113 adds the fixture index and metadata guard, including coverage for fixture-specific sample shapes.
+- PR #123 confirms the JavaScript eased-overshoot contract, removes the Dart value-level clamp, and adds regression coverage for `back.*`, `elastic.*`, endpoints, out-of-range playhead progress, composed tracks, colours, and non-overshooting curves.
 
-## Remaining work
+## Eased overshoot decision: fixed, not accepted as a divergence
 
-### Open divergence decision
+The JavaScript reference clamps the **playhead** before interpolation, then lets the authored easing curve produce the blend factor. `back.*` and `elastic.*` therefore overshoot authored numeric values by design.
 
-- Eased overshoot is clamped away: `MotionPathInterpolators.number()` clamps `t` to `[0, 1]`, so `back.*` and `elastic.*` resolve correctly and then lose their overshoot at the value boundary. Confirm against the JS reference, then either fix the clamp or document it in `docs/COMPATIBILITY.md` with an owner and a regression test. Deliberately untested until the decision is made.
+Dart previously reused the playhead clamp as the numeric blend clamp, which flattened that overshoot. PR #123 changes `MotionPathInterpolators.number()` to blend with the raw eased factor. `interpolateStops` still pins authored endpoints and out-of-range progress, and colour interpolation keeps its channel clamp.
 
 ## Diagnostics parity: closed
 
@@ -23,11 +24,13 @@ PR #110 closes the diagnostics item. The matrix pins code, severity, JSON path, 
 
 ## Fixture tooling: closed
 
-PRs #111 through #113 provide the shared loader, dedicated plugin fixtures, and the fixture index/metadata guard. Core CI now fails when a fixture is missing from the index, has an unknown case, lacks its harness, or declares malformed sample metadata.
+PRs #111 through #113 provide the shared loader, dedicated plugin fixtures, and the fixture index/metadata guard. Core CI fails when a fixture is missing from the index, has an unknown case, lacks its harness, or declares malformed sample metadata.
 
 ## Closeout checklist
 
-Phase 6 can move to **Complete** when the eased-overshoot candidate is either fixed with a parity regression test or explicitly documented as an intentional divergence with reason, owner, and test.
+- Eased overshoot matches the JavaScript reference. Done, PR #123.
+- Regression coverage pins overshoot, endpoints, boundary clamping, colours, and unchanged curves. Done, PR #123.
+- Intentional divergences remain explicit and are tracked separately in `docs/COMPATIBILITY.md`.
 
 ## Deliberate exclusions
 
