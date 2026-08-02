@@ -20,10 +20,12 @@ Source fixture: `packages/motionpath_core/test/fixtures/motionpath_trajectory_fi
 | JS case | Flutter coverage | Comparison rule | Status |
 |---|---|---|---|
 | `card` | position `x`/`y`/`z`, `opacity`, `scale`, `color` | numeric `1e-9`, colors normalized to ARGB, exact key set | covered |
+| `rotation3d` | `rotation`, `rotationX`, `rotationY`, depth metadata `z` | numeric `1e-9`, exact key set | covered |
+| `rig` | three-bone forward-kinematics world transforms | numeric `1e-9`, exact key set per track | covered |
 | `sprite` | image frame selection | frame URL normalized to frame name | covered |
 | `badge` | patch disappearance | exact key set per sample, payload equality while present | covered |
 
-Each track resolves plugins through the default registry rather than an explicit list, so these cases also cover registry resolution for `path`, `imageSequence`, `overlay`, and the property passthrough.
+Each track resolves plugins through the default registry rather than an explicit list, so these cases also cover registry resolution for `path`, `imageSequence`, `overlay`, and the property passthrough. The `rig` case runs through `MotionPathEngine`, so it additionally covers project parsing, graph ordering, and input observation wiring.
 
 ### Provenance, stated plainly
 
@@ -32,7 +34,10 @@ These expectations are hand-derived closed form from the JS v4 contract. They ar
 - The three path segments are axis-aligned and exactly 100 units each, so total arc length is 300 and progress `p` samples distance `300p`.
 - A straight cubic with evenly spaced control points is exactly linear in `t`, so arc-length reparameterization contributes no approximation error to the expected position.
 - Color channels are `round(255p)`, and the frame index is `round(p * (frames - 1))`.
+- Every `rotation3d` property is a single linear segment, so `rotation` is `180p`, `rotationX` is `90p`, `rotationY` is `-45 + 90p`, and `z` is `-100 + 200p`.
 - The sample grid uses eighths, so every intermediate value is exact in binary floating point and the residual is bounded by accumulated segment-length error, far inside the `1e-9` tolerance.
+
+The `rig` case is the one exception: world transforms accumulate through `cos` and `sin` of non-right angles, so its expected values are derived from the documented FK formula rather than closed form, and agree only within the `1e-9` tolerance. Its endpoint rotations match the invariants `fk_test.dart` already asserts independently, which is what keeps the derivation honest.
 
 Replace these with exported samples when the JS side ships a trajectory generator. Until then, treat a failure here as a real behavioral drift and re-derive the closed form before touching the fixture.
 
@@ -72,3 +77,18 @@ when a non-terminal-consuming plugin (`path`, `imageSequence`) receives a stop w
 interpolation path does, for full authoring parity with transform/filter/color tracks. Until one
 of these lands, treat `ease` on `imageSequence` keyframes as unsupported and avoid
 authoring it in production schemas.
+
+## Known divergence candidate: eased overshoot is clamped away
+
+Found while deriving the trajectory fixtures (2026-08-02).
+
+`MotionPathInterpolators.number()` multiplies by `linear(t)`, which clamps `t` to `[0, 1]`
+before blending. Curves that legitimately leave that range — `back.*` and `elastic.*` — are
+resolved correctly by `resolveEasing`, then have their overshoot discarded at the value
+boundary. An authored `back.out` therefore eases in but never overshoots its target value.
+
+The JS reference is expected to overshoot here, so this is a suspected behavioral divergence
+rather than a documented one. It has no regression test yet, deliberately: pinning the current
+behavior would freeze a probable bug. Confirm against the JS reference, then either fix the
+clamp or record the divergence in `docs/COMPATIBILITY.md` with a reason and an owner. Until
+then, trajectory fixtures avoid overshooting curves so they measure sampling, not clamping.
