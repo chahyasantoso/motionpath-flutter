@@ -16,7 +16,7 @@
         {"elapsed": 2.25, "progress": 0.5, "finished": false},
         {"elapsed": 2.75, "progress": 0, "finished": false},
         {"elapsed": 3, "progress": 0, "finished": false},
-        {"elapsed": 3.25, "progress": 0.5, "finished": false},
+        {"elapsed": 3.25, "progress": 0.25, "finished": false},
         {"elapsed": 3.5, "progress": 1, "finished": true}
       ]
     },
@@ -29,7 +29,7 @@
         {"elapsed": 1, "tracks": {"short": 1, "long": 0.25}},
         {"elapsed": 1.5, "tracks": {"short": 1, "long": 0.5}},
         {"elapsed": 2, "tracks": {"short": 1, "long": 0.75}},
-        {"elapsed": 2.5, "tracks": {"short": 1, "long": 1}}
+        {"elapsed": 2.5, "tracks": {"short": 1, "long": 0.75}}
       ]
     }
   }
