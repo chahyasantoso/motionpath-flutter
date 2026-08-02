@@ -14,8 +14,7 @@ release commit.
 ## API and package metadata
 
 - [ ] Review every export in both public library entrypoints.
-- [ ] Decide which APIs are stable, experimental, or internal before removing
-      `publish_to: none`.
+- [x] Classify stable, experimental, and internal APIs in `docs/API_SURFACE.md`.
 - [ ] Replace path dependency with the published core version in the Flutter
       package before publishing.
 - [ ] Set the release version and update `CHANGELOG.md`.
