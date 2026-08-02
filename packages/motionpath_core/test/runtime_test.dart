@@ -10,6 +10,44 @@ void main() {
     expect(value, 25);
   });
 
+  test('publishes a completion event once per run', () {
+    final MotionPathMotionRuntime motion = MotionPathMotionRuntime(
+      id: 'complete',
+      tracks: <MotionPathTrackRuntime>[MotionPathTrackRuntime('track')],
+      duration: 1,
+    );
+    int completions = 0;
+    motion.onComplete = () => completions++;
+    motion.play();
+    motion.advance(0.5);
+    motion.advance(0.5);
+    motion.advance(1);
+    expect(completions, 1);
+    expect(motion.playing, isFalse);
+    motion.restart();
+    motion.play();
+    motion.advance(1);
+    expect(completions, 2);
+    motion.dispose();
+  });
+
+  test('seeking back below the endpoint re-arms completion', () {
+    final MotionPathMotionRuntime motion = MotionPathMotionRuntime(
+      id: 'rearm',
+      tracks: <MotionPathTrackRuntime>[MotionPathTrackRuntime('track')],
+      duration: 1,
+    );
+    int completions = 0;
+    motion.onComplete = () => completions++;
+    motion.play();
+    motion.advance(1);
+    motion.seek(0.25);
+    motion.play();
+    motion.advance(0.75);
+    expect(completions, 2);
+    motion.dispose();
+  });
+
   test('mounts, ticks, and destroys a motion', () {
     const MotionPathProject project = MotionPathProject(
       schemaVersion: 4,

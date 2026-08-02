@@ -40,8 +40,16 @@ class MotionPathMotionRuntime {
   double _duration;
   double _progress = 0;
   bool playing = false;
+  bool _completed = false;
   ObservationGraph? graph;
   void Function(Map<String, Map<String, Object?>> patches)? onPatches;
+
+  /// Called once when an advancing motion completes its final cycle.
+  ///
+  /// Reaching the end while paused does not fire the callback. Calling
+  /// [restart] or seeking back below the endpoint arms it for the next run.
+  void Function()? onComplete;
+
   double _elapsed = 0;
   Map<String, Map<String, Object?>> _patches =
       const <String, Map<String, Object?>>{};
@@ -97,6 +105,7 @@ class MotionPathMotionRuntime {
     }
     progress = value;
     _elapsed = progress * (duration <= 0 ? 1 : duration);
+    if (progress < 1) _completed = false;
     _seekTracks(_elapsed);
   }
 
@@ -117,12 +126,6 @@ class MotionPathMotionRuntime {
     }
   }
 
-  /// Composes the graph, optionally restricting top-level output to [only].
-  ///
-  /// Recursive dependency resolution remains inside each track's `compose()`
-  /// call. A filtered composition therefore still pulls in observed ancestors
-  /// needed by the requested tracks, while leaving the last full snapshot in
-  /// [patches] untouched.
   Map<String, Map<String, Object?>> composeGraph({Set<String>? only}) {
     final List<String> order = graphOrder;
     final Map<String, MotionPathTrackRuntime> byId =
@@ -134,18 +137,14 @@ class MotionPathMotionRuntime {
     final Map<String, Map<String, Object?>> composed =
         <String, Map<String, Object?>>{};
     for (final String trackId in order) {
-      if (only != null && !only.contains(trackId)) {
-        continue;
-      }
+      if (only != null && !only.contains(trackId)) continue;
       final MotionPathTrackRuntime? track = byId[trackId];
       if (track == null) {
         throw StateError('Graph order references unknown track "$trackId".');
       }
       composed[trackId] = track.compose(context: context);
     }
-    if (only == null) {
-      _patches = composed;
-    }
+    if (only == null) _patches = composed;
     return composed;
   }
 
@@ -155,21 +154,9 @@ class MotionPathMotionRuntime {
     return composed;
   }
 
-  /// Advances the playhead by [delta] seconds.
-  ///
-  /// Composition is a separate concern from advancement. Pass
-  /// `publishPatches: false` when the caller owns composition scope, for
-  /// example an interest-scoped renderer that composes only watched tracks;
-  /// that caller is then responsible for composing exactly once. Completion
-  /// still settles the playhead either way, so skipping publication never
-  /// changes lifecycle behaviour.
   void advance(double delta, {bool publishPatches = true}) {
     if (!delta.isFinite || delta < 0) {
-      throw ArgumentError.value(
-        delta,
-        'delta',
-        'must be finite and non-negative',
-      );
+      throw ArgumentError.value(delta, 'delta', 'must be finite and non-negative');
     }
     final MotionPathTrigger? currentTrigger = trigger;
     final double span = duration <= 0 ? 1 : duration;
@@ -182,17 +169,18 @@ class MotionPathMotionRuntime {
       if (stagger > 0) {
         _seekTracks(progress * span);
       } else {
-        for (final MotionPathTrackRuntime track in tracks) {
-          track.seek(progress);
-        }
+        for (final MotionPathTrackRuntime track in tracks) track.seek(progress);
       }
     }
-    if (publishPatches) {
-      publish();
-    }
-    if (progress >= 1 &&
-        (currentTrigger == null || currentTrigger.isFinished(_elapsed, span))) {
+    if (publishPatches) publish();
+    final bool finished = progress >= 1 &&
+        (currentTrigger == null || currentTrigger.isFinished(_elapsed, span));
+    if (finished) {
       pause();
+      if (!_completed) {
+        _completed = true;
+        onComplete?.call();
+      }
     }
   }
 
@@ -202,14 +190,14 @@ class MotionPathMotionRuntime {
   void restart() {
     _elapsed = 0;
     progress = 0;
+    _completed = false;
     _seekTracks(0);
   }
 
   void dispose() {
     onPatches = null;
-    for (final MotionPathTrackRuntime track in tracks) {
-      track.dispose();
-    }
+    onComplete = null;
+    for (final MotionPathTrackRuntime track in tracks) track.dispose();
     graph = null;
     playing = false;
     _patches = const <String, Map<String, Object?>>{};
