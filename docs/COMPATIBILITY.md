@@ -32,6 +32,7 @@ The following reference behaviors are now covered in `main`:
 | Sampled trajectories: position, depth, colour, 3D rotation, FK, frames, disappearance | PR #106 | Covered |
 | Observation, lifecycle, repeat/stagger, plugin, and diagnostics fixtures | PRs #107 through #113 | Covered |
 | Carousel interaction and geometry slices | PRs #114 through #119 | Covered |
+| Carousel host interaction and scene-derived chrome | PRs #121 and #122 | Covered |
 
 ## Suspected divergence, not yet accepted
 
@@ -39,7 +40,19 @@ Eased overshoot is clamped away. `MotionPathInterpolators.number()` clamps `t` t
 
 ## Carousel scene mapping
 
-The Flutter Carousel scene now has executable parity evidence in PR #119: five authored path points with quadratic controls, `autoRotate: true`, opacity stops at 0, 0.15, 0.85, and 1, plus 0.1 stagger. The demo still contains its own scene literal; wiring it to the shared builder is the next task. The Flutter implementation intentionally uses shared renderer patches and does not use Spiral's drain semantics.
+The Flutter Carousel scene has executable parity evidence in PR #119: five authored path points with quadratic controls, `autoRotate: true`, opacity stops at 0, 0.15, 0.85, and 1, plus 0.1 stagger. PR #120 made the demo consume that definition and PR #122 made the stage guide painter derive from the same authored points, so the scene now exists exactly once in the Flutter tree.
+
+## Accepted Carousel differences
+
+These are deliberate Flutter-side choices, closed as part of the Phase 7 gate. None of them changes authored scene semantics, and none of them requires a schema decision.
+
+| Difference | Reason | Owner | Regression evidence |
+|---|---|---|---|
+| Carousel does not use drain semantics; `drainOnComplete` stays Spiral-only | The Carousel scene removes cards through host interaction and reflow, not timeline drain | chahyasantoso | PRs #116 and #117 |
+| Card identity is anchored with a scoped per-card `GlobalKey` | Keeps expensive card subtrees alive across patch-driven wrapper rebuilds in the current spawn architecture | chahyasantoso | PR #115 |
+| Scroll progress is owned by a Flutter `ScrollPosition` | The reference stack's smooth-scroll and scroll-trigger libraries are implementation details, not contract | chahyasantoso | PRs #94 and #121 |
+| Host interaction tests drive `ScrollPosition` directly instead of synthesizing drags | Gesture touch slop is a Flutter framework artifact with no reference analogue; letting it offset the scrub window would make authored progress assertions untestable | chahyasantoso | PR #121 |
+| Authored end-boundary opacity is asserted at scene and geometry level, not in the host | The demo stage leaves the viewport before a card reaches progress 1, so the host covers the start boundary and both fade ramps | chahyasantoso | PRs #118, #119, and #121 |
 
 ## Stable subtree identity tradeoff
 
