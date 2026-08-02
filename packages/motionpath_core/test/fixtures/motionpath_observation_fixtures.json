@@ -26,7 +26,7 @@
       "patches": {
         "root": {"x": 10, "y": 0, "rotation": 0},
         "left": {"x": 40, "y": 0, "rotation": 0},
-        "right": {"x": 10, "y": 40, "rotation": 90}
+        "right": {"x": 10, "y": 30, "rotation": 90}
       }
     },
     "cycle": {
