@@ -29,9 +29,14 @@ The following reference behaviors are now covered in `main`:
 | Path anchors: center, none, explicit percentages | PR #99 | Covered |
 | Path control warnings and normalized stop ranges | PR #100 | Covered |
 | Path plus explicit x/y exclusivity | PR #101 | Covered |
+| Sampled trajectories: position, depth, colour, 3D rotation, FK, frames, disappearance | PR #106 | Covered |
 | Carousel mount and scroll scrub | PRs #93 and #94 | Initial coverage |
 
-Remaining parity work is tracked, not hidden: lifecycle event fixtures, broader trigger and trajectory samples, FK/plugin fixtures, malformed-project matrix comparison, and deeper Carousel interaction/golden coverage. See `docs/PHASE_6_ACCEPTANCE.md` and `docs/PHASE_7_ACCEPTANCE.md` for the exact closeout checklists.
+Remaining parity work is tracked, not hidden: lifecycle event fixtures, broader trigger samples, observation-graph and plugin fixtures, malformed-project matrix comparison, and deeper Carousel interaction/golden coverage. See `docs/PHASE_6_ACCEPTANCE.md` and `docs/PHASE_7_ACCEPTANCE.md` for the exact closeout checklists.
+
+## Suspected divergence, not yet accepted
+
+Eased overshoot is clamped away. `MotionPathInterpolators.number()` clamps `t` to `[0, 1]` before blending, so `back.*` and `elastic.*` resolve to the correct curve and then lose their overshoot at the value boundary. The JS reference is expected to overshoot. This is listed here so it is not mistaken for an accepted difference: it has no owner-approved reason and no regression test yet, because pinning the current behavior would freeze a probable bug. Confirm against the JS reference, then either fix the clamp or promote this to a documented divergence with a reason, an owner, and a test. Working notes are in `docs/PARITY_MATRIX.md`.
 
 ## Shared fixture
 

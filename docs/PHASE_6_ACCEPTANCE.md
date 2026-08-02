@@ -19,13 +19,13 @@ Phase 6 proves behavioral parity against the JavaScript reference. It is not com
 - PR #103: reverse, play/pause, seek-back, unmount, and destroy lifecycle behavior is covered.
 - PR #104: Overlay and Spawner plugin edge contracts are covered.
 - PR #105: ImageSequence stop types and frame-index ranges are validated.
+- PR #106: whole-timeline trajectory fixtures sampled at nine progress points cover path position, `z` depth, `opacity`, `scale`, `color`, `rotation`, `rotationX`, `rotationY`, three-bone FK world transforms, image frame selection, and patch disappearance, each with an exact key-set assertion.
 
 ## Remaining work
 
 ### P0: sampled runtime parity
 
 - Add versioned fixtures for repeat, yoyo, delay, repeat delay, stagger, and completion events across multiple track durations.
-- Add trajectory fixtures for path, FK, opacity, scale, color, z-depth, rotationX, and rotationY.
 - Add observation fixtures for input edges, output merges, diamonds, cycles, missing sources, and deterministic graph order.
 - Add plugin fixtures for filter, CSS variables, overlay, spawner, image sequence, path, and FK outputs, including malformed diagnostics.
 
@@ -40,6 +40,11 @@ Phase 6 proves behavioral parity against the JavaScript reference. It is not com
 - Keep JS-generated samples versioned and deterministic.
 - Add a small fixture index mapping each JS case to its Dart test and tolerance rule.
 - Make CI fail when a fixture is missing, malformed, or outside its documented tolerance.
+- Extract the duplicated fixture-loading helpers now living in `js_parity_fixture_test.dart` and `js_trajectory_parity_test.dart` into one shared support file.
+
+### Open divergence candidate
+
+- Eased overshoot is clamped away: `MotionPathInterpolators.number()` clamps `t` to `[0, 1]`, so `back.*` and `elastic.*` resolve correctly and then lose their overshoot at the value boundary. Confirm against the JS reference, then either fix the clamp or record it in `docs/COMPATIBILITY.md` with a reason and an owner. Deliberately untested for now, because pinning it would freeze a probable bug. See `docs/PARITY_MATRIX.md`.
 
 ## Closeout checklist
 

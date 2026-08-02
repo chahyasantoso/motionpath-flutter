@@ -1,6 +1,6 @@
 # MotionPath Flutter session handoff
 
-Updated 2026-08-02 after PR #105 merged green.
+Updated 2026-08-02 after PR #106 merged green.
 
 ## Repo and workflow
 
@@ -41,17 +41,19 @@ Authoritative closeout docs:
 - #103: locked reverse, play/pause, seek-back, completion, unmount, and destroy lifecycle coverage.
 - #104: added Overlay and Spawner plugin edge coverage.
 - #105: added ImageSequence stop type and frame-index validation.
+- #106: added whole-timeline trajectory fixtures with exact key-set assertions, covering path position, depth, opacity, scale, colour, 2D/3D rotation, three-bone FK world transforms, frame selection, and patch disappearance.
 
 ## Next work, in order
 
 ### Phase 6 parity closeout
 
-1. Add deterministic trajectory fixtures for path, FK, opacity, scale, color, z-depth, rotationX, and rotationY.
-2. Add observation fixtures for input edges, output merges, diamonds, cycles, missing sources, and graph ordering.
-3. Expand lifecycle fixtures to cover mount, prepare, play, pause, seek, reverse, completion, unmount, and destroy as one mapped matrix.
+1. Add observation fixtures for input edges, output merges, diamonds, cycles, missing sources, and graph ordering.
+2. Expand lifecycle fixtures to cover mount, prepare, play, pause, seek, reverse, completion, unmount, and destroy as one mapped matrix.
+3. Add repeat, yoyo, delay, repeat delay, and stagger fixtures across multiple track durations.
 4. Build the malformed-project diagnostics matrix: codes, severity, JSON paths, and error categories against JS.
-5. Add the fixture index/tooling and record intentional divergences in `docs/COMPATIBILITY.md`.
-6. Close Phase 6 only when every remaining item is green or explicitly documented as excluded.
+5. Add the fixture index/tooling, extract the duplicated fixture-loading helpers into one support file, and record intentional divergences in `docs/COMPATIBILITY.md`.
+6. Resolve the eased-overshoot divergence candidate: confirm against JS, then fix the clamp or document it with an owner and a test.
+7. Close Phase 6 only when every remaining item is green or explicitly documented as excluded.
 
 ### Phase 7 Carousel closeout
 
@@ -72,8 +74,9 @@ Authoritative closeout docs:
 - Preserve existing test coverage when adding validation cases. Do not replace a whole test file with a reduced subset.
 - Analyzer is strict and CI runs `dart analyze --format machine` plus all tests. Fix unused imports and curly-brace lint findings before waiting on CI.
 - `repeat` is repeat count, so total cycles are `repeat + 1`; repeat delays occur only between cycles.
+- Value interpolation clamps `t` to `[0, 1]`, so overshooting eases never overshoot. Avoid `back.*` and `elastic.*` in fixtures until that is resolved.
 - Docs-only changes go straight to `main`; code changes need the full four-job gate.
 
 ## Session result
 
-The repo now has a credible path from parity bugs to acceptance gates: payload composition, trigger semantics, path behavior, validation diagnostics, lifecycle completion, and plugin edges are covered. The next meaningful move is not another demo. Finish the Phase 6 fixture matrix, then use that proof to close the Carousel with interaction and geometry coverage.
+Parity now has sampled trajectory evidence, not just endpoint checks: nine points across a full timeline, exact key sets, and an honest provenance note separating closed-form cases from the formula-derived FK case. The next meaningful move is the observation and lifecycle fixture matrix, then the diagnostics matrix, before returning to the Carousel interaction and geometry work.
