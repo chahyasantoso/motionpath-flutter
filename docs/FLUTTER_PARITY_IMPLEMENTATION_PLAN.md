@@ -236,6 +236,14 @@ Exit criteria:
 
 Update this section after every meaningful implementation batch. Keep reports factual and tied to exit criteria.
 
+### 2026-08-02: Phase 5 closed, scroll capabilities complete
+
+- Changed: no runtime code. This change records the Phase 5 exit criteria and flips the gate after PR #89 merged pinned-sample visibility, `MotionPathViewportSample` value equality, and real `ScrollPosition` integration coverage on top of the PR #88 arbitrary pin host.
+- Verified: the `hygiene`, `dart-core`, `flutter-adapter`, and `flutter-example` jobs all passed on PR #89 before it merged into `main`. Exit evidence is listed in `docs/PHASE_5_ACCEPTANCE.md`.
+- Result: complete. Scrub sampling, viewport sampling, the toggle state machine, `SliverPersistentHeader` top pinning, the `MotionPathArbitraryPinned` stack host, and attach/detach/reattach/route-teardown/mid-scroll-disposal coverage are all in `main`. Both exit criteria hold: there is no god-class and no hidden ticker, because the binding only samples and seeks, and pinned scenes are deterministic across attach, detach, and disposal.
+- Risks: snap is deferred by design rather than missing by accident, and its interruption behavior has to be specified before anyone implements it. Crossing callbacks still fire before `onSample`, which stays a host-visible ordering contract. `MotionPathArbitraryPinned` measures from its stack's leading edge, so a host stack that does not match the viewport will misplace the pin.
+- Next: Phase 7 Carousel is unblocked and is the first production-style consumer of the shared renderer. Phase 6 parity fixtures remain the other open P1.
+
 ### 2026-07-31: Phase 3, interest-scoped consumers and composition scope
 
 - Changed: added `MotionPathMotionRuntime.advance(delta, {publishPatches})` so advancement and composition are separable, with `tick()` reduced to a wrapper that preserves existing ordering. Added `MotionPathPatchController.trackPatch()` backed by per-track `ValueNotifier`s, whole-graph fallback, zero-listener tick gating, explicit notifier release, automatic pruning of vanished tracks, and `motionPathPatchEquals` deep dirty checking shared by the controller and `MotionPathPatchPainter.shouldRepaint`.
@@ -351,6 +359,15 @@ This is a source and documentation audit against the repository contents, curren
 - Next: implement Phase 1 lifecycle ownership and explicit-failure fixes before adding Carousel or Helix.
 
 ## 6. Changelog
+
+### 2026-08-02
+
+- Closed the Phase 5 gate after PR #89 went green and merged, completing scroll capabilities.
+- Fixed pinned-sample visibility so a section is no longer dropped halfway through its own pin window.
+- Gave `MotionPathViewportSample` value equality so the arbitrary pin host rebuilds when geometry moves instead of once per scrolled pixel.
+- Added real `ScrollPosition` integration coverage for approach, pin, release, reverse crossings, and mid-pin host teardown.
+- Recorded snap as a deliberate exclusion with unspecified interruption behavior, not an open gap.
+- Unblocked Phase 7 Carousel.
 
 ### 2026-07-31
 
