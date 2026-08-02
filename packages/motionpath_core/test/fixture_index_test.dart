@@ -59,7 +59,10 @@ void main() {
       expect(fixture['formatVersion'], 1);
       expect(fixture['cases'], isA<Map<String, Object?>>());
       final Object? tolerance = entry['tolerance'];
-      expect(tolerance == null || (tolerance is num && tolerance > 0), isTrue);
+      expect(
+        tolerance == null || (tolerance is num && tolerance > 0),
+        isTrue,
+      );
       final List<Object?> cases = entry['cases']! as List<Object?>;
       final Map<String, Object?> actualCases =
           fixture['cases']! as Map<String, Object?>;
@@ -72,8 +75,10 @@ void main() {
           reason: '$file is missing case $caseName',
         );
       }
-      if (tolerance != null) {
-        final List<Object?> samples = fixture['sampleProgress']! as List<Object?>;
+      final Object? rawSampleProgress = fixture['sampleProgress'];
+      if (rawSampleProgress != null) {
+        expect(rawSampleProgress, isA<List<Object?>>());
+        final List<Object?> samples = rawSampleProgress as List<Object?>;
         expect(samples, isNotEmpty);
         expect(samples.every((Object? sample) => sample is num), isTrue);
       }
