@@ -15,6 +15,10 @@ Phase 6 proves behavioral parity against the JavaScript reference. It is not com
 - PR #99: path anchors preserve `center`, `none`, and explicit percentage output.
 - PR #100: first-point control warnings, paired controls, and normalized path stop ranges match the JS validator.
 - PR #101: path plus explicit `x` or `y` is rejected as an output collision at validation time.
+- PR #102: one-shot completion callbacks fire at the final advancing cycle and re-arm on restart or seek-back.
+- PR #103: reverse, play/pause, seek-back, unmount, and destroy lifecycle behavior is covered.
+- PR #104: Overlay and Spawner plugin edge contracts are covered.
+- PR #105: ImageSequence stop types and frame-index ranges are validated.
 
 ## Remaining work
 
@@ -22,14 +26,13 @@ Phase 6 proves behavioral parity against the JavaScript reference. It is not com
 
 - Add versioned fixtures for repeat, yoyo, delay, repeat delay, stagger, and completion events across multiple track durations.
 - Add trajectory fixtures for path, FK, opacity, scale, color, z-depth, rotationX, and rotationY.
-- Add lifecycle fixtures for mount, prepare, play, pause, seek, reverse, completion, unmount, and destroy.
 - Add observation fixtures for input edges, output merges, diamonds, cycles, missing sources, and deterministic graph order.
 - Add plugin fixtures for filter, CSS variables, overlay, spawner, image sequence, path, and FK outputs, including malformed diagnostics.
 
 ### P1: diagnostics parity
 
 - Compare Dart and JS diagnostic codes, severity, JSON paths, and error categories for malformed projects.
-- Cover duplicate ids, invalid triggers, invalid eases, bad stop ranges, invalid path controls, invalid anchors, bad image frames, path/x-y exclusivity, and non-finite numbers.
+- Cover duplicate ids, invalid triggers, invalid eases, bad stop ranges, invalid path controls, invalid anchors, bad image frames and indices, path/x-y exclusivity, and non-finite numbers.
 - Record every deliberate difference in `docs/COMPATIBILITY.md` with reason, owner, and regression test.
 
 ### P1: fixture tooling
@@ -40,13 +43,7 @@ Phase 6 proves behavioral parity against the JavaScript reference. It is not com
 
 ## Closeout checklist
 
-Phase 6 can move to **Complete** when:
-
-- Every item above has either a passing fixture/test or an explicit documented exclusion.
-- Core CI is green with the fixture suite enabled.
-- Diagnostics agree for the covered malformed-input matrix.
-- `docs/COMPATIBILITY.md` lists all intentional divergences.
-- The Phase 6 row cites the final PRs and this document.
+Phase 6 can move to **Complete** when every item above has either a passing fixture/test or an explicit documented exclusion, core CI is green with the fixture suite enabled, diagnostics agree for the covered malformed-input matrix, and `docs/COMPATIBILITY.md` lists all intentional divergences.
 
 ## Deliberate exclusions
 
