@@ -81,7 +81,7 @@ class _DemoLauncherPageState extends State<DemoLauncherPage> {
                 const Padding(
                   padding: EdgeInsets.fromLTRB(24, 8, 24, 16),
                   child: Text(
-                    'MotionPath demos',
+                    'Choose a demo',
                     style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
                   ),
                 ),
