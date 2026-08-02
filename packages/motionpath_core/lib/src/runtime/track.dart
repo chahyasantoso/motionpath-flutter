@@ -160,19 +160,42 @@ class MotionPathTrackRuntime implements MotionPathLayoutChild {
 
 ValueBlend blendForProperty(String propertyKey) => kMotionPathColorKeys.contains(propertyKey) ? blendColorValues : MotionPathInterpolators.value;
 
+/// Keyframe keys whose plugin samples a static authored payload.
+///
+/// These keyframes carry their data outside `stops`: a `path` owns `points`
+/// and an `imageSequence` owns `frames`. Their stops describe the authored
+/// progress ramp, which this runtime already takes from the track playhead, so
+/// the payload is what has to survive interpolation and reach the plugin.
+/// Interpolating the stop values instead handed the plugin a bare number, and
+/// the track then composed no position and no frame at all.
+const Map<String, String> kMotionPathStaticPayloadKeys = <String, String>{
+  'path': 'points',
+  'imageSequence': 'frames',
+};
+
+List<Object?> _staticPayload(Map<String, Object?> config, String propertyKey, String payloadKey) {
+  final Object? payload = config[payloadKey];
+  if (payload is! List<Object?> || payload.isEmpty) {
+    throw ArgumentError.value(payload, payloadKey, 'A "$propertyKey" keyframe requires a non-empty "$payloadKey" list');
+  }
+  return List<Object?>.unmodifiable(payload);
+}
+
 List<MotionPathStop> stopsFromKeyframe(Object? raw, {String propertyKey = ''}) {
   final Map<String, Object?> config = asStringKeyedMap(raw);
   final Object? rawStops = config['stops'];
   if (rawStops is! List<Object?>) return const <MotionPathStop>[];
   final Easing keyframeEase = resolveEasing(config['ease']);
   final bool isColor = kMotionPathColorKeys.contains(propertyKey);
+  final String? payloadKey = kMotionPathStaticPayloadKeys[propertyKey];
+  final List<Object?>? payload = payloadKey == null ? null : _staticPayload(config, propertyKey, payloadKey);
   final List<MotionPathStop> result = <MotionPathStop>[];
   for (final Object? candidate in rawStops) {
     final Map<String, Object?> stop = asStringKeyedMap(candidate);
     if (stop.isEmpty) continue;
     final Object? progress = stop['p'];
     final Object? value = stop['v'];
-    result.add(MotionPathStop(progress: progress is num ? progress.toDouble() : 0, value: isColor ? (parseColorArgb(value) ?? value) : value, ease: stop.containsKey('ease') ? resolveEasing(stop['ease']) : keyframeEase));
+    result.add(MotionPathStop(progress: progress is num ? progress.toDouble() : 0, value: payload ?? (isColor ? (parseColorArgb(value) ?? value) : value), ease: stop.containsKey('ease') ? resolveEasing(stop['ease']) : keyframeEase));
   }
   return List<MotionPathStop>.unmodifiable(result);
 }
