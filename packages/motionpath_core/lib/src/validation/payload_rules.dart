@@ -80,6 +80,16 @@ List<MotionPathDiagnostic> _pathRules(
         ),
       );
     }
+    if (index == 0 && (hasCtrlX || hasCtrlY)) {
+      diagnostics.add(
+        MotionPathDiagnostic(
+          path: '$path.points[$index]',
+          code: 'path-shape',
+          severity: MotionPathSeverity.warning,
+          message: 'ctrlX/ctrlY on the first path point have no effect.',
+        ),
+      );
+    }
     for (final String control in <String>['ctrlX', 'ctrlY', 'ctrlZ', 'z']) {
       if (point.containsKey(control) && point[control] is! num) {
         diagnostics.add(
@@ -87,6 +97,22 @@ List<MotionPathDiagnostic> _pathRules(
             path: '$path.points[$index].$control',
             code: 'path-shape',
             message: 'Path coordinate $control must be numeric when present.',
+          ),
+        );
+      }
+    }
+  }
+  final Object? rawStops = config['stops'];
+  if (rawStops is List<Object?>) {
+    for (int index = 0; index < rawStops.length; index++) {
+      final Map<String, Object?> stop = asStringKeyedMap(rawStops[index]);
+      final Object? value = stop['v'];
+      if (value is num && (value < 0 || value > 1)) {
+        diagnostics.add(
+          MotionPathDiagnostic(
+            path: '$path.stops[$index].v',
+            code: 'path-shape',
+            message: 'path.stops[$index].v must be between 0 and 1.',
           ),
         );
       }
