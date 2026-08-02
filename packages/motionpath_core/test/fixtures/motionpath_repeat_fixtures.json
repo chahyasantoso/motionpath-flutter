@@ -17,7 +17,7 @@
         {"elapsed": 2.75, "progress": 0, "finished": false},
         {"elapsed": 3, "progress": 0, "finished": false},
         {"elapsed": 3.25, "progress": 0.25, "finished": false},
-        {"elapsed": 3.5, "progress": 1, "finished": true}
+        {"elapsed": 3.5, "progress": 0.5, "finished": true}
       ]
     },
     "staggeredTracks": {
