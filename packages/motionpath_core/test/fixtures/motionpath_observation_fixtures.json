@@ -4,48 +4,11 @@
   "source": "chahyasantoso/motionpath v4 observation contract",
   "tolerance": 1e-9,
   "cases": {
-    "inputEdge": {
-      "graphOrder": ["source", "consumer"],
-      "edges": [{"source": "source", "target": "consumer", "role": "input", "input": "parentWorld"}],
-      "patches": {
-        "source": {"x": 10, "y": 20, "rotation": 30},
-        "consumer": {"x": 14.330127018922193, "y": 22.5, "rotation": 45}
-      }
-    },
-    "outputMerge": {
-      "graphOrder": ["source", "consumer"],
-      "edges": [{"source": "source", "target": "consumer", "role": "output"}],
-      "patches": {"source": {"x": 7, "opacity": 0.4}, "consumer": {"x": 7, "opacity": 0.4, "y": 3}}
-    },
-    "diamond": {
-      "graphOrder": ["root", "left", "right"],
-      "edges": [
-        {"source": "root", "target": "left", "role": "input", "input": "parentWorld"},
-        {"source": "root", "target": "right", "role": "input", "input": "parentWorld"}
-      ],
-      "patches": {
-        "root": {"x": 10, "y": 0, "rotation": 0},
-        "left": {"x": 40, "y": 0, "rotation": 0},
-        "right": {"x": 10, "y": 30, "rotation": 90}
-      }
-    },
-    "cycle": {
-      "graphOrder": [],
-      "errorCodes": ["track-observations-cycle"],
-      "fatal": true
-    },
-    "missingSource": {
-      "graphOrder": ["consumer"],
-      "errorCodes": ["track-observations"],
-      "fatal": true
-    },
-    "stableOrder": {
-      "graphOrder": ["root", "child", "sibling"],
-      "edges": [
-        {"source": "root", "target": "child", "role": "output"},
-        {"source": "root", "target": "sibling", "role": "output"}
-      ],
-      "fatal": false
-    }
+    "inputEdge": {"graphOrder": ["source", "consumer"], "edges": [{"source": "source", "target": "consumer", "role": "input", "input": "parentWorld"}], "patches": {"source": {"x": 10, "y": 20, "rotation": 30}, "consumer": {"x": 14.330127018922193, "y": 22.5, "rotation": 45}}},
+    "outputMerge": {"graphOrder": ["source", "consumer"], "edges": [{"source": "source", "target": "consumer", "role": "output"}], "patches": {"source": {"x": 7, "opacity": 0.4}, "consumer": {"x": 7, "opacity": 0.4, "y": 3}}},
+    "diamond": {"graphOrder": ["root", "left", "right"], "edges": [{"source": "root", "target": "left", "role": "input", "input": "parentWorld"}, {"source": "root", "target": "right", "role": "input", "input": "parentWorld"}], "patches": {"root": {"x": 10, "y": 0, "rotation": 0}, "left": {"x": 40, "y": 0, "rotation": 0}, "right": {"x": 40, "y": 0, "rotation": 90}}},
+    "cycle": {"graphOrder": [], "errorCodes": ["track-observations-cycle"], "fatal": true},
+    "missingSource": {"graphOrder": ["consumer"], "errorCodes": ["track-observations"], "fatal": true},
+    "stableOrder": {"graphOrder": ["root", "child", "sibling"], "edges": [{"source": "root", "target": "child", "role": "output"}, {"source": "root", "target": "sibling", "role": "output"}], "fatal": false}
   }
 }
