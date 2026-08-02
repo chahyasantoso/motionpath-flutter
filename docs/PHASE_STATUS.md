@@ -1,6 +1,6 @@
 # Phase status
 
-Updated 2026-08-02 against `main` after the green CI gates.
+Updated 2026-08-02 against `main` after PR #119 merged green.
 
 | Phase | Status | Evidence | Gate |
 |---|---|---|---|
@@ -10,8 +10,8 @@ Updated 2026-08-02 against `main` after the green CI gates.
 | 3 Shared Flutter renderer | Complete | PRs #73 through #80 merged; shared payload consumption, stable child rendering, interest-scoped consumers, bounded filters, z/perspective/3D transforms, image cache lifecycle, performance coverage, Spiral migration, explicit renderer key policy, and green CI are complete. | Closed |
 | 4 Dynamic children and spawn lifecycle | Complete | PRs #81 through #86 merged; deterministic ordering, host paint order, front-most hit testing, reflow/drain, lifecycle coverage, and Spiral rebuild cleanup are complete. | Closed |
 | 5 Scroll capabilities | Complete | PR #88 and PR #89 merged; scrub sampling, toggle actions, top pinning, arbitrary pinning, visibility, value equality, and real ScrollPosition integration coverage are complete. | Closed. Snap remains deliberately deferred |
-| 6 Cross-repository parity | Partial | PRs #91 through #110 cover authored payloads, path behavior, triggers, repeat boundaries, anchors, validation diagnostics, lifecycle controls, completion events, plugin edge contracts, observation/lifecycle/repeat fixtures, and malformed-project diagnostics. PR #111 extracts the shared fixture loader, PR #112 adds dedicated filter and CSS variable fixtures, and PR #113 adds the fixture index and metadata guard. Remaining: the eased-overshoot divergence decision. | Open. See `docs/PHASE_6_ACCEPTANCE.md` |
-| 7 Carousel | Active | PR #93 implements the scroll-driven Carousel, PR #94 covers mount and scrubbing, PR #114 covers reverse scrubbing, and PR #115 proves stable card subtrees with per-card identity anchors. | Open. See `docs/PHASE_7_ACCEPTANCE.md` |
+| 6 Cross-repository parity | Partial | PRs #91 through #113 cover parity behavior, diagnostics, plugin fixtures, shared fixture tooling, and fixture-index enforcement. Remaining: the eased-overshoot divergence decision. | Open. See `docs/PHASE_6_ACCEPTANCE.md` |
+| 7 Carousel | Active | PRs #93, #94, and #114 through #119 cover mount/scrub, reverse scroll, stable subtrees, overlap hit testing, reflow, teardown, representative geometry, and the shared scene contract. Remaining: wire the shared scene into the demo, add actual widget interaction coverage, and record intentional differences. | Open. See `docs/PHASE_7_ACCEPTANCE.md` |
 | 8 Helix and depth | Not started | No Helix/depth scene. | Blocked until Phase 6 and Phase 7 mature |
 | 9 Release hardening | Partial | Docs, metadata, CI, and benchmark harness exist. | Publish/security/API-doc evidence remains |
 

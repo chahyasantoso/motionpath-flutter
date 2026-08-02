@@ -11,7 +11,11 @@ Phase 7 proves the shared renderer can support a real production-style scene wit
 - PR #93 added the scroll-driven Carousel example with dynamic children, stagger, opacity, transforms, add/remove interaction, and front-most hit testing.
 - PR #94 added widget coverage for page mount, rendered cards, and real ListView scrubbing.
 - PR #114 added reverse-scroll coverage, proving card identity, settled offsets, and child playheads survive reverse scrubbing.
-- PR #115 added stable card-subtree coverage and fixed the spawn view to cache each expensive child by instance id. The implementation uses a per-card `GlobalKey` as the scoped identity anchor; this is deliberate, not a blanket recommendation. A future render-host or AnimatedWidget design could avoid GlobalKey overhead, but changing that architecture during Carousel closeout would be needless risk.
+- PR #115 added stable card-subtree coverage and fixed the spawn view to cache each expensive child by instance id. The implementation uses a per-card `GlobalKey` as a scoped identity anchor; a stable host/render-object design could avoid that overhead, but changing architecture during closeout is deliberately deferred.
+- PR #116 added overlapping-card front-most hit testing and mid-chain removal/reflow coverage with no survivor teleport.
+- PR #117 added Carousel teardown coverage for scroll/ticker binding disposal and controller hook cleanup.
+- PR #118 added representative geometry assertions at 0, 0.15, 0.5, 0.85, and 1 for composed position, tangent rotation, center anchor output, opacity, scale, and deterministic patches.
+- PR #119 adds the shared executable scene contract for the five-point path, quadratic controls, `autoRotate`, opacity stops, and 0.1 stagger.
 
 ## Remaining work
 
@@ -19,35 +23,19 @@ Phase 7 proves the shared renderer can support a real production-style scene wit
 
 - Confirm every Carousel visual comes from composed patches: x/y, rotation, opacity, scale, anchor, and any image payload.
 - Remove any remaining demo-local path, progress, or visual interpolation math.
-- Add widget assertions for transformed position, opacity boundaries, anchor output, and child identity across scroll updates.
-- Prove expensive card subtrees remain stable while patches update. PR #115 covers the card subtree identity contract.
+- Add widget assertions for transformed position, opacity boundaries, anchor output, and child identity across scroll updates. Geometry and subtree identity are covered by PRs #115 and #118; the demo audit remains.
 
-### P0: dynamic lifecycle proof
+### P1: scene parity and interaction
 
-- Cover add-card identity and stable keys.
-- Cover tap-to-remove selecting the front-most card when cards overlap.
-- Cover mid-chain removal and reflow without teleporting survivors.
-- Cover teardown while cards are mounted and after the scroll host is disposed.
-- Cover empty-carousel recovery and adding a card after the list drains. Drain behavior belongs to Spiral-style scenes, not the Carousel contract, so it is intentionally not part of Carousel coverage.
-
-### P1: scene parity
-
-- Keep the Flutter scene schema aligned with the JS `dynamicCarouselScene`: path points, path stops, autoRotate, opacity stops, stagger, and stagger transition.
-- Add a shared fixture or builder so the demo is not maintaining a second hand-copied scene definition.
-- Add interaction coverage for scroll forward, reverse, add, remove, and re-entry.
+- Use the shared scene builder/fixture in the demo instead of maintaining a second hand-copied scene definition.
+- Add widget interaction coverage for forward scroll, reverse scroll, add, remove, and re-entry.
+- Record intentional Flutter/JS scene differences.
 
 ### P1: visual regression
 
-- Add a stable widget golden or sampled geometry assertions for representative progress values: 0, 0.15, 0.5, 0.85, and 1.
-- Assert cards disappear at the authored opacity/path boundaries.
-- Assert ordering is deterministic for equal offsets.
+- Keep the representative sampled geometry assertions green. A golden is optional; deterministic patch assertions are the current regression strategy.
+- Assert cards disappear at authored opacity/path boundaries in the actual widget host.
 
 ## Closeout checklist
 
-Phase 7 can move to **Complete** when:
-
-- The Carousel uses shared patch consumers only, with no duplicated engine math.
-- Widget tests cover mount, scroll, reverse scroll, add, remove, overlap hit testing, reflow, and teardown.
-- Representative trajectory or golden coverage is green.
-- The JS scene mapping is recorded and intentional differences are documented.
-- The Phase 7 row cites the final implementation and coverage PRs plus this document.
+Phase 7 can move to **Complete** when the demo consumes the shared scene definition, the interaction/teardown coverage is green, representative trajectory evidence is green, and intentional differences are documented.

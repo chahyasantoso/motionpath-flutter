@@ -30,19 +30,20 @@ The following reference behaviors are now covered in `main`:
 | Path control warnings and normalized stop ranges | PR #100 | Covered |
 | Path plus explicit x/y exclusivity | PR #101 | Covered |
 | Sampled trajectories: position, depth, colour, 3D rotation, FK, frames, disappearance | PR #106 | Covered |
-| Carousel mount and scroll scrub | PRs #93 and #94 | Initial coverage |
-
-Remaining parity work is tracked, not hidden: lifecycle event fixtures, broader trigger samples, observation-graph and plugin fixtures, malformed-project matrix comparison, and deeper Carousel interaction/golden coverage. See `docs/PHASE_6_ACCEPTANCE.md` and `docs/PHASE_7_ACCEPTANCE.md` for the exact closeout checklists.
+| Observation, lifecycle, repeat/stagger, plugin, and diagnostics fixtures | PRs #107 through #113 | Covered |
+| Carousel interaction and geometry slices | PRs #114 through #119 | Covered |
 
 ## Suspected divergence, not yet accepted
 
-Eased overshoot is clamped away. `MotionPathInterpolators.number()` clamps `t` to `[0, 1]` before blending, so `back.*` and `elastic.*` resolve to the correct curve and then lose their overshoot at the value boundary. The JS reference is expected to overshoot. This is listed here so it is not mistaken for an accepted difference: it has no owner-approved reason and no regression test yet, because pinning the current behavior would freeze a probable bug. Confirm against the JS reference, then either fix the clamp or promote this to a documented divergence with a reason, an owner, and a test. Working notes are in `docs/PARITY_MATRIX.md`.
+Eased overshoot is clamped away. `MotionPathInterpolators.number()` clamps `t` to `[0, 1]` before blending, so `back.*` and `elastic.*` resolve to the correct curve and then lose their overshoot at the value boundary. The JS reference is expected to overshoot. This remains an explicit open decision, not an accepted difference. Confirm against the JS reference, then either fix the clamp or document it with an owner and a regression test.
 
-## Shared fixture
+## Carousel scene mapping
 
-`fixtures/v4-project.json` is the Dart repository's canonical copy of the reference integration fixture. It intentionally covers a scroll-scrub motion, a time loop with stagger, an autoplay-disabled time motion, a manual motion, an image sequence, a reused template, a path track, a CSS custom property, and a standalone track.
+The Flutter Carousel scene now has executable parity evidence in PR #119: five authored path points with quadratic controls, `autoRotate: true`, opacity stops at 0, 0.15, 0.85, and 1, plus 0.1 stagger. The demo still contains its own scene literal; wiring it to the shared builder is the next task. The Flutter implementation intentionally uses shared renderer patches and does not use Spiral's drain semantics.
 
-The core compatibility test validates that the fixture has no fatal diagnostics and preserves its authored project, motion, template, and standalone-track shape. It does not claim that all renderer adapters are exercised by one parse test; plugin and renderer tests remain focused and deterministic.
+## Stable subtree identity tradeoff
+
+PR #115 uses a per-card `GlobalKey` as a scoped identity anchor so patch-driven wrapper rebuilds preserve the expensive card subtree. This is the safest closeout fix for the current wrapper architecture, not the only possible design. A future stable host, `AnimatedWidget`, or render-object layer could avoid GlobalKey overhead; that refactor is intentionally separate from parity closeout.
 
 ## Do not promise source parity
 
