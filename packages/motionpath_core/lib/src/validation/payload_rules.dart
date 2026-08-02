@@ -6,6 +6,22 @@ List<MotionPathDiagnostic> keyframePayloadRules(
   String path,
 ) {
   final List<MotionPathDiagnostic> diagnostics = <MotionPathDiagnostic>[];
+  final bool hasPath = keyframes['path'] != null;
+  final bool hasX = keyframes['x'] != null;
+  final bool hasY = keyframes['y'] != null;
+  if (hasPath && (hasX || hasY)) {
+    final String offending = <String>[
+      if (hasX) 'x',
+      if (hasY) 'y',
+    ].join('/');
+    diagnostics.add(
+      MotionPathDiagnostic(
+        path: '$path.keyframes',
+        code: 'path-xy-exclusivity',
+        message: "Track has both a 'path' property and explicit '$offending' keyframes. They are mutually exclusive.",
+      ),
+    );
+  }
   for (final MapEntry<String, Object?> entry in keyframes.entries) {
     final String propertyPath = '$path.keyframes.${entry.key}';
     final Map<String, Object?> config = asStringKeyedMap(entry.value);
@@ -18,88 +34,27 @@ List<MotionPathDiagnostic> keyframePayloadRules(
   return diagnostics;
 }
 
-List<MotionPathDiagnostic> _pathRules(
-  Map<String, Object?> config,
-  String path,
-) {
+List<MotionPathDiagnostic> _pathRules(Map<String, Object?> config, String path) {
   final List<MotionPathDiagnostic> diagnostics = <MotionPathDiagnostic>[];
   final Object? anchor = config['anchor'];
-  if (anchor != null &&
-      anchor != 'center' &&
-      anchor != 'none' &&
-      !(anchor is Map<Object?, Object?> &&
-          asStringKeyedMap(anchor)['xPercent'] is num &&
-          asStringKeyedMap(anchor)['yPercent'] is num)) {
-    diagnostics.add(
-      MotionPathDiagnostic(
-        path: '$path.anchor',
-        code: 'path-shape',
-        message: 'path.anchor must be "center", "none", or numeric xPercent/yPercent.',
-      ),
-    );
+  if (anchor != null && anchor != 'center' && anchor != 'none' && !(anchor is Map<Object?, Object?> && asStringKeyedMap(anchor)['xPercent'] is num && asStringKeyedMap(anchor)['yPercent'] is num)) {
+    diagnostics.add(MotionPathDiagnostic(path: '$path.anchor', code: 'path-shape', message: 'path.anchor must be "center", "none", or numeric xPercent/yPercent.'));
   }
   final Object? rawPoints = config['points'];
   if (rawPoints is! List<Object?> || rawPoints.length < 2) {
-    diagnostics.add(
-      MotionPathDiagnostic(
-        path: '$path.points',
-        code: 'path-shape',
-        message: 'path.points must be an array with at least 2 points.',
-      ),
-    );
+    diagnostics.add(MotionPathDiagnostic(path: '$path.points', code: 'path-shape', message: 'path.points must be an array with at least 2 points.'));
     return diagnostics;
   }
   for (int index = 0; index < rawPoints.length; index++) {
     final Map<String, Object?> point = asStringKeyedMap(rawPoints[index]);
-    if (point['x'] is! num) {
-      diagnostics.add(
-        MotionPathDiagnostic(
-          path: '$path.points[$index].x',
-          code: 'path-shape',
-          message: 'Path point x must be numeric.',
-        ),
-      );
-    }
-    if (point['y'] is! num) {
-      diagnostics.add(
-        MotionPathDiagnostic(
-          path: '$path.points[$index].y',
-          code: 'path-shape',
-          message: 'Path point y must be numeric.',
-        ),
-      );
-    }
+    if (point['x'] is! num) diagnostics.add(MotionPathDiagnostic(path: '$path.points[$index].x', code: 'path-shape', message: 'Path point x must be numeric.'));
+    if (point['y'] is! num) diagnostics.add(MotionPathDiagnostic(path: '$path.points[$index].y', code: 'path-shape', message: 'Path point y must be numeric.'));
     final bool hasCtrlX = point.containsKey('ctrlX');
     final bool hasCtrlY = point.containsKey('ctrlY');
-    if (hasCtrlX != hasCtrlY) {
-      diagnostics.add(
-        MotionPathDiagnostic(
-          path: '$path.points[$index]',
-          code: 'path-shape',
-          message: 'ctrlX and ctrlY must be provided together.',
-        ),
-      );
-    }
-    if (index == 0 && (hasCtrlX || hasCtrlY)) {
-      diagnostics.add(
-        MotionPathDiagnostic(
-          path: '$path.points[$index]',
-          code: 'path-shape',
-          severity: MotionPathSeverity.warning,
-          message: 'ctrlX/ctrlY on the first path point have no effect.',
-        ),
-      );
-    }
+    if (hasCtrlX != hasCtrlY) diagnostics.add(MotionPathDiagnostic(path: '$path.points[$index]', code: 'path-shape', message: 'ctrlX and ctrlY must be provided together.'));
+    if (index == 0 && (hasCtrlX || hasCtrlY)) diagnostics.add(MotionPathDiagnostic(path: '$path.points[$index]', code: 'path-shape', severity: MotionPathSeverity.warning, message: 'ctrlX/ctrlY on the first path point have no effect.'));
     for (final String control in <String>['ctrlX', 'ctrlY', 'ctrlZ', 'z']) {
-      if (point.containsKey(control) && point[control] is! num) {
-        diagnostics.add(
-          MotionPathDiagnostic(
-            path: '$path.points[$index].$control',
-            code: 'path-shape',
-            message: 'Path coordinate $control must be numeric when present.',
-          ),
-        );
-      }
+      if (point.containsKey(control) && point[control] is! num) diagnostics.add(MotionPathDiagnostic(path: '$path.points[$index].$control', code: 'path-shape', message: 'Path coordinate $control must be numeric when present.'));
     }
   }
   final Object? rawStops = config['stops'];
@@ -107,45 +62,18 @@ List<MotionPathDiagnostic> _pathRules(
     for (int index = 0; index < rawStops.length; index++) {
       final Map<String, Object?> stop = asStringKeyedMap(rawStops[index]);
       final Object? value = stop['v'];
-      if (value is num && (value < 0 || value > 1)) {
-        diagnostics.add(
-          MotionPathDiagnostic(
-            path: '$path.stops[$index].v',
-            code: 'path-shape',
-            message: 'path.stops[$index].v must be between 0 and 1.',
-          ),
-        );
-      }
+      if (value is num && (value < 0 || value > 1)) diagnostics.add(MotionPathDiagnostic(path: '$path.stops[$index].v', code: 'path-shape', message: 'path.stops[$index].v must be between 0 and 1.'));
     }
   }
   return diagnostics;
 }
 
-List<MotionPathDiagnostic> _imageSequenceRules(
-  Map<String, Object?> config,
-  String path,
-) {
+List<MotionPathDiagnostic> _imageSequenceRules(Map<String, Object?> config, String path) {
   final Object? rawFrames = config['frames'];
-  if (rawFrames is! List<Object?> || rawFrames.isEmpty) {
-    return <MotionPathDiagnostic>[
-      MotionPathDiagnostic(
-        path: '$path.frames',
-        code: 'image-sequence-shape',
-        message: 'imageSequence.frames must be a non-empty array.',
-      ),
-    ];
-  }
+  if (rawFrames is! List<Object?> || rawFrames.isEmpty) return <MotionPathDiagnostic>[MotionPathDiagnostic(path: '$path.frames', code: 'image-sequence-shape', message: 'imageSequence.frames must be a non-empty array.')];
   final List<MotionPathDiagnostic> diagnostics = <MotionPathDiagnostic>[];
   for (int index = 0; index < rawFrames.length; index++) {
-    if (rawFrames[index] is! String || (rawFrames[index]! as String).isEmpty) {
-      diagnostics.add(
-        MotionPathDiagnostic(
-          path: '$path.frames[$index]',
-          code: 'image-sequence-shape',
-          message: 'Image sequence frames must be non-empty strings.',
-        ),
-      );
-    }
+    if (rawFrames[index] is! String || (rawFrames[index]! as String).isEmpty) diagnostics.add(MotionPathDiagnostic(path: '$path.frames[$index]', code: 'image-sequence-shape', message: 'Image sequence frames must be non-empty strings.'));
   }
   return diagnostics;
 }
