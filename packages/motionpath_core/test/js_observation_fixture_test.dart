@@ -1,10 +1,8 @@
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:motionpath_core/motionpath_core.dart';
 import 'package:test/test.dart';
 
-Map<String, Object?> _fixture() => jsonDecode(File('test/fixtures/motionpath_observation_fixtures.json').readAsStringSync()) as Map<String, Object?>;
+import 'support/fixture_support.dart';
+
 double _number(Object? value) => (value! as num).toDouble();
 Map<String, Object?> _case(Map<String, Object?> cases, String name) => cases[name]! as Map<String, Object?>;
 Map<String, Object?> _ramp(num from, num to) => <String, Object?>{'stops': <Object?>[<String, Object?>{'p': 0, 'v': from}, <String, Object?>{'p': 1, 'v': to}]};
@@ -42,7 +40,7 @@ MotionPathMotion _invalidMotion(String name) {
 }
 
 void main() {
-  final Map<String, Object?> fixture = _fixture();
+  final Map<String, Object?> fixture = readFixture('motionpath_observation_fixtures.json');
   final Map<String, Object?> cases = fixture['cases']! as Map<String, Object?>;
   final double tolerance = _number(fixture['tolerance']);
   for (final String name in <String>['inputEdge', 'outputMerge', 'diamond', 'stableOrder']) {

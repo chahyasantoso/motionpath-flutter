@@ -1,18 +1,12 @@
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:motionpath_core/motionpath_core.dart';
 import 'package:test/test.dart';
+
+import 'support/fixture_support.dart';
 
 // Every expected code, severity, JSON path, and message fragment lives in the
 // versioned fixture. This harness only hydrates non-finite sentinels, runs the
 // validator, and matches diagnostics one-for-one, so no validation semantics
 // are encoded here.
-Map<String, Object?> _fixture() => jsonDecode(
-      File('test/fixtures/motionpath_diagnostics_fixtures.json').readAsStringSync(),
-    ) as Map<String, Object?>;
-
-// JSON cannot encode non-finite numbers, so the fixture carries sentinels.
 const Map<String, double> _nonFinite = <String, double>{
   '@Infinity': double.infinity,
   '@-Infinity': double.negativeInfinity,
@@ -43,7 +37,7 @@ List<Map<String, Object?>> _expectations(Map<String, Object?> testCase) => <Map<
     ];
 
 void main() {
-  final Map<String, Object?> fixture = _fixture();
+  final Map<String, Object?> fixture = readFixture('motionpath_diagnostics_fixtures.json');
   final Map<String, Object?> cases = fixture['cases']! as Map<String, Object?>;
 
   for (final MapEntry<String, Object?> entry in cases.entries) {

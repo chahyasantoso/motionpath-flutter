@@ -1,13 +1,7 @@
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:motionpath_core/motionpath_core.dart';
 import 'package:test/test.dart';
 
-Map<String, Object?> _fixture() => jsonDecode(
-      File('test/fixtures/motionpath_lifecycle_fixtures.json')
-          .readAsStringSync(),
-    ) as Map<String, Object?>;
+import 'support/fixture_support.dart';
 
 Map<String, Object?> _case(Map<String, Object?> cases, String name) =>
     cases[name]! as Map<String, Object?>;
@@ -43,7 +37,8 @@ Map<String, Object?> _project({
 };
 
 void main() {
-  final Map<String, Object?> fixture = _fixture();
+  final Map<String, Object?> fixture =
+      readFixture('motionpath_lifecycle_fixtures.json');
   final Map<String, Object?> cases = fixture['cases']! as Map<String, Object?>;
 
   test('mount and prepare lifecycle matches the fixture', () {
@@ -78,20 +73,17 @@ void main() {
     motion.play();
     expect(motion.playing, (expected['afterPlay']! as Map<String, Object?>)['playing']);
     motion.advance(0.25);
-    final Map<String, Object?> afterAdvance =
-        expected['afterAdvance']! as Map<String, Object?>;
+    final Map<String, Object?> afterAdvance = expected['afterAdvance']! as Map<String, Object?>;
     expect(motion.progress, afterAdvance['progress']);
     expect(motion.tracks.single.progress, afterAdvance['trackProgress']);
     motion.pause();
     expect(motion.playing, (expected['afterPause']! as Map<String, Object?>)['playing']);
     motion.seek(0.75);
-    final Map<String, Object?> afterSeek =
-        expected['afterSeek']! as Map<String, Object?>;
+    final Map<String, Object?> afterSeek = expected['afterSeek']! as Map<String, Object?>;
     expect(motion.progress, afterSeek['progress']);
     expect(motion.tracks.single.progress, afterSeek['trackProgress']);
     motion.reverse();
-    final Map<String, Object?> afterReverse =
-        expected['afterReverse']! as Map<String, Object?>;
+    final Map<String, Object?> afterReverse = expected['afterReverse']! as Map<String, Object?>;
     expect(motion.progress, afterReverse['progress']);
     expect(motion.tracks.single.progress, afterReverse['trackProgress']);
     motion.dispose();

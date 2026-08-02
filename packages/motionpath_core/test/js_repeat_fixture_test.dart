@@ -1,15 +1,10 @@
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:motionpath_core/motionpath_core.dart';
 import 'package:test/test.dart';
 
+import 'support/fixture_support.dart';
+
 // Expected values are sourced from the versioned trigger fixture; no runtime
 // semantics are encoded in this harness.
-Map<String, Object?> _fixture() => jsonDecode(
-      File('test/fixtures/motionpath_repeat_fixtures.json').readAsStringSync(),
-    ) as Map<String, Object?>;
-
 Map<String, Object?> _case(Map<String, Object?> cases, String name) =>
     cases[name]! as Map<String, Object?>;
 
@@ -28,7 +23,8 @@ MotionPathTrackRuntime _track(String id, double duration) =>
     );
 
 void main() {
-  final Map<String, Object?> fixture = _fixture();
+  final Map<String, Object?> fixture =
+      readFixture('motionpath_repeat_fixtures.json');
   final Map<String, Object?> cases = fixture['cases']! as Map<String, Object?>;
   final double tolerance = _number(fixture['tolerance']);
 
