@@ -14,8 +14,8 @@ Already ported:
 - Spiral/Zuma: existing Flutter example, still needs a renderer-consumption audit because the current host retains some local patch plumbing.
 - Helix/depth: complete, PRs #124 through #126.
 - Walker: scene graph and real FK host merged, PRs #127 through #129.
-- Burst: scene contract and scroll-driven host merged, PRs #130 and #132.
-- Motorcycle: scene contract and host merged, PRs #131 and #133, with the vector-art asset decision recorded in `docs/COMPATIBILITY.md`.
+- Burst: scene contract and spawn host merged, PRs #130 and #132.
+- Motorcycle: scene contract and vector-art host merged, PRs #131 and #134.
 
 ## Remaining demo matrix
 
@@ -23,8 +23,8 @@ Already ported:
 |---:|---|---|---|---|
 | 1 | `/walker` | FK chain, scroll scrub, 14 bone tracks, world-space patches, tone layering | `walker_demo.dart` plus shared Walker scene builder | Complete, PRs #127 through #129 |
 | 2 | `/burst` | Scroll-driven radial burst, staggered transforms, opacity, scale, and color | `burst_demo.dart` plus sampled burst scene | Complete, PRs #130 and #132 |
-| 3 | `/moto` | Scroll-driven motorcycle assembly, nested transforms, image/asset composition | `motorcycle_demo.dart` plus asset contract | Complete, PRs #131 and #133 |
-| 4 | `/pasarmalam` | Multi-track festival scene, scroll orchestration, authored plugin payloads | `pasar_malam_demo.dart` plus scene contract | Next |
+| 3 | `/moto` | Scroll-driven motorcycle assembly, nested transforms, image/asset composition | `motorcycle_demo.dart` plus asset contract | Complete, PRs #131 and #134. Imagery is vector art by decision, recorded in `docs/COMPATIBILITY.md` |
+| 4 | `/pasarmalam` | Multi-track festival scene, scroll orchestration, authored plugin payloads | `pasar_malam_demo.dart` plus scene contract | Planned |
 | 5 | `/pasarmalam-observer` | Observer/input-output graph variant of Pasar Malam | `pasar_malam_observer_demo.dart` plus graph fixtures | Planned |
 | 6 | `/tower-defense` | Dynamic units, target/attack state, spawned children, interaction | `tower_defense_demo.dart` plus lifecycle contract | Planned |
 | 7 | `/hooks-demo` | Hook/runtime integration showcase and baseline consumer | `hooks_demo.dart` plus minimal project contract | Planned |
@@ -45,22 +45,8 @@ Safe parallel workstreams:
 
 - Pasar Malam and Tower Defense scene inventories can proceed independently.
 - Observer work follows the Pasar Malam base scene contract but its fixture inventory can start in parallel.
-- The example route shell below is independent of every remaining scene port.
 
 Do not parallelize edits to shared public renderer files without a dedicated contract PR first. Keep each demo in its own branch and PR.
-
-## Open cross-demo gap: no example route shell
-
-`example/lib/main.dart` still hardcodes a single `home:` page, currently
-`WalkerDemoPage`. Carousel, Helix, Burst, and Motorcycle are all merged and
-tested but unreachable from a running example app, so the "route exists and
-launches from the Flutter example" line of the audit checklist below is not
-satisfied for any of them.
-
-This is deliberately not folded into a scene PR. It needs its own PR that adds
-a demo index and named routes, plus a widget test that launches each host from
-the index. Do it before the Pasar Malam port so later demos land into a shell
-that already exists.
 
 ## Consistency audit checklist
 
@@ -75,9 +61,17 @@ For each port, compare the JS route against Flutter before marking complete:
 - Public APIs stay in package exports; demo helpers stay in `example/lib`.
 - Docs, phase status, changelog, and compatibility notes agree.
 
+## Known audit gap
+
+`example/lib/main.dart` still boots a single hard-coded page, so Carousel,
+Helix, Burst, and Motorcycle are reachable from tests but not from the running
+example app. The first checklist line stays open for every ported demo until a
+demo launcher lands. Track that as its own PR rather than folding it into a
+port.
+
 ## Current next tasks
 
-1. Add the example route shell: demo index, named routes, and a launch test per host.
+1. Add a demo launcher to `example/lib/main.dart` so every ported route is reachable from the running app.
 2. Inventory and port Pasar Malam, then its observer variant.
 3. Port Tower Defense, then Hooks Demo.
-4. Close the Spiral/Zuma renderer-consumption audit.
+4. Audit the Spiral/Zuma host for leftover local patch plumbing.
