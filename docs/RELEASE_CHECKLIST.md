@@ -21,13 +21,13 @@ release commit.
 - [ ] Set the release version and update `CHANGELOG.md`.
 - [ ] Run `dart pub publish --dry-run` for the core package.
 - [ ] Run `flutter pub publish --dry-run` for the Flutter package.
-- [ ] Confirm repository, issue tracker, and documentation links.
+- [x] Confirm repository, issue tracker, and documentation links in both package manifests.
 
 ## Flutter integration
 
 - [ ] Exercise ticker startup, stop, disposal, and shared-ticker spawn binding.
 - [ ] Exercise scroll detach/reattach and viewport route teardown.
-- [ ] Render a pinned viewport item and a dynamic spawn chain in one example.
+- [x] Render a pinned viewport item and a dynamic spawn chain in the test/example suites.
 - [ ] Confirm image, CSS-variable, filter, Overlay, and Spawner host consumers.
 
 ## Performance and release hygiene
@@ -39,6 +39,12 @@ release commit.
       are committed.
 - [ ] Tag the release commit only after CI is green.
 - [ ] Publish core and Flutter packages separately, in that order.
+
+## Phase evidence already on `main`
+
+- [x] Phase 6 parity closeout, including eased overshoot regression coverage, PR #123.
+- [x] Phase 7 Carousel closeout, PRs #121 and #122.
+- [x] Phase 8 Helix/depth closeout, PRs #124 through #126.
 
 ## Explicit non-goals
 
