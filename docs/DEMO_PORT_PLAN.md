@@ -1,6 +1,6 @@
 # JS demo port plan
 
-Updated 2026-08-02 against the JS demo route map in `apps/demo/src/App.jsx`.
+Updated 2026-08-03 against the JS demo route map in `apps/demo/src/App.jsx`.
 
 ## Scope
 
@@ -14,15 +14,17 @@ Already ported:
 - Spiral/Zuma: existing Flutter example, still needs a renderer-consumption audit because the current host retains some local patch plumbing.
 - Helix/depth: complete, PRs #124 through #126.
 - Walker: scene graph and real FK host merged, PRs #127 through #129.
+- Burst: scene contract and scroll-driven host merged, PRs #130 and #132.
+- Motorcycle: scene contract, host, and vector asset decision merged, PRs #131 and #133.
 
 ## Remaining demo matrix
 
 | Order | JS route | Source contract | Flutter target | Status |
 |---:|---|---|---|---|
 | 1 | `/walker` | FK chain, scroll scrub, 14 bone tracks, world-space patches, tone layering | `walker_demo.dart` plus shared Walker scene builder | Complete, PRs #127 through #129 |
-| 2 | `/burst` | Scroll-driven radial burst, staggered transforms, opacity, scale, and color | `burst_demo.dart` plus sampled burst scene | Scene contract merged in PR #130; host next |
-| 3 | `/moto` | Scroll-driven motorcycle assembly, nested transforms, image/asset composition | `motorcycle_demo.dart` plus asset contract | Scene contract PR #131, currently fixing test contract |
-| 4 | `/pasarmalam` | Multi-track festival scene, scroll orchestration, authored plugin payloads | `pasar_malam_demo.dart` plus scene contract | Planned |
+| 2 | `/burst` | Scroll-driven radial burst, staggered transforms, opacity, scale, and color | `burst_demo.dart` plus sampled burst scene | Complete, PRs #130 and #132 |
+| 3 | `/moto` | Scroll-driven motorcycle assembly, nested transforms, image/asset composition | `motorcycle_demo.dart` plus asset contract | Complete, PRs #131 and #133 |
+| 4 | `/pasarmalam` | Multi-track festival scene, scroll orchestration, authored plugin payloads | `pasar_malam_demo.dart` plus scene contract | Next |
 | 5 | `/pasarmalam-observer` | Observer/input-output graph variant of Pasar Malam | `pasar_malam_observer_demo.dart` plus graph fixtures | Planned |
 | 6 | `/tower-defense` | Dynamic units, target/attack state, spawned children, interaction | `tower_defense_demo.dart` plus lifecycle contract | Planned |
 | 7 | `/hooks-demo` | Hook/runtime integration showcase and baseline consumer | `hooks_demo.dart` plus minimal project contract | Planned |
@@ -41,9 +43,9 @@ Already ported:
 
 Safe parallel workstreams:
 
-- Burst host and Motorcycle asset/host work can proceed independently.
 - Pasar Malam and Tower Defense scene inventories can proceed independently.
 - Observer work follows the Pasar Malam base scene contract but its fixture inventory can start in parallel.
+- The Spiral/Zuma renderer-consumption audit is independent of every remaining port.
 
 Do not parallelize edits to shared public renderer files without a dedicated contract PR first. Keep each demo in its own branch and PR.
 
@@ -62,7 +64,8 @@ For each port, compare the JS route against Flutter before marking complete:
 
 ## Current next tasks
 
-1. Fix PR #131's Motorcycle test to assert the composed path plugin output (`x`, `y`, `rotation`, and opacity), not raw internal `path` metadata.
-2. Build the Burst host from PR #130's shared tracks.
-3. Build the Motorcycle host after its scene contract is green.
-4. Inventory and port Pasar Malam, then Tower Defense and Hooks Demo.
+1. Inventory the JS Pasar Malam route, then land its shared scene contract before any host work.
+2. Build the Pasar Malam host, then the observer variant on top of the same base contract.
+3. Inventory and port Tower Defense, then Hooks Demo.
+4. Run the Spiral/Zuma renderer-consumption audit and remove the remaining local patch plumbing.
+5. Add example routes for the ported demos: `main.dart` still launches Walker only.
