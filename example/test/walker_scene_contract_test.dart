@@ -15,12 +15,7 @@ void main() {
     pelvis.seek(1);
     expect(pelvis.compose()['x'], walkerEndX);
 
-    final thigh = walkerBoneTrack('leg-near-thigh');
-    thigh.seek(0);
-    final start = (thigh.compose()['boneRotation']! as num).toDouble();
-    thigh.seek(0.5);
-    final middle = (thigh.compose()['boneRotation']! as num).toDouble();
-    expect(start, closeTo(90, 1e-9));
-    expect(middle, closeTo(90, 1e-9));
+    expect(walkerBoneRotationAt('leg-near-thigh', 0), closeTo(90, 1e-9));
+    expect(walkerBoneRotationAt('leg-near-thigh', 0.5), closeTo(90, 1e-9));
   });
 }

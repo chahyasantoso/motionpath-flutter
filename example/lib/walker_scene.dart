@@ -66,11 +66,13 @@ const Map<String, double> walkerOffsets = <String, double>{
   'leg-near-foot': 56,
 };
 
+double _phaseAt(double progress) => progress * walkerCycles * math.pi * 2;
+
 List<MotionPathStop> _sample(double Function(double phase, double progress) fn) => <MotionPathStop>[
       for (int index = 0; index <= walkerSamples; index++)
         MotionPathStop(
           progress: index / walkerSamples,
-          value: fn(index / walkerSamples * walkerCycles * math.pi * 2, index / walkerSamples),
+          value: fn(_phaseAt(index / walkerSamples), index / walkerSamples),
         ),
     ];
 
@@ -93,27 +95,34 @@ MotionPathTrackRuntime walkerPelvisTrack() => _track('pelvis', <String, List<Mot
       'rotation': _sample((double phase, double progress) => 1.6 * math.sin(2 * phase)),
     });
 
+List<MotionPathStop> _boneRotationStops(String id) {
+  final bool far = id.contains('far');
+  if (id == 'head') {
+    return _sample((double phase, double progress) => -90 + 3 * math.sin(phase + 1.2));
+  }
+  if (id.contains('thigh')) {
+    return _sample((double phase, double progress) => 90 + 26 * math.sin(phase + (far ? math.pi : 0)));
+  }
+  if (id.contains('shin')) {
+    return _sample((double phase, double progress) => 115 + 21 * math.sin(phase + (far ? math.pi : 0) + 2.1));
+  }
+  if (id.contains('foot')) {
+    return _sample((double phase, double progress) => -8 + 12 * math.sin(phase + (far ? math.pi : 0) + 0.9));
+  }
+  return _hold(-90);
+}
+
+double walkerBoneRotationAt(String id, double progress) {
+  final List<MotionPathStop> stops = _boneRotationStops(id);
+  return (interpolateStops(stops, progress)! as num).toDouble();
+}
+
 MotionPathTrackRuntime walkerBoneTrack(String id) {
   final String parent = walkerParents[id]!;
   final double offset = walkerOffsets[id]!;
-  final bool far = id.contains('far');
-  final List<MotionPathStop> rotation = _hold(-90);
-  if (id == 'head') {
-    rotation.clear();
-    rotation.addAll(_sample((double phase, double progress) => -90 + 3 * math.sin(phase + 1.2)));
-  } else if (id.contains('thigh')) {
-    rotation.clear();
-    rotation.addAll(_sample((double phase, double progress) => 90 + 26 * math.sin(phase + (far ? math.pi : 0))));
-  } else if (id.contains('shin')) {
-    rotation.clear();
-    rotation.addAll(_sample((double phase, double progress) => 115 + 21 * math.sin(phase + (far ? math.pi : 0) + 2.1)));
-  } else if (id.contains('foot')) {
-    rotation.clear();
-    rotation.addAll(_sample((double phase, double progress) => -8 + 12 * math.sin(phase + (far ? math.pi : 0) + 0.9)));
-  }
   return _track(id, <String, List<MotionPathStop>>{
     'boneLength': _hold(offset),
-    'boneRotation': rotation,
+    'boneRotation': _boneRotationStops(id),
     'parentWorld': _hold(parent.hashCode.toDouble()),
   });
 }
