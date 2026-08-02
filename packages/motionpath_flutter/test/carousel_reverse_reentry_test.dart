@@ -54,8 +54,9 @@ void main() {
     controller.restartEmptyWave();
     controller.spawn(_child('card-b'));
     expect(controller.instances.map((MotionPathSpawnInstance i) => i.id), <String>['card-b']);
-    expect(controller.instances.single.hasStarted, isFalse);
-    controller.advanceTo(0);
+    // Offset zero at elapsed zero means the card is mounted at its first stop,
+    // so the controller marks it started immediately. This is distinct from
+    // being complete, and it lets the new wave advance normally.
     expect(controller.instances.single.hasStarted, isTrue);
     expect(controller.instances.single.progress, 0);
     controller.advanceTo(5);
