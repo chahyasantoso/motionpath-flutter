@@ -1,6 +1,6 @@
 # MotionPath Flutter session handoff
 
-Updated 2026-08-02 after PR #119 merged green.
+Updated 2026-08-02 after PR #120 merged green.
 
 ## Repo and workflow
 
@@ -13,7 +13,7 @@ Updated 2026-08-02 after PR #119 merged green.
 
 - Phases 0 through 5: Complete.
 - Phase 6 Cross-repository parity: Partial and near closeout. PRs #111 through #113 are merged; only the eased-overshoot divergence decision remains.
-- Phase 7 Carousel: Active. PRs #114 through #119 are merged, covering reverse scroll, stable card subtrees, overlap hit testing, reflow, teardown, geometry samples, and the shared scene contract.
+- Phase 7 Carousel: Active. PRs #114 through #120 are merged, covering reverse scroll, stable card subtrees, overlap hit testing, reflow, teardown, geometry samples, the shared scene contract, and the demo now consuming that shared scene.
 - Phase 8 Helix/depth: Blocked until Phase 6 and Phase 7 mature.
 - Phase 9 release hardening: Partial.
 
@@ -55,6 +55,7 @@ Authoritative closeout docs:
 - #117: Carousel teardown coverage for scroll/ticker binding disposal and controller hook cleanup. No drain semantics added; drain remains Spiral-only.
 - #118: representative geometry assertions at 0, 0.15, 0.5, 0.85, and 1 for composed position, tangent rotation, center anchor, opacity, scale, and deterministic patches.
 - #119: executable shared Carousel scene contract for five path points, quadratic controls, `autoRotate`, opacity boundaries, and 0.1 stagger.
+- #120: `example/lib/carousel_scene.dart` extracted as the single authored scene definition; `carousel_demo.dart` consumes `carouselCardTrack` and `carouselCardStagger`, and the duplicated path/opacity literal is gone.
 
 ## Next work, in order
 
@@ -65,10 +66,9 @@ Authoritative closeout docs:
 
 ### Phase 7 Carousel closeout
 
-1. Wire the shared scene builder/fixture from #119 into `example/lib/carousel_demo.dart`, eliminating the duplicated path/opacity literal.
-2. Add actual widget interaction coverage for forward scroll, reverse scroll, add, remove, and re-entry against the shared scene.
-3. Assert cards disappear at authored opacity/path boundaries in the widget host.
-4. Record any intentional Flutter/JS differences, then close Phase 7 docs.
+1. Add actual widget interaction coverage for forward scroll, reverse scroll, add, remove, and re-entry against the shared scene, in the real demo host.
+2. Assert card visibility in the widget host tracks the authored opacity stops, including cards hidden at the authored start boundary.
+3. Record any intentional Flutter/JS differences, then close Phase 7 docs.
 
 ### After Phases 6 and 7
 
@@ -86,7 +86,9 @@ Authoritative closeout docs:
 - Carousel does not use drain semantics. `drainOnComplete` belongs to Spiral-style scenes.
 - The scoped GlobalKey identity anchor is deliberate for current spawn wrappers; a stable host/render-object refactor could remove that overhead later.
 - Docs-only changes go straight to `main`; code changes need the full four-job gate.
+- The demo scene now lives in `example/lib/carousel_scene.dart`. Any authored change belongs there, not in `carousel_demo.dart`.
+- The demo's scroll range and the stage position mean a card only reaches the authored end boundary after the stage has scrolled out of the viewport, so end-boundary evidence stays at the scene and geometry level.
 
 ## Session result
 
-The parity suite is now well instrumented, and Carousel has coverage across interaction primitives, teardown, geometry, and scene mapping. This chat is safe to close. The next chat should start by wiring #119's shared scene definition into the demo, then add real widget interaction coverage, while keeping the eased-overshoot decision visible as the only Phase 6 blocker.
+The parity suite is well instrumented, Carousel has coverage across interaction primitives, teardown, geometry, and scene mapping, and the demo consumes the shared scene definition. The next chat should start by adding real widget interaction coverage in the demo host, then record intentional differences and close Phase 7, while keeping the eased-overshoot decision visible as the only Phase 6 blocker.

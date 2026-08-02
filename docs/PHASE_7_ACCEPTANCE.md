@@ -15,7 +15,8 @@ Phase 7 proves the shared renderer can support a real production-style scene wit
 - PR #116 added overlapping-card front-most hit testing and mid-chain removal/reflow coverage with no survivor teleport.
 - PR #117 added Carousel teardown coverage for scroll/ticker binding disposal and controller hook cleanup.
 - PR #118 added representative geometry assertions at 0, 0.15, 0.5, 0.85, and 1 for composed position, tangent rotation, center anchor output, opacity, scale, and deterministic patches.
-- PR #119 adds the shared executable scene contract for the five-point path, quadratic controls, `autoRotate`, opacity stops, and 0.1 stagger.
+- PR #119 added the shared executable scene contract for the five-point path, quadratic controls, `autoRotate`, opacity stops, and 0.1 stagger.
+- PR #120 moved the authored scene into `example/lib/carousel_scene.dart` and made the demo consume `carouselCardTrack` and `carouselCardStagger`, removing the second hand-copied scene definition.
 
 ## Remaining work
 
@@ -27,15 +28,14 @@ Phase 7 proves the shared renderer can support a real production-style scene wit
 
 ### P1: scene parity and interaction
 
-- Use the shared scene builder/fixture in the demo instead of maintaining a second hand-copied scene definition.
-- Add widget interaction coverage for forward scroll, reverse scroll, add, remove, and re-entry.
+- Add widget interaction coverage for forward scroll, reverse scroll, add, remove, and re-entry in the real demo host.
 - Record intentional Flutter/JS scene differences.
 
 ### P1: visual regression
 
 - Keep the representative sampled geometry assertions green. A golden is optional; deterministic patch assertions are the current regression strategy.
-- Assert cards disappear at authored opacity/path boundaries in the actual widget host.
+- Assert host card visibility tracks the authored opacity stops. Note the demo's scroll range: a card only reaches the authored end boundary after the stage has left the viewport, so end-boundary evidence stays at the scene and geometry level while the host covers the start boundary and the fade ramps.
 
 ## Closeout checklist
 
-Phase 7 can move to **Complete** when the demo consumes the shared scene definition, the interaction/teardown coverage is green, representative trajectory evidence is green, and intentional differences are documented.
+Phase 7 can move to **Complete** when the interaction coverage in the demo host is green, representative trajectory evidence is green, and intentional differences are documented. The demo now consumes the shared scene definition.
