@@ -48,6 +48,10 @@ void main() {
     controller.advanceTo(10);
     expect(controller.instances, isEmpty);
 
+    // A new wave must explicitly restart the playhead after the previous wave
+    // drained. Otherwise the controller correctly treats the new child as
+    // already complete at the retained elapsed time.
+    controller.restartEmptyWave();
     controller.spawn(_child('card-b'));
     expect(controller.instances.map((MotionPathSpawnInstance i) => i.id), <String>['card-b']);
     expect(controller.instances.single.hasStarted, isFalse);
