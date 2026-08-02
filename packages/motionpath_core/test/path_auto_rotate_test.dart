@@ -32,9 +32,9 @@ MotionPathTrackRuntime _authored(Map<String, Object?> pathKeyframe) {
   );
 }
 
-List<Object?> _ramp() => <Object?>[
+List<Object?> _ramp({String? ease}) => <Object?>[
   <String, Object?>{'p': 0, 'v': 0},
-  <String, Object?>{'p': 1, 'v': 1},
+  <String, Object?>{'p': 1, 'v': 1, if (ease != null) 'ease': ease},
 ];
 
 void main() {
@@ -61,7 +61,6 @@ void main() {
       'stops': _ramp(),
     });
     track.seek(0.5);
-    // Screen space: +y is down, so a downward heading is +90 degrees.
     expect(_n(track.compose()['rotation']), closeTo(90, 1e-6));
   });
 
@@ -78,9 +77,20 @@ void main() {
     final double start = _n(track.compose()['rotation']);
     track.seek(1);
     final double end = _n(track.compose()['rotation']);
-    // The quadratic leaves horizontal and arrives vertical.
     expect(start, closeTo(0, 1e-6));
     expect(end, closeTo(90, 1e-6));
+  });
+
+  test('an eased path uses the authored stop pace before sampling', () {
+    final MotionPathTrackRuntime track = _authored(<String, Object?>{
+      'points': <Object?>[
+        <String, Object?>{'x': 0, 'y': 0},
+        <String, Object?>{'x': 100, 'y': 0},
+      ],
+      'stops': _ramp(ease: 'power1.in'),
+    });
+    track.seek(0.5);
+    expect(_n(track.compose()['x']), closeTo(25, 1e-6));
   });
 
   test('a path without autoRotate emits no rotation at all', () {
