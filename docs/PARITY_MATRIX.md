@@ -13,6 +13,29 @@ Source fixture: `packages/motionpath_core/test/fixtures/motionpath_parity_fixtur
 
 The JS and Flutter renderer contracts intentionally serialize colors and image frames differently: JS emits CSS strings, while Flutter core emits packed ARGB values and frame names. The test normalizes only those renderer-boundary representations; it does not loosen numeric comparison or ignore missing keys.
 
+## Trajectory fixtures
+
+Source fixture: `packages/motionpath_core/test/fixtures/motionpath_trajectory_fixtures.json`, consumed by `packages/motionpath_core/test/js_trajectory_parity_test.dart`. The five-point grid above catches a wrong curve, but it does not catch drift in arc-length pacing, color channel rounding, frame-index boundaries, or the exact moment a key leaves the patch. These cases sample nine progress points across a full normalized timeline and assert every sample, including the complete key set.
+
+| JS case | Flutter coverage | Comparison rule | Status |
+|---|---|---|---|
+| `card` | position `x`/`y`/`z`, `opacity`, `scale`, `color` | numeric `1e-9`, colors normalized to ARGB, exact key set | covered |
+| `sprite` | image frame selection | frame URL normalized to frame name | covered |
+| `badge` | patch disappearance | exact key set per sample, payload equality while present | covered |
+
+Each track resolves plugins through the default registry rather than an explicit list, so these cases also cover registry resolution for `path`, `imageSequence`, `overlay`, and the property passthrough.
+
+### Provenance, stated plainly
+
+These expectations are hand-derived closed form from the JS v4 contract. They are not generator output, which is weaker evidence than `motionpath_parity_fixtures.json`, so every case is built to make its expected values exactly computable rather than approximated:
+
+- The three path segments are axis-aligned and exactly 100 units each, so total arc length is 300 and progress `p` samples distance `300p`.
+- A straight cubic with evenly spaced control points is exactly linear in `t`, so arc-length reparameterization contributes no approximation error to the expected position.
+- Color channels are `round(255p)`, and the frame index is `round(p * (frames - 1))`.
+- The sample grid uses eighths, so every intermediate value is exact in binary floating point and the residual is bounded by accumulated segment-length error, far inside the `1e-9` tolerance.
+
+Replace these with exported samples when the JS side ships a trajectory generator. Until then, treat a failure here as a real behavioral drift and re-derive the closed form before touching the fixture.
+
 ## Known contract asymmetry: per-stop `ease` is not universally consumed
 
 Discovered while stabilizing `js_parity_fixture_test.dart` (2026-07-31, post-merge of PR #65).
@@ -37,9 +60,15 @@ index at each sample point. That workaround is correct for a test that already k
 but it is not a fix for the underlying contract gap — a schema author (or an LLM generating a
 project) has no way to discover this asymmetry from the schema shape alone.
 
+**Partially addressed by PR #98.** `path` now applies authored pacing through its own payload:
+`_pacedProgress` reads the `stops` and `ease` carried inside the `path` config and remaps raw
+progress before sampling, so path timing is authorable. The gap above still stands for
+`imageSequence`, and for an `ease` attached to a `path` *keyframe* stop rather than to the
+payload's pacing stops.
+
 **Action item, not yet implemented:** either (a) make `MotionPathTrackRuntime` validate/warn
 when a non-terminal-consuming plugin (`path`, `imageSequence`) receives a stop with a non-default
 `ease`, or (b) extend both plugins to accept and apply per-stop easing the same way the standard
 interpolation path does, for full authoring parity with transform/filter/color tracks. Until one
-of these lands, treat `ease` on `path`/`imageSequence` keyframes as unsupported and avoid
+of these lands, treat `ease` on `imageSequence` keyframes as unsupported and avoid
 authoring it in production schemas.
