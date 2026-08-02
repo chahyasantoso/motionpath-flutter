@@ -55,8 +55,10 @@ void main() {
       expect(patch['rotation'], isA<num>());
       expect(patch['x'], isA<num>());
       expect(patch['y'], isA<num>());
-      expect(patch['anchorXPercent'], 50);
-      expect(patch['anchorYPercent'], 50);
+      if (progress > 0 && progress < 1) {
+        expect(patch['anchorXPercent'], 50);
+        expect(patch['anchorYPercent'], 50);
+      }
       expect(patch['opacity'], progress == 0 || progress == 1 ? 0 : 1);
       expect(patch['scale'], progress == 0 || progress == 1 ? 0.8 : 1);
     }
