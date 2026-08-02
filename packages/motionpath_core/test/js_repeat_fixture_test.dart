@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:motionpath_core/motionpath_core.dart';
 import 'package:test/test.dart';
 
+// Expected values are sourced from the versioned trigger fixture; no runtime
+// semantics are encoded in this harness.
 Map<String, Object?> _fixture() => jsonDecode(
       File('test/fixtures/motionpath_repeat_fixtures.json').readAsStringSync(),
     ) as Map<String, Object?>;
