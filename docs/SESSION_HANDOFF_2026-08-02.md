@@ -1,6 +1,6 @@
 # MotionPath Flutter session handoff
 
-Updated 2026-08-02 after PR #115 merged green.
+Updated 2026-08-02 after PR #119 merged green.
 
 ## Repo and workflow
 
@@ -13,7 +13,7 @@ Updated 2026-08-02 after PR #115 merged green.
 
 - Phases 0 through 5: Complete.
 - Phase 6 Cross-repository parity: Partial and near closeout. PRs #111 through #113 are merged; only the eased-overshoot divergence decision remains.
-- Phase 7 Carousel: Active. PR #114 covers reverse scrubbing. PR #115 proves stable card subtrees and records the scoped per-card GlobalKey tradeoff. Next is overlap hit testing plus mid-chain reflow coverage.
+- Phase 7 Carousel: Active. PRs #114 through #119 are merged, covering reverse scroll, stable card subtrees, overlap hit testing, reflow, teardown, geometry samples, and the shared scene contract.
 - Phase 8 Helix/depth: Blocked until Phase 6 and Phase 7 mature.
 - Phase 9 release hardening: Partial.
 
@@ -26,60 +26,67 @@ Authoritative closeout docs:
 
 ## Merged implementation slices
 
-- #91: fixed default plugin registration and authored `path`/`imageSequence` payloads crossing the JSON boundary.
-- #92: added path `autoRotate` tangent rotation.
-- #93: added the scroll-driven Carousel example with shared patches, dynamic children, stagger, add/remove, and front-most hit testing.
-- #94: added Carousel mount and real ListView scrubbing coverage; fixed transformed card text overflow.
-- #95: parsed time triggers now autoplay by default; explicit pause, manual, and scroll semantics remain distinct.
-- #96: added validation for malformed path and image payloads; fixed analyzer imports/lints before merge.
-- #97: fixed repeat completion math so `repeat` means repeat count, including yoyo and repeat-delay boundaries.
-- #98: path stop easing now applies before physical-distance sampling; fixed missing interpolation imports and preserved path stops for plain paths.
-- #99: added path anchors: `center`, `none`, and explicit `{xPercent, yPercent}`; fixed payload carry-through and restored precise diagnostics.
-- #100: matched JS path validation edge cases.
-- #101: rejected path combined with explicit `x` or `y` at validation time.
-- #102: added one-shot motion completion events with restart and seek-back re-arming.
-- #103: locked reverse, play/pause, seek-back, completion, unmount, and destroy lifecycle coverage.
-- #104: added Overlay and Spawner plugin edge coverage.
-- #105: added ImageSequence stop type and frame-index validation.
-- #106: added whole-timeline trajectory fixtures with exact key-set assertions.
-- #107: added observation graph parity fixtures.
-- #108: added the lifecycle parity fixture matrix.
-- #109: added repeat, yoyo, delay, repeat delay, stagger, and completion fixtures.
-- #110: added the malformed-project diagnostics matrix.
-- #111: extracted the shared JSON fixture loader into `test/support/fixture_support.dart`.
-- #112: added dedicated filter and CSS variable parity fixtures.
-- #113: added the fixture index and metadata guard, including the fix for fixture-specific sample shapes.
-- #114: added reverse-scroll coverage while preserving card identity and settled offsets.
-- #115: proved stable card subtrees survive patch updates. The spawn view now caches each expensive child by instance id and uses a scoped per-card `GlobalKey` as the identity anchor.
+- #91: authored `path` and `imageSequence` payloads cross the JSON boundary and resolve through the default plugin registry.
+- #92: path `autoRotate` emits tangent-aligned rotation.
+- #93: scroll-driven Carousel example with dynamic children, shared patches, stagger, add/remove interaction, and front-most hit testing.
+- #94: Carousel mount and real ListView scrubbing coverage; transformed card text overflow fix.
+- #95: time autoplay defaults and distinct pause/manual/scroll semantics.
+- #96: malformed path/image validation and analyzer cleanup.
+- #97: repeat count, yoyo, delay, repeat-delay boundaries and completion math.
+- #98: path stop easing before physical-distance sampling.
+- #99: path anchors: `center`, `none`, explicit percentages.
+- #100: JS path validation edge cases.
+- #101: path plus explicit x/y rejected at validation.
+- #102: one-shot completion events with restart/seek-back re-arming.
+- #103: reverse, play/pause, seek-back, completion, unmount, destroy lifecycle coverage.
+- #104: Overlay and Spawner plugin edge contracts.
+- #105: ImageSequence stop type and frame-index validation.
+- #106: whole-timeline trajectory fixtures with exact key-set assertions.
+- #107: observation graph parity fixtures.
+- #108: lifecycle parity fixture matrix.
+- #109: repeat/yoyo/delay/repeat-delay/stagger/completion fixtures.
+- #110: malformed-project diagnostics matrix.
+- #111: shared JSON fixture loader.
+- #112: dedicated filter and CSS variable parity fixtures.
+- #113: fixture index and metadata guard.
+- #114: reverse-scroll coverage preserving card identity, offsets, and playheads.
+- #115: stable card subtrees across patch updates, with a scoped per-card `GlobalKey` identity anchor. A stable host/render-object design is a future alternative, not current scope.
+- #116: overlapping-card front-most hit testing and middle-card removal/reflow without teleporting survivors.
+- #117: Carousel teardown coverage for scroll/ticker binding disposal and controller hook cleanup. No drain semantics added; drain remains Spiral-only.
+- #118: representative geometry assertions at 0, 0.15, 0.5, 0.85, and 1 for composed position, tangent rotation, center anchor, opacity, scale, and deterministic patches.
+- #119: executable shared Carousel scene contract for five path points, quadratic controls, `autoRotate`, opacity boundaries, and 0.1 stagger.
 
 ## Next work, in order
 
 ### Phase 6 closeout
 
-1. Resolve the eased-overshoot divergence candidate: confirm against JS, then fix the clamp or document it in `docs/COMPATIBILITY.md` with an owner and a regression test.
-2. Close Phase 6 only when that decision and test are green or explicitly documented as excluded.
+1. Resolve eased-overshoot divergence: confirm the JS behavior, then either remove the numeric clamp and add parity fixtures or document the intentional divergence with owner, reason, and regression test.
+2. Mark Phase 6 complete only after that decision is tested and recorded.
 
 ### Phase 7 Carousel closeout
 
-1. Add overlapping-card front-most hit-test coverage tied to the actual spawn view.
-2. Add mid-chain removal/reflow coverage and prove survivors do not teleport.
-3. Add teardown coverage while cards are mounted and after the scroll host is disposed.
-4. Add representative geometry assertions or a stable golden at progress 0, 0.15, 0.5, 0.85, and 1.
-5. Add the shared JS scene builder/fixture and record intentional differences.
-6. Close Phase 7 docs only after all acceptance items are green.
+1. Wire the shared scene builder/fixture from #119 into `example/lib/carousel_demo.dart`, eliminating the duplicated path/opacity literal.
+2. Add actual widget interaction coverage for forward scroll, reverse scroll, add, remove, and re-entry against the shared scene.
+3. Assert cards disappear at authored opacity/path boundaries in the widget host.
+4. Record any intentional Flutter/JS differences, then close Phase 7 docs.
+
+### After Phases 6 and 7
+
+- Re-evaluate the Phase 8 Helix/depth gate.
+- Then tackle Phase 9 release hardening: publishability, API docs, security, and release checklist evidence.
 
 ## Known sharp edges
 
-- Path payloads keep points plus metadata such as stops, autoRotate, and anchor. If metadata is dropped in `propertiesFromTrack`, the plugin silently loses behavior.
-- `path_plugin.dart` needs both `interpolation/interpolator.dart` and `interpolation/easing.dart` imports.
-- Preserve existing test coverage when adding validation cases. Do not replace a whole test file with a reduced subset.
-- Analyzer is strict and CI runs `dart analyze --format machine` plus all tests. Fix unused imports and curly-brace lint findings before waiting on CI.
+- Path payload metadata (`stops`, `autoRotate`, `anchor`) must survive `propertiesFromTrack`.
+- `path_plugin.dart` needs both interpolation imports.
+- Preserve existing test coverage when adding validation cases.
+- Analyzer is strict: run analyze before waiting on CI.
 - `repeat` is repeat count, so total cycles are `repeat + 1`; repeat delays occur only between cycles.
-- Value interpolation clamps `t` to `[0, 1]`, so overshooting eases never overshoot. Avoid `back.*` and `elastic.*` in value fixtures until that is resolved.
-- The Carousel does not use drain semantics. `drainOnComplete` belongs to Spiral-style scenes and must not leak into Carousel tests or docs.
-- The stable card-subtree fix intentionally uses a per-card GlobalKey. A stable host/render-object design could avoid GlobalKey overhead, but that is a separate refactor, not a reason to destabilize the current green contract.
+- Value interpolation clamps `t` to `[0, 1]`; avoid overshooting value fixtures until the divergence decision is made.
+- Carousel does not use drain semantics. `drainOnComplete` belongs to Spiral-style scenes.
+- The scoped GlobalKey identity anchor is deliberate for current spawn wrappers; a stable host/render-object refactor could remove that overhead later.
 - Docs-only changes go straight to `main`; code changes need the full four-job gate.
 
 ## Session result
 
-Phase 6 is near complete: plugin fixtures, shared loader tooling, and the fixture index are merged. Phase 7 now has reverse-scroll and stable subtree evidence, with the GlobalKey tradeoff documented. The next code slice is overlap hit testing plus mid-chain reflow, then teardown and geometry coverage.
+The parity suite is now well instrumented, and Carousel has coverage across interaction primitives, teardown, geometry, and scene mapping. This chat is safe to close. The next chat should start by wiring #119's shared scene definition into the demo, then add real widget interaction coverage, while keeping the eased-overshoot decision visible as the only Phase 6 blocker.
