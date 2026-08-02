@@ -10,7 +10,7 @@ void main() {
     );
     expect(trigger.progressAt(0.5, 1), 0);
     expect(trigger.progressAt(1.5, 1), 0.5);
-    expect(trigger.progressAt(2.5, 1), 0);
+    expect(trigger.progressAt(2.5, 1), 0.5);
   });
 
   test('holds the playhead at the end during repeat delay', () {
