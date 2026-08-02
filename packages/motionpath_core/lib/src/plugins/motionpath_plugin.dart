@@ -1,6 +1,11 @@
 import 'package:meta/meta.dart';
 
 import '../math/fk_math.dart';
+import 'css_variable_plugin.dart';
+import 'filter_plugin.dart';
+import 'image_sequence_plugin.dart';
+import 'path_plugin.dart';
+import 'scene_plugin.dart';
 
 typedef PatchComposer =
     Map<String, Object?>? Function(Map<String, Object?> raw);
@@ -56,6 +61,26 @@ const MotionPathPlugin forwardKinematicsPlugin = MotionPathPlugin(
   compose: _composeForwardKinematics,
 );
 
+/// Every plugin a runtime resolves from authored keys by default.
+///
+/// A plugin that ships but is never registered is dead code. The registry falls
+/// back to a passthrough for any unclaimed key, so an authored `path` used to
+/// reach the renderer as raw geometry instead of a sampled position, and an
+/// authored `imageSequence` never selected a frame. Every entry here is inert
+/// until its own key is authored, so registering the shipped set costs nothing
+/// for tracks that do not use it.
+///
+/// A host that wants a different set still passes `plugins:` explicitly.
+const List<MotionPathPlugin> kMotionPathDefaultPlugins = <MotionPathPlugin>[
+  forwardKinematicsPlugin,
+  pathPlugin,
+  imageSequencePlugin,
+  filterPlugin,
+  cssVariablePlugin,
+  overlayPlugin,
+  spawnerPlugin,
+];
+
 MotionPathPlugin passthroughPlugin(List<String> keys) {
   final List<String> owned = List<String>.unmodifiable(keys);
   return MotionPathPlugin(
@@ -93,7 +118,7 @@ class MotionPathPluginRegistry {
   MotionPathPluginRegistry({List<MotionPathPlugin>? plugins})
     : _plugins = <MotionPathPlugin>[] {
     for (final MotionPathPlugin plugin
-        in plugins ?? const <MotionPathPlugin>[forwardKinematicsPlugin]) {
+        in plugins ?? kMotionPathDefaultPlugins) {
       register(plugin);
     }
   }
