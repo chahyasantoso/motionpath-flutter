@@ -14,16 +14,16 @@ double _number(Object? value) => (value! as num).toDouble();
 Map<String, Object?> _case(Map<String, Object?> cases, String name) =>
     cases[name]! as Map<String, Object?>;
 
-MotionPathTrack _rampTrack(
+Map<String, Object?> _rampTrack(
   String id,
   Map<String, Object?> keyframes, {
   List<Map<String, Object?>> observes = const <Map<String, Object?>>[],
-}) => MotionPathTrack(
-      id: id,
-      duration: 1,
-      keyframes: keyframes,
-      observes: observes,
-    );
+}) => <String, Object?>{
+      'id': id,
+      'duration': 1,
+      'keyframes': keyframes,
+      'observes': observes,
+    };
 
 Map<String, Object?> _ramp(num from, num to) => <String, Object?>{
       'stops': <Object?>[
