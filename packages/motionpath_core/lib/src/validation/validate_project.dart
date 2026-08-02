@@ -1,5 +1,4 @@
 import '../contract/motionpath_types.dart';
-import '../graph/observation_graph.dart';
 import 'easing_rules.dart';
 import 'finite_number_rules.dart';
 import 'payload_rules.dart';

@@ -87,7 +87,9 @@ class MotionPathTrackRuntime implements MotionPathLayoutChild {
     _onChildRemoved?.call(child);
     for (final MotionPathReflowTarget target in layoutDelegate.computeReflow(siblings, child, stagger: child._staggerOffset)) {
       final MotionPathLayoutChild moved = target.child;
-      if (moved is! MotionPathTrackRuntime) continue;
+      if (moved is! MotionPathTrackRuntime) {
+        continue;
+      }
       moved._currentOffset = target.offset;
       _onChildReflowed?.call(moved, target.offset);
     }
@@ -119,14 +121,18 @@ class MotionPathTrackRuntime implements MotionPathLayoutChild {
     ctx[this] = null;
     Map<String, Object?> raw = rawData ?? snapshot();
     for (final MotionPathObservation observation in _observed) {
-      if (!observation.isInput) continue;
+      if (!observation.isInput) {
+        continue;
+      }
       final String? key = observation.input;
       if (key == null || key.isEmpty) throw StateError('Track "$id" contains an input observation without a target key.');
       raw = <String, Object?>{...raw, key: observation.source.compose(context: ctx)};
     }
     Map<String, Object?> patch = composePatch(plugins, raw);
     for (final MotionPathObservation observation in _observed) {
-      if (!observation.isInput) patch = mergePatches(patch, observation.source.compose(context: ctx));
+      if (!observation.isInput) {
+        patch = mergePatches(patch, observation.source.compose(context: ctx));
+      }
     }
     ctx[this] = patch;
     return patch;
@@ -163,52 +169,4 @@ ValueBlend blendForProperty(String propertyKey) => kMotionPathColorKeys.contains
 /// Keyframe keys whose plugin samples a static authored payload.
 ///
 /// These keyframes carry their data outside `stops`: a `path` owns `points`
-/// and an `imageSequence` owns `frames`. Their stops describe the authored
-/// progress ramp, which this runtime already takes from the track playhead, so
-/// the payload is what has to survive interpolation and reach the plugin.
-/// Interpolating the stop values instead handed the plugin a bare number, and
-/// the track then composed no position and no frame at all.
-const Map<String, String> kMotionPathStaticPayloadKeys = <String, String>{
-  'path': 'points',
-  'imageSequence': 'frames',
-};
-
-Object _keyframePayload(Map<String, Object?> config, String propertyKey, String payloadKey) {
-  final Object? payload = config[payloadKey];
-  if (payload is! List<Object?> || payload.isEmpty) {
-    throw ArgumentError.value(payload, payloadKey, 'A "$propertyKey" keyframe requires a non-empty "$payloadKey" list');
-  }
-  final List<Object?> entries = List<Object?>.unmodifiable(payload);
-  // autoRotate has to ride along with the geometry: the plugin reads one raw
-  // value and needs both to emit a tangent. Plain geometry stays a bare list so
-  // a host can still hand the plugin nodes directly.
-  if (propertyKey != 'path' || config['autoRotate'] != true) return entries;
-  return Map<String, Object?>.unmodifiable(<String, Object?>{'points': entries, 'autoRotate': true});
-}
-
-List<MotionPathStop> stopsFromKeyframe(Object? raw, {String propertyKey = ''}) {
-  final Map<String, Object?> config = asStringKeyedMap(raw);
-  final Object? rawStops = config['stops'];
-  if (rawStops is! List<Object?>) return const <MotionPathStop>[];
-  final Easing keyframeEase = resolveEasing(config['ease']);
-  final bool isColor = kMotionPathColorKeys.contains(propertyKey);
-  final String? payloadKey = kMotionPathStaticPayloadKeys[propertyKey];
-  final Object? payload = payloadKey == null ? null : _keyframePayload(config, propertyKey, payloadKey);
-  final List<MotionPathStop> result = <MotionPathStop>[];
-  for (final Object? candidate in rawStops) {
-    final Map<String, Object?> stop = asStringKeyedMap(candidate);
-    if (stop.isEmpty) continue;
-    final Object? progress = stop['p'];
-    final Object? value = stop['v'];
-    result.add(MotionPathStop(progress: progress is num ? progress.toDouble() : 0, value: payload ?? (isColor ? (parseColorArgb(value) ?? value) : value), ease: stop.containsKey('ease') ? resolveEasing(stop['ease']) : keyframeEase));
-  }
-  return List<MotionPathStop>.unmodifiable(result);
-}
-Map<String, List<MotionPathStop>> propertiesFromTrack(MotionPathTrack track) {
-  final Map<String, List<MotionPathStop>> result = <String, List<MotionPathStop>>{};
-  for (final MapEntry<String, Object?> entry in track.keyframes.entries) {
-    final List<MotionPathStop> stops = stopsFromKeyframe(entry.value, propertyKey: entry.key);
-    if (stops.isNotEmpty) result[entry.key] = stops;
-  }
-  return result;
-}
+/// and an `imageSequence` owns `frames`. Their stops describe the authored\n/// progress ramp, which this runtime already takes from the track playhead, so\n/// the payload is what has to survive interpolation and reach the plugin.\n/// Interpolating the stop values instead handed the plugin a bare number, and\n/// the track then composed no position and no frame at all.\nconst Map<String, String> kMotionPathStaticPayloadKeys = <String, String>{\n  'path': 'points',\n  'imageSequence': 'frames',\n};\n\nObject _keyframePayload(Map<String, Object?> config, String propertyKey, String payloadKey) {\n  final Object? payload = config[payloadKey];\n  if (payload is! List<Object?> || payload.isEmpty) {\n    throw ArgumentError.value(payload, payloadKey, 'A "\$propertyKey" keyframe requires a non-empty "\$payloadKey" list');\n  }\n  final List<Object?> entries = List<Object?>.unmodifiable(payload);\n  // autoRotate has to ride along with the geometry: the plugin reads one raw\n  // value and needs both to emit a tangent. Plain geometry stays a bare list so\n  // a host can still hand the plugin nodes directly.\n  if (propertyKey != 'path' || config['autoRotate'] != true) return entries;\n  return Map<String, Object?>.unmodifiable(<String, Object?>{'points': entries, 'autoRotate': true});\n}\n\nList<MotionPathStop> stopsFromKeyframe(Object? raw, {String propertyKey = ''}) {\n  final Map<String, Object?> config = asStringKeyedMap(raw);\n  final Object? rawStops = config['stops'];\n  if (rawStops is! List<Object?>) return const <MotionPathStop>[];\n  final Easing keyframeEase = resolveEasing(config['ease']);\n  final bool isColor = kMotionPathColorKeys.contains(propertyKey);\n  final String? payloadKey = kMotionPathStaticPayloadKeys[propertyKey];\n  final Object? payload = payloadKey == null ? null : _keyframePayload(config, propertyKey, payloadKey);\n  final List<MotionPathStop> result = <MotionPathStop>[];\n  for (final Object? candidate in rawStops) {\n    final Map<String, Object?> stop = asStringKeyedMap(candidate);\n    if (stop.isEmpty) continue;\n    final Object? progress = stop['p'];\n    final Object? value = stop['v'];\n    result.add(MotionPathStop(progress: progress is num ? progress.toDouble() : 0, value: payload ?? (isColor ? (parseColorArgb(value) ?? value) : value), ease: stop.containsKey('ease') ? resolveEasing(stop['ease']) : keyframeEase));\n  }\n  return List<MotionPathStop>.unmodifiable(result);\n}\nMap<String, List<MotionPathStop>> propertiesFromTrack(MotionPathTrack track) {\n  final Map<String, List<MotionPathStop>> result = <String, List<MotionPathStop>>{};\n  for (final MapEntry<String, Object?> entry in track.keyframes.entries) {\n    final List<MotionPathStop> stops = stopsFromKeyframe(entry.value, propertyKey: entry.key);\n    if (stops.isNotEmpty) result[entry.key] = stops;\n  }\n  return result;\n}\n
