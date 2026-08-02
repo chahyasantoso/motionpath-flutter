@@ -40,9 +40,14 @@ class MotionPathTrigger {
     final Object? repeat = json['repeat'];
     final Object? repeatDelay = json['repeatDelay'];
     final Object? delay = json['delay'];
+    // The JS runtime's time delegate autoplays unless explicitly paused.
+    // Manual remains paused by definition; scroll is driven by its host.
+    final bool autoplay = json.containsKey('autoplay')
+        ? json['autoplay'] == true
+        : type == MotionPathTriggerType.time;
     return MotionPathTrigger(
       type: type,
-      autoplay: json['autoplay'] == true,
+      autoplay: autoplay,
       repeat: repeat is num ? repeat.toInt() : 0,
       yoyo: json['yoyo'] == true,
       repeatDelay: repeatDelay is num ? repeatDelay.toDouble() : 0,

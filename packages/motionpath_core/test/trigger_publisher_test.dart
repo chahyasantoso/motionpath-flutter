@@ -13,6 +13,34 @@ void main() {
     expect(trigger.progressAt(2.5, 1), 0.5);
   });
 
+  test('defaults parsed time triggers to autoplay like the JS runtime', () {
+    final MotionPathTrigger trigger = MotionPathTrigger.fromJson(
+      <String, Object?>{'type': 'time'},
+    );
+    expect(trigger.autoplay, isTrue);
+  });
+
+  test('honours explicit autoplay false and keeps manual paused', () {
+    expect(
+      MotionPathTrigger.fromJson(
+        <String, Object?>{'type': 'time', 'autoplay': false},
+      ).autoplay,
+      isFalse,
+    );
+    expect(
+      MotionPathTrigger.fromJson(<String, Object?>{'type': 'manual'}).autoplay,
+      isFalse,
+    );
+  });
+
+  test('scroll remains host-driven even without an autoplay field', () {
+    final MotionPathTrigger trigger = MotionPathTrigger.fromJson(
+      <String, Object?>{'type': 'scroll', 'scrub': true},
+    );
+    expect(trigger.autoplay, isFalse);
+    expect(trigger.isScrub, isTrue);
+  });
+
   test('reads trigger settings from authored JSON', () {
     final MotionPathTrigger trigger = MotionPathTrigger.fromJson(
       <String, Object?>{'type': 'scroll', 'scrub': true, 'autoplay': true},
