@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:motionpath_core/motionpath_core.dart';
-import 'package:motionpath_flutter/motionpath_flutter.dart';
 
 const List<Object?> _points = <Object?>[
   <String, Object?>{'x': -100, 'y': 50},
@@ -12,7 +11,7 @@ MotionPathTrackRuntime _card() => MotionPathTrackRuntime(
       'carousel-card',
       properties: <String, List<MotionPathStop>>{
         'path': <MotionPathStop>[
-          MotionPathStop(
+          const MotionPathStop(
             progress: 0,
             value: <String, Object?>{
               'points': _points,
@@ -20,7 +19,7 @@ MotionPathTrackRuntime _card() => MotionPathTrackRuntime(
               'anchor': 'center',
             },
           ),
-          MotionPathStop(
+          const MotionPathStop(
             progress: 1,
             value: <String, Object?>{
               'points': _points,
