@@ -22,7 +22,7 @@ void main() {
     expect(trigger.progressAt(1.25, 1), 1);
     expect(trigger.progressAt(1.5, 1), 0);
     expect(trigger.isFinished(1.49, 1), isFalse);
-    expect(trigger.isFinished(1.5, 1), isFalse);
+    expect(trigger.isFinished(2.49, 1), isFalse);
     expect(trigger.isFinished(2.5, 1), isTrue);
   });
 
@@ -33,9 +33,9 @@ void main() {
       delay: 0.5,
     );
     // delay + three one-second cycles plus two inter-cycle pauses.
-    expect(trigger.isFinished(3.0, 1), isFalse);
-    expect(trigger.isFinished(3.5, 1), isTrue);
-    expect(trigger.progressAt(3.5, 1), 1);
+    expect(trigger.isFinished(3.99, 1), isFalse);
+    expect(trigger.isFinished(4.0, 1), isTrue);
+    expect(trigger.progressAt(4.0, 1), 1);
   });
 
   test('defaults parsed time triggers to autoplay like the JS runtime', () {
