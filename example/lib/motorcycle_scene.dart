@@ -38,7 +38,7 @@ const List<Map<String, Object?>> motorcycleStreakBNodes = <Map<String, Object?>>
   <String, Object?>{'x': 1400, 'y': 470},
 ];
 
-List<MotionPathStop> _pathStops(List<Map<String, Object?>> points, {double start = 0, double end = 1}) => <MotionPathStop>[
+List<MotionPathStop> _pathStops(List<Map<String, Object?>> points) => <MotionPathStop>[
       MotionPathStop(progress: 0, value: <String, Object?>{'points': points, 'autoRotate': true}),
       MotionPathStop(progress: 1, value: <String, Object?>{'points': points, 'autoRotate': true}),
     ];
