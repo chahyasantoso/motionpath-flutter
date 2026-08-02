@@ -40,8 +40,6 @@ class MotionPathTrigger {
     final Object? repeat = json['repeat'];
     final Object? repeatDelay = json['repeatDelay'];
     final Object? delay = json['delay'];
-    // The JS runtime's time delegate autoplays unless explicitly paused.
-    // Manual remains paused by definition; scroll is driven by its host.
     final bool autoplay = json.containsKey('autoplay')
         ? json['autoplay'] == true
         : type == MotionPathTriggerType.time;
@@ -81,7 +79,7 @@ class MotionPathTrigger {
   bool get isScrub =>
       type == MotionPathTriggerType.scroll && (scrub == true || scrub is num);
 
-  /// Normalized progress for [elapsed] seconds over a [duration].
+  /// Normalized progress for [elapsed] seconds over an authored cycle.
   double progressAt(double elapsed, double duration) {
     if (duration <= 0) return 1;
     final double shifted = elapsed - delay;
@@ -98,11 +96,11 @@ class MotionPathTrigger {
     return yoyo && index.isOdd ? 1 - value : value;
   }
 
-  /// Whether the trigger has exhausted every cycle by [elapsed].
+  /// Whether the trigger has exhausted every authored cycle by [elapsed].
   bool isFinished(double elapsed, double duration) {
     if (repeat < 0) return false;
     if (duration <= 0) return true;
-    final double cycle = duration + repeatDelay;
-    return elapsed - delay >= cycle * repeat + duration;
+    final double total = duration * (repeat + 1) + repeatDelay * repeat;
+    return elapsed - delay >= total;
   }
 }

@@ -13,6 +13,31 @@ void main() {
     expect(trigger.progressAt(2.5, 1), 0.5);
   });
 
+  test('holds the playhead at the end during repeat delay', () {
+    const MotionPathTrigger trigger = MotionPathTrigger(
+      repeat: 1,
+      repeatDelay: 0.5,
+    );
+    expect(trigger.progressAt(1, 1), 1);
+    expect(trigger.progressAt(1.25, 1), 1);
+    expect(trigger.progressAt(1.5, 1), 0);
+    expect(trigger.isFinished(1.49, 1), isFalse);
+    expect(trigger.isFinished(2.49, 1), isFalse);
+    expect(trigger.isFinished(2.5, 1), isTrue);
+  });
+
+  test('finishes after the final cycle, not after the repeat-delay boundary', () {
+    const MotionPathTrigger trigger = MotionPathTrigger(
+      repeat: 2,
+      repeatDelay: 0.25,
+      delay: 0.5,
+    );
+    // delay + three one-second cycles plus two inter-cycle pauses.
+    expect(trigger.isFinished(3.99, 1), isFalse);
+    expect(trigger.isFinished(4.0, 1), isTrue);
+    expect(trigger.progressAt(4.0, 1), 1);
+  });
+
   test('defaults parsed time triggers to autoplay like the JS runtime', () {
     final MotionPathTrigger trigger = MotionPathTrigger.fromJson(
       <String, Object?>{'type': 'time'},
