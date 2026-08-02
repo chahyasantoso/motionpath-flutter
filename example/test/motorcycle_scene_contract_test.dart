@@ -11,11 +11,14 @@ void main() {
     ]));
   });
 
-  test('Motorcycle keeps the main ride duration and authored path payload', () {
+  test('Motorcycle keeps the main ride duration and composed path outputs', () {
     final track = motorcycleSceneTracks().first;
     expect(track.duration, motorcycleRideDuration);
     track.seek(0.5);
-    expect(track.compose()['path'], isA<Map<Object?, Object?>>());
-    expect(track.compose()['opacity'], isNotNull);
+    final Map<String, Object?> patch = track.compose();
+    expect(patch['x'], isA<num>());
+    expect(patch['y'], isA<num>());
+    expect(patch['rotation'], isA<num>());
+    expect(patch['opacity'], isA<num>());
   });
 }
