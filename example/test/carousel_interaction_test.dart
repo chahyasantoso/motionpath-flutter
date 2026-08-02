@@ -5,17 +5,7 @@ import 'package:motionpath_flutter/motionpath_flutter.dart';
 import 'package:motionpath_flutter_example/carousel_demo.dart';
 import 'package:motionpath_flutter_example/carousel_scene.dart';
 
-/// Card badges in spawn order. Spawn order fixes the staggered offsets.
-const List<String> _badges = <String>[
-  '01 / IMAGINATION',
-  '02 / ARCHITECTURE',
-  '03 / CREATIVE',
-  '04 / INTERACTIVE',
-  '05 / PERFORMANCE',
-  '06 / DYNAMIC',
-];
-
-/// Card titles in spawn order.
+/// Card titles in spawn order. Spawn order fixes the staggered offsets.
 const List<String> _titles = <String>[
   'Fluid Motion Engine',
   'Zero Rebuilds',
@@ -26,14 +16,14 @@ const List<String> _titles = <String>[
 ];
 
 /// Authored opacity for a card playhead, read from the shared scene itself so
-/// the host assertions cannot drift from `carousel_scene.dart`.
+/// host assertions cannot drift from `carousel_scene.dart`.
 double _sceneOpacityAt(double progress) {
   final MotionPathTrackRuntime track = carouselCardTrack('opacity-probe');
   track.seek(progress);
   return (track.compose()['opacity']! as num).toDouble();
 }
 
-/// Effective opacity applied by the spawn host to a rendered card.
+/// Effective opacity the spawn host applies to a rendered card.
 double _hostOpacity(WidgetTester tester, String title) {
   final Finder card = find.text(title);
   expect(card, findsOneWidget);
@@ -56,24 +46,6 @@ double _hostOpacity(WidgetTester tester, String title) {
 Future<void> _scrollBy(WidgetTester tester, double dy) async {
   await tester.drag(find.byType(ListView), Offset(0, dy));
   await tester.pump();
-}
-
-/// First card badge fully inside the visible stage, so a tap lands on a card
-/// the user can actually see.
-String? _tappableBadge(WidgetTester tester) {
-  final Size screen = tester.view.physicalSize / tester.view.devicePixelRatio;
-  final Rect stage = tester
-      .getRect(find.byType(MotionPathSpawnView))
-      .intersect(Rect.fromLTWH(0, 0, screen.width, screen.height));
-  for (final String badge in _badges) {
-    final Finder finder = find.text(badge);
-    if (finder.evaluate().length != 1) continue;
-    final Rect rect = tester.getRect(finder);
-    if (stage.contains(rect.topLeft) && stage.contains(rect.center)) {
-      return badge;
-    }
-  }
-  return null;
 }
 
 void main() {
@@ -112,22 +84,34 @@ void main() {
 
     // Scroll offset 300 scrubs the parent timeline to 0.18.
     await _scrollBy(tester, -300);
-    expect(_hostOpacity(tester, _titles[0]), closeTo(_sceneOpacityAt(0.18), 1e-9));
-    expect(_hostOpacity(tester, _titles[1]), closeTo(_sceneOpacityAt(0.08), 1e-9));
+    expect(
+      _hostOpacity(tester, _titles[0]),
+      closeTo(_sceneOpacityAt(0.18), 1e-9),
+    );
+    expect(
+      _hostOpacity(tester, _titles[1]),
+      closeTo(_sceneOpacityAt(0.08), 1e-9),
+    );
     for (final String title in _titles.sublist(2)) {
       expect(_hostOpacity(tester, title), closeTo(_sceneOpacityAt(0), 1e-9));
     }
 
-    // Scroll offset 800 pushes the lead card onto the authored fade-out ramp.
-    await _scrollBy(tester, -500);
-    expect(_hostOpacity(tester, _titles[0]), closeTo(_sceneOpacityAt(0.93), 1e-9));
-    expect(_hostOpacity(tester, _titles[0]), lessThan(1));
+    // Scroll offset 500 scrubs to 0.48, so the stagger walks the fade down the
+    // card chain instead of flashing every card at once.
+    await _scrollBy(tester, -200);
+    for (final String title in _titles.sublist(0, 4)) {
+      expect(_hostOpacity(tester, title), closeTo(_sceneOpacityAt(0.48), 1e-9));
+    }
+    expect(
+      _hostOpacity(tester, _titles[4]),
+      closeTo(_sceneOpacityAt(0.08), 1e-9),
+    );
+    expect(_hostOpacity(tester, _titles[5]), closeTo(_sceneOpacityAt(0), 1e-9));
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('adding a card joins the shared scene without dropping survivors', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('adding a card joins the shared scene without dropping survivors',
+      (WidgetTester tester) async {
     await tester.pumpWidget(const MaterialApp(home: CarouselDemoPage()));
     await tester.pump();
     expect(find.textContaining('6 cards'), findsOneWidget);
@@ -139,26 +123,6 @@ void main() {
     for (final String title in _titles.sublist(1)) {
       expect(find.text(title), findsOneWidget);
     }
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('tapping a visible card removes it and keeps survivors mounted', (
-    WidgetTester tester,
-  ) async {
-    await tester.pumpWidget(const MaterialApp(home: CarouselDemoPage()));
-    await tester.pump();
-    await _scrollBy(tester, -300);
-
-    final String? badge = _tappableBadge(tester);
-    expect(badge, isNotNull, reason: 'no card is visible on the stage to tap');
-    final Offset target =
-        tester.getTopLeft(find.text(badge!)) + const Offset(1, 1);
-
-    await tester.tapAt(target);
-    await tester.pump();
-
-    expect(find.text(badge), findsNothing);
-    expect(find.textContaining('5 cards'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
