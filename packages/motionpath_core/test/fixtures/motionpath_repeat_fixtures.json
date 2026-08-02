@@ -1,0 +1,36 @@
+{
+  "format": "motionpath-repeat-fixtures",
+  "formatVersion": 1,
+  "source": "chahyasantoso/motionpath v4 trigger contract",
+  "tolerance": 1e-9,
+  "cases": {
+    "delayRepeatYoyo": {
+      "trigger": {"type": "time", "delay": 0.5, "repeat": 2, "yoyo": true, "repeatDelay": 0.25},
+      "samples": [
+        {"elapsed": 0, "progress": 0, "finished": false},
+        {"elapsed": 0.5, "progress": 0, "finished": false},
+        {"elapsed": 1, "progress": 0.5, "finished": false},
+        {"elapsed": 1.5, "progress": 1, "finished": false},
+        {"elapsed": 1.75, "progress": 1, "finished": false},
+        {"elapsed": 2, "progress": 1, "finished": false},
+        {"elapsed": 2.25, "progress": 0.75, "finished": false},
+        {"elapsed": 2.75, "progress": 0.25, "finished": false},
+        {"elapsed": 3, "progress": 0, "finished": false},
+        {"elapsed": 3.25, "progress": 0, "finished": false},
+        {"elapsed": 3.5, "progress": 1, "finished": true}
+      ]
+    },
+    "staggeredTracks": {
+      "duration": 2,
+      "stagger": 0.5,
+      "samples": [
+        {"elapsed": 0, "tracks": {"short": 0, "long": 0}},
+        {"elapsed": 0.5, "tracks": {"short": 0.25, "long": 0}},
+        {"elapsed": 1, "tracks": {"short": 0.5, "long": 0.25}},
+        {"elapsed": 1.5, "tracks": {"short": 0.75, "long": 0.5}},
+        {"elapsed": 2, "tracks": {"short": 1, "long": 0.75}},
+        {"elapsed": 2.5, "tracks": {"short": 1, "long": 1}}
+      ]
+    }
+  }
+}
