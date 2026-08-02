@@ -10,10 +10,7 @@ List<MotionPathDiagnostic> keyframePayloadRules(
   final bool hasX = keyframes['x'] != null;
   final bool hasY = keyframes['y'] != null;
   if (hasPath && (hasX || hasY)) {
-    final String offending = <String>[
-      if (hasX) 'x',
-      if (hasY) 'y',
-    ].join('/');
+    final String offending = <String>[if (hasX) 'x', if (hasY) 'y'].join('/');
     diagnostics.add(
       MotionPathDiagnostic(
         path: '$path.keyframes',
@@ -69,11 +66,31 @@ List<MotionPathDiagnostic> _pathRules(Map<String, Object?> config, String path) 
 }
 
 List<MotionPathDiagnostic> _imageSequenceRules(Map<String, Object?> config, String path) {
-  final Object? rawFrames = config['frames'];
-  if (rawFrames is! List<Object?> || rawFrames.isEmpty) return <MotionPathDiagnostic>[MotionPathDiagnostic(path: '$path.frames', code: 'image-sequence-shape', message: 'imageSequence.frames must be a non-empty array.')];
   final List<MotionPathDiagnostic> diagnostics = <MotionPathDiagnostic>[];
+  final Object? rawFrames = config['frames'];
+  if (rawFrames is! List<Object?> || rawFrames.isEmpty) {
+    diagnostics.add(MotionPathDiagnostic(path: '$path.frames', code: 'image-sequence-shape', message: 'imageSequence.frames must be a non-empty array.'));
+    return diagnostics;
+  }
+  final bool validFrames = rawFrames.every((Object? frame) => frame is String && frame.isNotEmpty);
   for (int index = 0; index < rawFrames.length; index++) {
-    if (rawFrames[index] is! String || (rawFrames[index]! as String).isEmpty) diagnostics.add(MotionPathDiagnostic(path: '$path.frames[$index]', code: 'image-sequence-shape', message: 'Image sequence frames must be non-empty strings.'));
+    if (rawFrames[index] is! String || (rawFrames[index]! as String).isEmpty) {
+      diagnostics.add(MotionPathDiagnostic(path: '$path.frames[$index]', code: 'image-sequence-shape', message: 'Image sequence frames must be non-empty strings.'));
+    }
+  }
+  final Object? rawStops = config['stops'];
+  if (rawStops is List<Object?>) {
+    for (int index = 0; index < rawStops.length; index++) {
+      final Map<String, Object?> stop = asStringKeyedMap(rawStops[index]);
+      final Object? position = stop['p'];
+      final Object? value = stop['v'];
+      if (position is! num) diagnostics.add(MotionPathDiagnostic(path: '$path.stops[$index].p', code: 'image-sequence-shape', message: 'imageSequence.stops[$index].p must be a number.'));
+      if (value is! num) {
+        diagnostics.add(MotionPathDiagnostic(path: '$path.stops[$index].v', code: 'image-sequence-shape', message: 'imageSequence.stops[$index].v must be a number.'));
+      } else if (validFrames && (value < 0 || value > rawFrames.length - 1)) {
+        diagnostics.add(MotionPathDiagnostic(path: '$path.stops[$index].v', code: 'image-sequence-shape', message: 'imageSequence.stops[$index].v must be between 0 and ${rawFrames.length - 1}.'));
+      }
+    }
   }
   return diagnostics;
 }
