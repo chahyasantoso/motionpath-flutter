@@ -186,6 +186,7 @@ Object _keyframePayload(Map<String, Object?> config, String propertyKey, String 
     'stops': config['stops'],
     if (config['autoRotate'] == true) 'autoRotate': true,
     if (config.containsKey('ease')) 'ease': config['ease'],
+    if (config.containsKey('anchor')) 'anchor': config['anchor'],
   });
 }
 

@@ -10,7 +10,7 @@ const MotionPathPlugin pathPlugin = MotionPathPlugin(
   name: 'path',
   keys: <String>['path'],
   inputs: <String>['progress'],
-  outputs: <String>['x', 'y', 'z', 'rotation'],
+  outputs: <String>['x', 'y', 'z', 'rotation', 'xPercent', 'yPercent'],
   internalKeys: <String>['path'],
   stage: 20,
   compose: _composePath,
@@ -23,11 +23,13 @@ Map<String, Object?>? _composePath(Map<String, Object?> raw) {
   final double progress = raw['progress'] is num
       ? (raw['progress']! as num).toDouble().clamp(0.0, 1.0).toDouble()
       : 0;
-  return _samplePath(
+  final Map<String, Object?> patch = _samplePath(
     nodes,
     _pacedProgress(authored, progress),
     autoRotate: _authoredAutoRotate(authored),
   );
+  patch.addAll(_anchorPatch(authored));
+  return patch;
 }
 
 Object? _authoredPoints(Object? authored) => authored is Map<Object?, Object?>
@@ -38,6 +40,22 @@ bool _authoredAutoRotate(Object? authored) =>
     authored is Map<Object?, Object?> &&
     asStringKeyedMap(authored)['autoRotate'] == true;
 
+Map<String, Object?> _anchorPatch(Object? authored) {
+  if (authored is! Map<Object?, Object?>) return const <String, Object?>{};
+  final Object? anchor = asStringKeyedMap(authored)['anchor'];
+  if (anchor == 'center') {
+    return <String, Object?>{'xPercent': -50.0, 'yPercent': -50.0};
+  }
+  if (anchor is Map<Object?, Object?>) {
+    final Map<String, Object?> value = asStringKeyedMap(anchor);
+    return <String, Object?>{
+      'xPercent': (value['xPercent']! as num).toDouble(),
+      'yPercent': (value['yPercent']! as num).toDouble(),
+    };
+  }
+  return const <String, Object?>{};
+}
+
 double _pacedProgress(Object? authored, double progress) {
   if (authored is! Map<Object?, Object?>) return progress;
   final Map<String, Object?> config = asStringKeyedMap(authored);
@@ -47,15 +65,11 @@ double _pacedProgress(Object? authored, double progress) {
   for (final Object? candidate in rawStops) {
     final Map<String, Object?> stop = asStringKeyedMap(candidate);
     if (stop.isEmpty) continue;
-    stops.add(
-      MotionPathStop(
-        progress: stop['p'] is num ? (stop['p']! as num).toDouble() : 0,
-        value: stop['v'] is num ? (stop['v']! as num).toDouble() : progress,
-        ease: stop.containsKey('ease')
-            ? resolveEasing(stop['ease'])
-            : resolveEasing(config['ease']),
-      ),
-    );
+    stops.add(MotionPathStop(
+      progress: stop['p'] is num ? (stop['p']! as num).toDouble() : 0,
+      value: stop['v'] is num ? (stop['v']! as num).toDouble() : progress,
+      ease: stop.containsKey('ease') ? resolveEasing(stop['ease']) : resolveEasing(config['ease']),
+    ));
   }
   if (stops.length < 2) return progress;
   final Object? paced = interpolateStops(stops, progress);

@@ -26,10 +26,7 @@ MotionPathTrackRuntime _authored(Map<String, Object?> pathKeyframe) {
     _projectJson(pathKeyframe),
   );
   final MotionPathTrack track = project.motions.single.tracks.single;
-  return MotionPathTrackRuntime(
-    track.id,
-    properties: propertiesFromTrack(track),
-  );
+  return MotionPathTrackRuntime(track.id, properties: propertiesFromTrack(track));
 }
 
 List<Object?> _ramp({String? ease}) => <Object?>[
