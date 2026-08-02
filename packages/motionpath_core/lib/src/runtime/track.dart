@@ -180,11 +180,11 @@ Object _keyframePayload(Map<String, Object?> config, String propertyKey, String 
     throw ArgumentError.value(payload, payloadKey, 'A "$propertyKey" keyframe requires a non-empty "$payloadKey" list');
   }
   final List<Object?> entries = List<Object?>.unmodifiable(payload);
-  if (propertyKey != 'path' || config['autoRotate'] != true) return entries;
+  if (propertyKey != 'path') return entries;
   return Map<String, Object?>.unmodifiable(<String, Object?>{
     'points': entries,
-    'autoRotate': true,
     'stops': config['stops'],
+    if (config['autoRotate'] == true) 'autoRotate': true,
     if (config.containsKey('ease')) 'ease': config['ease'],
   });
 }
