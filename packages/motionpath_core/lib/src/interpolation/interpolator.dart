@@ -3,10 +3,20 @@ typedef Easing = double Function(double t);
 typedef ValueBlend = Object? Function(Object? from, Object? to, double t);
 
 class MotionPathInterpolators {
+  /// The identity curve.
+  ///
+  /// Clamping belongs here because an [Easing] consumes *playhead* progress,
+  /// which the reference runtime pins to `[0, 1]` before any curve runs.
   static double linear(double t) => t.clamp(0.0, 1.0);
 
+  /// Blends [from] towards [to] by [t].
+  ///
+  /// [t] is an already-eased factor, not playhead progress, so it is
+  /// deliberately left unclamped. `back.*` and `elastic.*` resolve outside
+  /// `[0, 1]` by design and the reference runtime lets that overshoot reach
+  /// the value. See `docs/COMPATIBILITY.md`.
   static double number(num from, num to, double t) =>
-      from + (to - from) * linear(t);
+      (from + (to - from) * t).toDouble();
 
   static Object? value(Object? from, Object? to, double t) {
     if (from is num && to is num) {
