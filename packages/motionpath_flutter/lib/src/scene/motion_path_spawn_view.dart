@@ -69,30 +69,38 @@ class MotionPathSpawnView extends StatelessWidget {
   }
 }
 
-class _MotionPathSpawnItem extends StatelessWidget {
+class _MotionPathSpawnItem extends StatefulWidget {
   const _MotionPathSpawnItem({
     required this.instance,
     required this.fallbackArgb,
     required this.child,
     super.key,
   });
+
   final MotionPathSpawnInstance instance;
   final int fallbackArgb;
   final Widget child;
 
   @override
+  State<_MotionPathSpawnItem> createState() => _MotionPathSpawnItemState();
+}
+
+class _MotionPathSpawnItemState extends State<_MotionPathSpawnItem> {
+  late final Widget _stableChild = widget.child;
+
+  @override
   Widget build(BuildContext context) {
     final MotionPathPatchTransform transform =
         MotionPathPatchTransform.fromPatch(
-      instance.patch,
-      fallbackArgb: fallbackArgb,
+      widget.instance.patch,
+      fallbackArgb: widget.fallbackArgb,
     );
-    Widget result = child;
+    Widget result = _stableChild;
     if (transform.opacity != 1) {
       result = Opacity(opacity: transform.opacity, child: result);
     }
     final ImageFilter? filter = MotionPathPatchConsumers.blurFilter(
-      instance.patch,
+      widget.instance.patch,
     );
     if (filter != null) {
       result = ImageFiltered(imageFilter: filter, child: result);
