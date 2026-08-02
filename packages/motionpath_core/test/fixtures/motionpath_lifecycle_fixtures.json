@@ -1,0 +1,35 @@
+{
+  "format": "motionpath-lifecycle-fixtures",
+  "formatVersion": 1,
+  "source": "chahyasantoso/motionpath v4 lifecycle contract",
+  "cases": {
+    "mountPrepare": {
+      "mountedBefore": 0,
+      "mountedAfter": 1,
+      "autoplay": true,
+      "prepared": true,
+      "duplicateMount": "StateError",
+      "duplicatePrepare": "StateError"
+    },
+    "playPauseSeekReverse": {
+      "afterPlay": {"playing": true},
+      "afterAdvance": {"progress": 0.25, "trackProgress": 0.25},
+      "afterPause": {"playing": false},
+      "afterSeek": {"progress": 0.75, "trackProgress": 0.75},
+      "afterReverse": {"progress": 0.25, "trackProgress": 0.25}
+    },
+    "completionRestart": {
+      "completionAfterFirstAdvance": 1,
+      "completionAfterSecondAdvance": 1,
+      "completionAfterRestart": 2,
+      "playingAtCompletion": false
+    },
+    "unmountDestroy": {
+      "mountedAfterFirstUnmount": 0,
+      "mountedAfterSecondUnmount": 0,
+      "mountedAfterFirstDestroy": 0,
+      "mountedAfterSecondDestroy": 0,
+      "projectAfterDestroy": null
+    }
+  }
+}
