@@ -2,7 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:motionpath_flutter_example/motorcycle_demo.dart';
 
-Finder _art(String id) => find.byKey(ValueKey<String>('moto-art-$id'));
+const String _artPrefix = 'moto-art-';
+
+Finder _art(String id) => find.byKey(ValueKey<String>('$_artPrefix$id'));
+
+/// Art ids in depth-first tree order, which is Stack paint order.
+List<String> _paintedIds(WidgetTester tester) => <String>[
+      for (final Element element in find
+          .byWidgetPredicate(
+            (Widget widget) =>
+                widget.key is ValueKey<String> &&
+                (widget.key! as ValueKey<String>).value.startsWith(_artPrefix),
+          )
+          .evaluate())
+        (element.widget.key! as ValueKey<String>).value.substring(
+              _artPrefix.length,
+            ),
+    ];
 
 double _opacityFor(WidgetTester tester, String id) {
   final Finder finder = find.ancestor(
@@ -14,7 +30,8 @@ double _opacityFor(WidgetTester tester, String id) {
 }
 
 void main() {
-  testWidgets('Motorcycle host mounts every authored track through the spawn view',
+  testWidgets(
+      'Motorcycle host mounts every authored track through the spawn view',
       (WidgetTester tester) async {
     await tester.pumpWidget(const MaterialApp(home: MotorcycleDemoPage()));
     await tester.pump();
@@ -27,24 +44,13 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('Motorcycle layers clouds behind the bike',
+  testWidgets('Motorcycle paints clouds and streaks behind the rider',
       (WidgetTester tester) async {
     await tester.pumpWidget(const MaterialApp(home: MotorcycleDemoPage()));
     await tester.pump();
 
-    final List<Element> painted = <Element>[
-      for (final String id in motorcyclePaintOrder) _art(id).evaluate().single,
-    ];
-    final List<int> depths = <int>[
-      for (final Element element in painted)
-        painted.indexOf(element),
-    ];
-    expect(depths, <int>[0, 1, 2, 3, 4, 5]);
-    expect(
-      motorcyclePaintOrder.last,
-      'moto-bike',
-      reason: 'the rider must paint in front of its own shadow',
-    );
+    expect(_paintedIds(tester), motorcyclePaintOrder);
+    expect(motorcyclePaintOrder.last, 'moto-bike');
     expect(tester.takeException(), isNull);
   });
 
