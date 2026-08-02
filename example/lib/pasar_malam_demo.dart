@@ -121,7 +121,10 @@ class _PasarMalamBackdrop extends StatelessWidget {
           children: <Widget>[
             Center(
               child: Text(
-                'FRAME ${(progress * (pasarMalamFrameCount - 1)).round() + 1}'.padLeft(10, '0'),
+                'FRAME ${(progress * (pasarMalamFrameCount - 1)).round() + 1}'.replaceFirst(
+                  RegExp(r'(?<=FRAME )\\d+'),
+                  ((progress * (pasarMalamFrameCount - 1)).round() + 1).toString().padLeft(4, '0'),
+                ),
                 style: const TextStyle(color: Colors.white24, letterSpacing: 3),
               ),
             ),
@@ -212,13 +215,13 @@ class _MarketCard extends StatelessWidget {
             boxShadow: <BoxShadow>[BoxShadow(color: accent.withValues(alpha: 0.18), blurRadius: 30)],
           ),
           child: Padding(
-            padding: const EdgeInsets.all(22),
+            padding: const EdgeInsets.all(18),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
               Text(badge, style: TextStyle(color: accent, fontSize: 11, letterSpacing: 2, fontWeight: FontWeight.w800)),
-              const Spacer(),
+              const SizedBox(height: 18),
               Text(title, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
-              const SizedBox(height: 10),
-              Text(body, style: const TextStyle(color: Colors.white70, height: 1.3)),
+              const SizedBox(height: 8),
+              Expanded(child: Text(body, maxLines: 4, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white70, height: 1.3))),
             ]),
           ),
         ),
