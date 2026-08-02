@@ -43,8 +43,21 @@ double _hostOpacity(WidgetTester tester, String title) {
   return opacity;
 }
 
-Future<void> _scrollBy(WidgetTester tester, double dy) async {
-  await tester.drag(find.byType(ListView), Offset(0, dy));
+/// Drives the host to an absolute scroll offset.
+///
+/// `tester.drag` is deliberately avoided here: the scroll view uses
+/// `DragStartBehavior.start`, so the gesture's touch slop is discarded before
+/// the `ScrollPosition` sees any delta and a 300px drag only scrubs 280px.
+/// Scrubbing through the real `ScrollPosition` keeps the authored scrub window
+/// the single source of truth for these assertions.
+Future<void> _scrollTo(WidgetTester tester, double offset) async {
+  final ScrollableState scrollable = tester.state<ScrollableState>(
+    find.descendant(
+      of: find.byType(ListView),
+      matching: find.byType(Scrollable),
+    ),
+  );
+  scrollable.position.jumpTo(offset);
   await tester.pump();
 }
 
@@ -56,13 +69,13 @@ void main() {
     await tester.pump();
     expect(find.text('0% scrubbed'), findsOneWidget);
 
-    await _scrollBy(tester, -300);
+    await _scrollTo(tester, 300);
     expect(find.text('12% scrubbed'), findsOneWidget);
 
-    await _scrollBy(tester, 300);
+    await _scrollTo(tester, 0);
     expect(find.text('0% scrubbed'), findsOneWidget);
 
-    await _scrollBy(tester, -300);
+    await _scrollTo(tester, 300);
     expect(find.text('12% scrubbed'), findsOneWidget);
     for (final String title in _titles) {
       expect(find.text(title), findsOneWidget);
@@ -83,7 +96,7 @@ void main() {
     }
 
     // Scroll offset 300 scrubs the parent timeline to 0.18.
-    await _scrollBy(tester, -300);
+    await _scrollTo(tester, 300);
     expect(
       _hostOpacity(tester, _titles[0]),
       closeTo(_sceneOpacityAt(0.18), 1e-9),
@@ -98,7 +111,7 @@ void main() {
 
     // Scroll offset 500 scrubs to 0.48, so the stagger walks the fade down the
     // card chain instead of flashing every card at once.
-    await _scrollBy(tester, -200);
+    await _scrollTo(tester, 500);
     for (final String title in _titles.sublist(0, 4)) {
       expect(_hostOpacity(tester, title), closeTo(_sceneOpacityAt(0.48), 1e-9));
     }
