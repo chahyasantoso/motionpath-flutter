@@ -51,12 +51,21 @@ List<MotionPathDiagnostic> _pathRules(
   }
   for (int index = 0; index < rawPoints.length; index++) {
     final Map<String, Object?> point = asStringKeyedMap(rawPoints[index]);
-    if (point['x'] is! num || point['y'] is! num) {
+    if (point['x'] is! num) {
       diagnostics.add(
         MotionPathDiagnostic(
-          path: '$path.points[$index]',
+          path: '$path.points[$index].x',
           code: 'path-shape',
-          message: 'Each path point requires numeric x and y.',
+          message: 'Path point x must be numeric.',
+        ),
+      );
+    }
+    if (point['y'] is! num) {
+      diagnostics.add(
+        MotionPathDiagnostic(
+          path: '$path.points[$index].y',
+          code: 'path-shape',
+          message: 'Path point y must be numeric.',
         ),
       );
     }
