@@ -14,6 +14,25 @@ The `chahyasantoso/motionpath` v4.2 repository is the reference implementation.
 - Engine ownership, mount, unmount, and destroy behavior
 - `play`, `pause`, `seek`, `reverse`, repeat, yoyo, delay, and scrub semantics
 
+## Current parity status
+
+The following reference behaviors are now covered in `main`:
+
+| Contract area | Evidence | Status |
+|---|---|---|
+| Authored path and image payloads | PR #91 | Covered |
+| Path autoRotate tangent output | PR #92 | Covered |
+| Time autoplay defaults | PR #95 | Covered |
+| Malformed path and image diagnostics | PR #96 | Covered |
+| Repeat, yoyo, delay, repeatDelay, completion | PR #97 | Covered |
+| Path stop easing before physical-distance sampling | PR #98 | Covered |
+| Path anchors: center, none, explicit percentages | PR #99 | Covered |
+| Path control warnings and normalized stop ranges | PR #100 | Covered |
+| Path plus explicit x/y exclusivity | PR #101 | Covered |
+| Carousel mount and scroll scrub | PRs #93 and #94 | Initial coverage |
+
+Remaining parity work is tracked, not hidden: lifecycle event fixtures, broader trigger and trajectory samples, FK/plugin fixtures, malformed-project matrix comparison, and deeper Carousel interaction/golden coverage. See `docs/PHASE_6_ACCEPTANCE.md` and `docs/PHASE_7_ACCEPTANCE.md` for the exact closeout checklists.
+
 ## Shared fixture
 
 `fixtures/v4-project.json` is the Dart repository's canonical copy of the reference integration fixture. It intentionally covers a scroll-scrub motion, a time loop with stagger, an autoplay-disabled time motion, a manual motion, an image sequence, a reused template, a path track, a CSS custom property, and a standalone track.
