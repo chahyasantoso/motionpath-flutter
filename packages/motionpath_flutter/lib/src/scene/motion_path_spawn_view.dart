@@ -18,7 +18,7 @@ typedef MotionPathSpawnHitTest = bool Function(
 /// [onHit] is called for the front-most matching instance. The callback owns
 /// the actual removal or interaction decision, so the generic host never
 /// guesses at scene-specific hit geometry.
-class MotionPathSpawnView extends StatelessWidget {
+class MotionPathSpawnView extends StatefulWidget {
   const MotionPathSpawnView({
     required this.controller,
     required this.itemBuilder,
@@ -35,33 +35,71 @@ class MotionPathSpawnView extends StatelessWidget {
   final MotionPathSpawnHitTest? onHit;
 
   @override
+  State<MotionPathSpawnView> createState() => _MotionPathSpawnViewState();
+}
+
+class _MotionPathSpawnViewState extends State<MotionPathSpawnView> {
+  final Map<String, Widget> _children = <String, Widget>{};
+  final Map<String, GlobalKey> _childKeys = <String, GlobalKey>{};
+
+  Widget _childFor(MotionPathSpawnInstance instance, BuildContext context) {
+    return _children.putIfAbsent(
+      instance.id,
+      () => KeyedSubtree(
+        key: _childKeys.putIfAbsent(instance.id, GlobalKey.new),
+        child: widget.itemBuilder(context, instance),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _children.clear();
+    _childKeys.clear();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final Widget stack = AnimatedBuilder(
-      animation: controller,
+      animation: widget.controller,
       builder: (BuildContext context, Widget? child) {
+        final Set<String> liveIds = <String>{
+          for (final MotionPathSpawnInstance instance
+              in widget.controller.instances)
+            instance.id,
+        };
+        _children.removeWhere(
+          (String id, Widget child) => !liveIds.contains(id),
+        );
+        _childKeys.removeWhere(
+          (String id, GlobalKey key) => !liveIds.contains(id),
+        );
         return Stack(
-          alignment: alignment,
+          alignment: widget.alignment,
           children: <Widget>[
-            for (final MotionPathSpawnInstance instance in controller.instances)
-              KeyedSubtree(
+            for (final MotionPathSpawnInstance instance
+                in widget.controller.instances)
+              _MotionPathSpawnItem(
                 key: ValueKey<String>(instance.id),
-                child: _MotionPathSpawnItem(
-                  instance: instance,
-                  fallbackArgb: fallbackArgb,
-                  child: itemBuilder(context, instance),
-                ),
+                instance: instance,
+                fallbackArgb: widget.fallbackArgb,
+                child: _childFor(instance, context),
               ),
           ],
         );
       },
     );
-    final MotionPathSpawnHitTest? hitTest = onHit;
+    final MotionPathSpawnHitTest? hitTest = widget.onHit;
     if (hitTest == null) return stack;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTapUp: (TapUpDetails details) {
-        motionPathHitTest(controller.instances, (MotionPathSpawnInstance instance) =>
-            hitTest(instance, details.localPosition));
+        motionPathHitTest(
+          widget.controller.instances,
+          (MotionPathSpawnInstance instance) =>
+              hitTest(instance, details.localPosition),
+        );
       },
       child: stack,
     );
@@ -69,21 +107,49 @@ class MotionPathSpawnView extends StatelessWidget {
 }
 
 class _MotionPathSpawnItem extends StatelessWidget {
-  const _MotionPathSpawnItem({required this.instance, required this.fallbackArgb, required this.child});
+  const _MotionPathSpawnItem({
+    required this.instance,
+    required this.fallbackArgb,
+    required this.child,
+    super.key,
+  });
   final MotionPathSpawnInstance instance;
   final int fallbackArgb;
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    final MotionPathPatchTransform transform = MotionPathPatchTransform.fromPatch(instance.patch, fallbackArgb: fallbackArgb);
+    final MotionPathPatchTransform transform =
+        MotionPathPatchTransform.fromPatch(
+      instance.patch,
+      fallbackArgb: fallbackArgb,
+    );
     Widget result = child;
-    if (transform.opacity != 1) result = Opacity(opacity: transform.opacity, child: result);
-    final ImageFilter? filter = MotionPathPatchConsumers.blurFilter(instance.patch);
-    if (filter != null) result = ImageFiltered(imageFilter: filter, child: result);
-    if (transform.scaleX != 1 || transform.scaleY != 1) result = Transform.scale(scaleX: transform.scaleX, scaleY: transform.scaleY, child: result);
-    if (transform.rotationRadians != 0) result = Transform.rotate(angle: transform.rotationRadians, child: result);
-    if (transform.translateX != 0 || transform.translateY != 0) result = Transform.translate(offset: Offset(transform.translateX, transform.translateY), child: result);
+    if (transform.opacity != 1) {
+      result = Opacity(opacity: transform.opacity, child: result);
+    }
+    final ImageFilter? filter = MotionPathPatchConsumers.blurFilter(
+      instance.patch,
+    );
+    if (filter != null) {
+      result = ImageFiltered(imageFilter: filter, child: result);
+    }
+    if (transform.scaleX != 1 || transform.scaleY != 1) {
+      result = Transform.scale(
+        scaleX: transform.scaleX,
+        scaleY: transform.scaleY,
+        child: result,
+      );
+    }
+    if (transform.rotationRadians != 0) {
+      result = Transform.rotate(angle: transform.rotationRadians, child: result);
+    }
+    if (transform.translateX != 0 || transform.translateY != 0) {
+      result = Transform.translate(
+        offset: Offset(transform.translateX, transform.translateY),
+        child: result,
+      );
+    }
     return result;
   }
 }
