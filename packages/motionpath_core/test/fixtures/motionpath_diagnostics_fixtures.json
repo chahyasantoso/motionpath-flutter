@@ -1,0 +1,410 @@
+{
+  "format": "motionpath-diagnostics-fixtures",
+  "formatVersion": 1,
+  "source": "chahyasantoso/motionpath v4 validator contract",
+  "notes": [
+    "Each case is a whole authored project plus the exact diagnostic set validateProject must emit.",
+    "The harness matches every expected diagnostic one-for-one, then asserts nothing is left over, so both missing and surplus diagnostics fail.",
+    "JSON cannot encode non-finite numbers, so '@Infinity', '@-Infinity', and '@NaN' are hydrated into doubles by the harness.",
+    "'fatal' records whether the diagnostics block MotionPathProject.fromJson, which is the real trust boundary."
+  ],
+  "codes": [
+    "schema-version",
+    "invalid-shape",
+    "perspective-usage",
+    "motion-structure",
+    "trigger-shape",
+    "ease-shape",
+    "stop-count",
+    "stop-shape",
+    "stop-sequence",
+    "path-shape",
+    "path-xy-exclusivity",
+    "image-sequence-shape",
+    "finite-number",
+    "track-observations",
+    "track-observations-cycle",
+    "track-observations-duplicate-node",
+    "track-observations-duplicate-edge"
+  ],
+  "cases": {
+    "schemaAndLegacyFields": {
+      "fatal": true,
+      "project": {
+        "schemaVersion": 3,
+        "motions": [
+          {
+            "motionId": "legacy",
+            "id": "legacy",
+            "driver": "scroll",
+            "timelineId": "tl",
+            "trigger": {"type": "manual"},
+            "tracks": []
+          }
+        ]
+      },
+      "expect": [
+        {"path": "$.schemaVersion", "code": "schema-version", "severity": "error", "messageContains": "Only schema version 4 is supported"},
+        {"path": "motions[0].motionId", "code": "motion-structure", "severity": "error", "messageContains": "rename it to"},
+        {"path": "motions[0].driver", "code": "motion-structure", "severity": "error", "messageContains": "v2/v3 field"},
+        {"path": "motions[0].timelineId", "code": "motion-structure", "severity": "error", "messageContains": "v2/v3 field"},
+        {"path": "motions[0].tracks", "code": "motion-structure", "severity": "error", "messageContains": "tracks must have at least 1 entry"}
+      ]
+    },
+
+    "duplicateIds": {
+      "fatal": true,
+      "project": {
+        "schemaVersion": 4,
+        "templates": [
+          {"templateId": "tpl"},
+          {"templateId": "tpl"}
+        ],
+        "motions": [
+          {
+            "id": "solo",
+            "trigger": {"type": "manual"},
+            "tracks": [
+              {"id": "a", "keyframes": {"x": {"stops": [{"p": 0, "v": 0}, {"p": 1, "v": 1}]}}},
+              {"id": "a", "keyframes": {"x": {"stops": [{"p": 0, "v": 0}, {"p": 1, "v": 1}]}}}
+            ]
+          },
+          {
+            "id": "solo",
+            "trigger": {"type": "manual"},
+            "tracks": [
+              {"id": "b", "keyframes": {"x": {"stops": [{"p": 0, "v": 0}, {"p": 1, "v": 1}]}}}
+            ]
+          }
+        ]
+      },
+      "expect": [
+        {"path": "templates[1].templateId", "code": "motion-structure", "severity": "error", "messageContains": "Duplicate templateId"},
+        {"path": "motions[1].id", "code": "motion-structure", "severity": "error", "messageContains": "Duplicate motion id"},
+        {"path": "motions[0].tracks[1].id", "code": "track-observations-duplicate-node", "severity": "error", "messageContains": "declared more than once"}
+      ]
+    },
+
+    "invalidTriggers": {
+      "fatal": true,
+      "project": {
+        "schemaVersion": 4,
+        "motions": [
+          {
+            "id": "bad-type",
+            "trigger": {"type": "hover"},
+            "tracks": [{"id": "t", "keyframes": {"x": {"stops": [{"p": 0, "v": 0}, {"p": 1, "v": 1}]}}}]
+          },
+          {
+            "id": "scrub-conflicts",
+            "trigger": {"type": "scroll", "scrub": true, "repeat": 2, "delay": 0.5},
+            "tracks": [{"id": "t", "duration": 1, "keyframes": {"x": {"stops": [{"p": 0, "v": 0}, {"p": 1, "v": 1}]}}}]
+          },
+          {
+            "id": "missing-scrub",
+            "trigger": {"type": "scroll", "endTrigger": "#end"},
+            "tracks": [{"id": "t", "keyframes": {"x": {"stops": [{"p": 0, "v": 0}, {"p": 1, "v": 1}]}}}]
+          }
+        ]
+      },
+      "expect": [
+        {"path": "motions[0].trigger.type", "code": "trigger-shape", "severity": "error", "messageContains": "must be 'scroll', 'time', or 'manual'"},
+        {"path": "motions[1].trigger", "code": "trigger-shape", "severity": "error", "messageContains": "repeat, yoyo, and repeatDelay"},
+        {"path": "motions[1].trigger.delay", "code": "trigger-shape", "severity": "error", "messageContains": "delay is incompatible"},
+        {"path": "motions[1].tracks[0].duration", "code": "trigger-shape", "severity": "error", "messageContains": "duration is incompatible"},
+        {"path": "motions[2].trigger.scrub", "code": "trigger-shape", "severity": "error", "messageContains": "requires 'scrub' parameter"},
+        {"path": "motions[2].trigger.endTrigger", "code": "trigger-shape", "severity": "error", "messageContains": "only valid on scroll triggers"}
+      ]
+    },
+
+    "invalidEases": {
+      "fatal": true,
+      "project": {
+        "schemaVersion": 4,
+        "motions": [
+          {
+            "id": "eases",
+            "trigger": {"type": "manual"},
+            "tracks": [
+              {
+                "id": "t",
+                "keyframes": {
+                  "x": {
+                    "ease": "not.a.real.ease",
+                    "stops": [
+                      {"p": 0, "v": 0, "ease": "power2.inOut"},
+                      {"p": 1, "v": 1, "ease": 7}
+                    ]
+                  },
+                  "opacity": {
+                    "ease": "back.out(1.7)",
+                    "stops": [{"p": 0, "v": 0}, {"p": 1, "v": 1}]
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expect": [
+        {"path": "motions[0].tracks[0].keyframes.x.ease", "code": "ease-shape", "severity": "error", "messageContains": "supported MotionPath easing name"},
+        {"path": "motions[0].tracks[0].keyframes.x.stops[1].ease", "code": "ease-shape", "severity": "error", "messageContains": "supported MotionPath easing name"}
+      ]
+    },
+
+    "badStopRanges": {
+      "fatal": true,
+      "project": {
+        "schemaVersion": 4,
+        "motions": [
+          {
+            "id": "stops",
+            "trigger": {"type": "manual"},
+            "tracks": [
+              {"id": "single", "keyframes": {"x": {"stops": [{"p": 0.5, "v": 1}]}}},
+              {"id": "outOfRange", "keyframes": {"y": {"stops": [{"p": -0.2, "v": 0}, {"p": 1.4, "v": 1}]}}},
+              {"id": "unordered", "keyframes": {"scale": {"stops": [{"p": 0, "v": 0}, {"p": 0.8, "v": 1}, {"p": 0.3, "v": 2}, {"p": 0.8, "v": 3}, {"p": 1, "v": 4}]}}},
+              {"id": "shapeless", "keyframes": {"opacity": {"stops": [{"p": 0}, "nope", {"p": 1, "v": 1}]}}}
+            ]
+          }
+        ]
+      },
+      "expect": [
+        {"path": "motions[0].tracks[0].keyframes.x", "code": "stop-count", "severity": "error", "messageContains": "must have at least 2 stops"},
+        {"path": "motions[0].tracks[0].keyframes.x.stops", "code": "stop-sequence", "severity": "warning", "messageContains": "no p: 0 stop"},
+        {"path": "motions[0].tracks[0].keyframes.x.stops", "code": "stop-sequence", "severity": "warning", "messageContains": "no p: 1 stop"},
+        {"path": "motions[0].tracks[1].keyframes.y.stops[0].p", "code": "stop-shape", "severity": "error", "messageContains": "between 0 and 1"},
+        {"path": "motions[0].tracks[1].keyframes.y.stops[1].p", "code": "stop-shape", "severity": "error", "messageContains": "between 0 and 1"},
+        {"path": "motions[0].tracks[1].keyframes.y.stops", "code": "stop-sequence", "severity": "warning", "messageContains": "no p: 0 stop"},
+        {"path": "motions[0].tracks[1].keyframes.y.stops", "code": "stop-sequence", "severity": "warning", "messageContains": "no p: 1 stop"},
+        {"path": "motions[0].tracks[2].keyframes.scale.stops[2].p", "code": "stop-sequence", "severity": "error", "messageContains": "must be monotonic"},
+        {"path": "motions[0].tracks[2].keyframes.scale.stops[3].p", "code": "stop-sequence", "severity": "error", "messageContains": "Duplicate stop position"},
+        {"path": "motions[0].tracks[3].keyframes.opacity.stops[0].v", "code": "stop-shape", "severity": "error", "messageContains": "must have a defined 'v' value"},
+        {"path": "motions[0].tracks[3].keyframes.opacity.stops[1]", "code": "stop-shape", "severity": "error", "messageContains": "must be a plain object"}
+      ]
+    },
+
+    "invalidPathControlsAndAnchors": {
+      "fatal": true,
+      "project": {
+        "schemaVersion": 4,
+        "motions": [
+          {
+            "id": "paths",
+            "trigger": {"type": "manual"},
+            "tracks": [
+              {
+                "id": "exclusivity",
+                "keyframes": {
+                  "path": {
+                    "points": [{"x": 0, "y": 0}, {"x": 10, "y": 10}],
+                    "stops": [{"p": 0, "v": 0}, {"p": 1, "v": 1}]
+                  },
+                  "x": {"stops": [{"p": 0, "v": 0}, {"p": 1, "v": 1}]},
+                  "y": {"stops": [{"p": 0, "v": 0}, {"p": 1, "v": 1}]}
+                }
+              },
+              {
+                "id": "controls",
+                "keyframes": {
+                  "path": {
+                    "anchor": {"xPercent": 50},
+                    "points": [
+                      {"x": 0, "y": 0, "ctrlX": 5, "ctrlY": 5},
+                      {"x": "ten", "y": 10, "ctrlX": 1},
+                      {"x": 20, "y": 20, "ctrlX": 2, "ctrlY": "two"}
+                    ],
+                    "stops": [{"p": 0, "v": 0}, {"p": 1, "v": 1.5}]
+                  }
+                }
+              },
+              {
+                "id": "tooFewPoints",
+                "keyframes": {
+                  "path": {
+                    "anchor": "top-left",
+                    "points": [{"x": 0, "y": 0}],
+                    "stops": [{"p": 0, "v": 0}, {"p": 1, "v": 1}]
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expect": [
+        {"path": "motions[0].tracks[0].keyframes", "code": "path-xy-exclusivity", "severity": "error", "messageContains": "mutually exclusive"},
+        {"path": "motions[0].tracks[1].keyframes.path.anchor", "code": "path-shape", "severity": "error", "messageContains": "numeric xPercent/yPercent"},
+        {"path": "motions[0].tracks[1].keyframes.path.points[0]", "code": "path-shape", "severity": "warning", "messageContains": "first path point have no effect"},
+        {"path": "motions[0].tracks[1].keyframes.path.points[1].x", "code": "path-shape", "severity": "error", "messageContains": "Path point x must be numeric"},
+        {"path": "motions[0].tracks[1].keyframes.path.points[1]", "code": "path-shape", "severity": "error", "messageContains": "must be provided together"},
+        {"path": "motions[0].tracks[1].keyframes.path.points[2].ctrlY", "code": "path-shape", "severity": "error", "messageContains": "must be numeric when present"},
+        {"path": "motions[0].tracks[1].keyframes.path.stops[1].v", "code": "path-shape", "severity": "error", "messageContains": "must be between 0 and 1"},
+        {"path": "motions[0].tracks[2].keyframes.path.anchor", "code": "path-shape", "severity": "error", "messageContains": "numeric xPercent/yPercent"},
+        {"path": "motions[0].tracks[2].keyframes.path.points", "code": "path-shape", "severity": "error", "messageContains": "at least 2 points"}
+      ]
+    },
+
+    "badImageFramesAndIndices": {
+      "fatal": true,
+      "project": {
+        "schemaVersion": 4,
+        "motions": [
+          {
+            "id": "images",
+            "trigger": {"type": "manual"},
+            "tracks": [
+              {
+                "id": "emptyFrames",
+                "keyframes": {"imageSequence": {"frames": [], "stops": [{"p": 0, "v": 0}, {"p": 1, "v": 0}]}}
+              },
+              {
+                "id": "badFrames",
+                "keyframes": {"imageSequence": {"frames": ["a.webp", "", 3], "stops": [{"p": 0, "v": 0}, {"p": 1, "v": 2}]}}
+              },
+              {
+                "id": "badIndices",
+                "keyframes": {
+                  "imageSequence": {
+                    "frames": ["a.webp", "b.webp", "c.webp"],
+                    "stops": [
+                      {"p": 0, "v": -1},
+                      {"p": 0.5, "v": "two"},
+                      {"p": "late", "v": 9},
+                      {"p": 1, "v": 2}
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "expect": [
+        {"path": "motions[0].tracks[0].keyframes.imageSequence.frames", "code": "image-sequence-shape", "severity": "error", "messageContains": "non-empty array"},
+        {"path": "motions[0].tracks[1].keyframes.imageSequence.frames[1]", "code": "image-sequence-shape", "severity": "error", "messageContains": "non-empty strings"},
+        {"path": "motions[0].tracks[1].keyframes.imageSequence.frames[2]", "code": "image-sequence-shape", "severity": "error", "messageContains": "non-empty strings"},
+        {"path": "motions[0].tracks[2].keyframes.imageSequence.stops[2].p", "code": "stop-shape", "severity": "error", "messageContains": "must have 'p' as a number"},
+        {"path": "motions[0].tracks[2].keyframes.imageSequence.stops[0].v", "code": "image-sequence-shape", "severity": "error", "messageContains": "must be between 0 and 2"},
+        {"path": "motions[0].tracks[2].keyframes.imageSequence.stops[1].v", "code": "image-sequence-shape", "severity": "error", "messageContains": "must be a number"},
+        {"path": "motions[0].tracks[2].keyframes.imageSequence.stops[2].p", "code": "image-sequence-shape", "severity": "error", "messageContains": "must be a number"},
+        {"path": "motions[0].tracks[2].keyframes.imageSequence.stops[2].v", "code": "image-sequence-shape", "severity": "error", "messageContains": "must be between 0 and 2"}
+      ]
+    },
+
+    "nonFiniteNumbers": {
+      "fatal": true,
+      "project": {
+        "schemaVersion": 4,
+        "perspective": "@Infinity",
+        "motions": [
+          {
+            "id": "nonFinite",
+            "stagger": "@NaN",
+            "trigger": {"type": "time", "delay": "@Infinity", "repeatDelay": "@-Infinity"},
+            "tracks": [
+              {
+                "id": "t",
+                "duration": "@NaN",
+                "keyframes": {"x": {"stops": [{"p": 0, "v": "@Infinity"}, {"p": 1, "v": 1}]}}
+              }
+            ]
+          }
+        ]
+      },
+      "expect": [
+        {"path": "$.perspective", "code": "finite-number", "severity": "error", "messageContains": "must be finite"},
+        {"path": "motions[0].stagger", "code": "finite-number", "severity": "error", "messageContains": "must be finite"},
+        {"path": "motions[0].trigger.repeatDelay", "code": "finite-number", "severity": "error", "messageContains": "must be finite"},
+        {"path": "motions[0].trigger.delay", "code": "finite-number", "severity": "error", "messageContains": "must be finite"},
+        {"path": "motions[0].tracks[0].duration", "code": "finite-number", "severity": "error", "messageContains": "must be finite"},
+        {"path": "motions[0].tracks[0].keyframes.x.stops[0].v", "code": "finite-number", "severity": "error", "messageContains": "must be finite"}
+      ]
+    },
+
+    "invalidObservations": {
+      "fatal": true,
+      "project": {
+        "schemaVersion": 4,
+        "motions": [
+          {
+            "id": "graph",
+            "trigger": {"type": "manual"},
+            "tracks": [
+              {
+                "id": "a",
+                "keyframes": {"x": {"stops": [{"p": 0, "v": 0}, {"p": 1, "v": 1}]}},
+                "observes": [
+                  {"source": "ghost"},
+                  {"source": "a"},
+                  {"source": "b", "role": "sideways"},
+                  {"source": "b", "target": "parentWorld"},
+                  {"source": "b"},
+                  {"source": "b"}
+                ]
+              },
+              {
+                "id": "b",
+                "keyframes": {"x": {"stops": [{"p": 0, "v": 0}, {"p": 1, "v": 1}]}}
+              }
+            ]
+          }
+        ]
+      },
+      "expect": [
+        {"path": "motions[0].tracks[0].observes[0].source", "code": "track-observations", "severity": "error", "messageContains": "Unknown source track"},
+        {"path": "motions[0].tracks[0].observes[1].source", "code": "track-observations-cycle", "severity": "error", "messageContains": "cannot observe itself"},
+        {"path": "motions[0].tracks[0].observes[2].role", "code": "track-observations", "severity": "error", "messageContains": "role must be 'input' or 'output'"},
+        {"path": "motions[0].tracks[0].observes[3].target", "code": "track-observations", "severity": "error", "messageContains": "Output observations cannot define target"},
+        {"path": "motions[0].tracks[0].observes[5]", "code": "track-observations-duplicate-edge", "severity": "error", "messageContains": "Duplicate observation edge"}
+      ]
+    },
+
+    "motionsNotAnArray": {
+      "fatal": true,
+      "project": {
+        "schemaVersion": 4,
+        "motions": {}
+      },
+      "expect": [
+        {"path": "$.motions", "code": "invalid-shape", "severity": "error", "messageContains": "must be an array"}
+      ]
+    },
+
+    "nonNumericPerspective": {
+      "fatal": true,
+      "project": {
+        "schemaVersion": 4,
+        "perspective": "wide",
+        "motions": [
+          {
+            "id": "p",
+            "trigger": {"type": "manual"},
+            "tracks": [{"id": "t", "keyframes": {"x": {"stops": [{"p": 0, "v": 0}, {"p": 1, "v": 1}]}}}]
+          }
+        ]
+      },
+      "expect": [
+        {"path": "$.perspective", "code": "perspective-usage", "severity": "error", "messageContains": "must be numeric"}
+      ]
+    },
+
+    "warningsOnly": {
+      "fatal": false,
+      "project": {
+        "schemaVersion": 4,
+        "motions": [
+          {
+            "id": "warn",
+            "trigger": {"type": "manual"},
+            "tracks": [{"id": "t", "keyframes": {"opacity": {"stops": [{"p": 0.2, "v": 0}, {"p": 0.8, "v": 1}]}}}]
+          }
+        ]
+      },
+      "expect": [
+        {"path": "motions[0].tracks[0].keyframes.opacity.stops", "code": "stop-sequence", "severity": "warning", "messageContains": "no p: 0 stop"},
+        {"path": "motions[0].tracks[0].keyframes.opacity.stops", "code": "stop-sequence", "severity": "warning", "messageContains": "no p: 1 stop"}
+      ]
+    }
+  }
+}
