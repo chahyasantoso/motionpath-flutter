@@ -18,7 +18,7 @@ typedef MotionPathSpawnHitTest = bool Function(
 /// [onHit] is called for the front-most matching instance. The callback owns
 /// the actual removal or interaction decision, so the generic host never
 /// guesses at scene-specific hit geometry.
-class MotionPathSpawnView extends StatelessWidget {
+class MotionPathSpawnView extends StatefulWidget {
   const MotionPathSpawnView({
     required this.controller,
     required this.itemBuilder,
@@ -35,31 +35,60 @@ class MotionPathSpawnView extends StatelessWidget {
   final MotionPathSpawnHitTest? onHit;
 
   @override
+  State<MotionPathSpawnView> createState() => _MotionPathSpawnViewState();
+}
+
+class _MotionPathSpawnViewState extends State<MotionPathSpawnView> {
+  final Map<String, Widget> _children = <String, Widget>{};
+
+  Widget _childFor(MotionPathSpawnInstance instance, BuildContext context) {
+    return _children.putIfAbsent(
+      instance.id,
+      () => widget.itemBuilder(context, instance),
+    );
+  }
+
+  @override
+  void dispose() {
+    _children.clear();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final Widget stack = AnimatedBuilder(
-      animation: controller,
+      animation: widget.controller,
       builder: (BuildContext context, Widget? child) {
+        final Set<String> liveIds = <String>{
+          for (final MotionPathSpawnInstance instance
+              in widget.controller.instances)
+            instance.id,
+        };
+        _children.removeWhere(
+          (String id, Widget child) => !liveIds.contains(id),
+        );
         return Stack(
-          alignment: alignment,
+          alignment: widget.alignment,
           children: <Widget>[
-            for (final MotionPathSpawnInstance instance in controller.instances)
+            for (final MotionPathSpawnInstance instance
+                in widget.controller.instances)
               _MotionPathSpawnItem(
                 key: ValueKey<String>(instance.id),
                 instance: instance,
-                fallbackArgb: fallbackArgb,
-                child: itemBuilder(context, instance),
+                fallbackArgb: widget.fallbackArgb,
+                child: _childFor(instance, context),
               ),
           ],
         );
       },
     );
-    final MotionPathSpawnHitTest? hitTest = onHit;
+    final MotionPathSpawnHitTest? hitTest = widget.onHit;
     if (hitTest == null) return stack;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTapUp: (TapUpDetails details) {
         motionPathHitTest(
-          controller.instances,
+          widget.controller.instances,
           (MotionPathSpawnInstance instance) =>
               hitTest(instance, details.localPosition),
         );
@@ -69,38 +98,30 @@ class MotionPathSpawnView extends StatelessWidget {
   }
 }
 
-class _MotionPathSpawnItem extends StatefulWidget {
+class _MotionPathSpawnItem extends StatelessWidget {
   const _MotionPathSpawnItem({
     required this.instance,
     required this.fallbackArgb,
     required this.child,
     super.key,
   });
-
   final MotionPathSpawnInstance instance;
   final int fallbackArgb;
   final Widget child;
 
   @override
-  State<_MotionPathSpawnItem> createState() => _MotionPathSpawnItemState();
-}
-
-class _MotionPathSpawnItemState extends State<_MotionPathSpawnItem> {
-  late final Widget _stableChild = widget.child;
-
-  @override
   Widget build(BuildContext context) {
     final MotionPathPatchTransform transform =
         MotionPathPatchTransform.fromPatch(
-      widget.instance.patch,
-      fallbackArgb: widget.fallbackArgb,
+      instance.patch,
+      fallbackArgb: fallbackArgb,
     );
-    Widget result = _stableChild;
+    Widget result = child;
     if (transform.opacity != 1) {
       result = Opacity(opacity: transform.opacity, child: result);
     }
     final ImageFilter? filter = MotionPathPatchConsumers.blurFilter(
-      widget.instance.patch,
+      instance.patch,
     );
     if (filter != null) {
       result = ImageFiltered(imageFilter: filter, child: result);
