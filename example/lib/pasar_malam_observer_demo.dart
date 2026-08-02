@@ -186,9 +186,9 @@ class _ObserverCard extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(18),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
-              Text(label, style: TextStyle(color: color, letterSpacing: 1.5, fontSize: 11)),
-              const Spacer(),
-              Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+              Text(label, style: TextStyle(color: color, letterSpacing: 1.5, fontSize: 11), maxLines: 1, overflow: TextOverflow.ellipsis),
+              const SizedBox(height: 8),
+              Expanded(child: Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800), maxLines: 2, overflow: TextOverflow.ellipsis)),
             ]),
           ),
         ),

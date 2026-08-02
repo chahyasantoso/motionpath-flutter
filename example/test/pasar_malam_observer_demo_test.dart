@@ -18,7 +18,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     await tester.drag(find.byType(ListView), const Offset(0, -300));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 100));
     expect(find.text('OBSERVER FRAME 0049'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
