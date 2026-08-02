@@ -104,41 +104,41 @@ class _PasarMalamBackdrop extends StatelessWidget {
   final double progress;
 
   @override
-  Widget build(BuildContext context) => DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: <Color>[
-              Color.lerp(const Color(0xFF05051A), const Color(0xFF301052), progress)!,
-              Color.lerp(const Color(0xFF10102B), const Color(0xFF07162B), progress)!,
-              const Color(0xFF050611),
-            ],
-          ),
-        ),
-        child: Stack(
-          fit: StackFit.expand,
-          children: <Widget>[
-            Center(
-              child: Text(
-                'FRAME ${(progress * (pasarMalamFrameCount - 1)).round() + 1}'.replaceFirst(
-                  RegExp(r'(?<=FRAME )\\d+'),
-                  ((progress * (pasarMalamFrameCount - 1)).round() + 1).toString().padLeft(4, '0'),
-                ),
-                style: const TextStyle(color: Colors.white24, letterSpacing: 3),
-              ),
-            ),
-            Positioned(
-              top: 48,
-              left: 24,
-              child: Text(
-                '192-frame night market sequence',
-                style: const TextStyle(color: Colors.white54, letterSpacing: 1.1),
-              ),
-            ),
+  Widget build(BuildContext context) {
+    final int frame = (progress * (pasarMalamFrameCount - 1)).round() + 1;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: <Color>[
+            Color.lerp(const Color(0xFF05051A), const Color(0xFF301052), progress)!,
+            Color.lerp(const Color(0xFF10102B), const Color(0xFF07162B), progress)!,
+            const Color(0xFF050611),
           ],
         ),
-      );
+      ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: <Widget>[
+          Center(
+            child: Text(
+              'FRAME ${frame.toString().padLeft(4, '0')}',
+              style: const TextStyle(color: Colors.white24, letterSpacing: 3),
+            ),
+          ),
+          Positioned(
+            top: 48,
+            left: 24,
+            child: Text(
+              '192-frame night market sequence',
+              style: const TextStyle(color: Colors.white54, letterSpacing: 1.1),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _PasarMalamItem extends StatelessWidget {
