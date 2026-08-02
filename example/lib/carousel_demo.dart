@@ -212,13 +212,33 @@ class _CarouselCard extends StatelessWidget {
           ),
           child: Padding(
             padding: const EdgeInsets.all(18),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
-              Text(data.badge, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.1)),
-              const Spacer(),
-              Text(data.title, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
-              const SizedBox(height: 8),
-              Text(data.description, style: const TextStyle(fontSize: 12, height: 1.25)),
-            ]),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  data.badge,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.1),
+                ),
+                const Spacer(),
+                Text(
+                  data.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 8),
+                Flexible(
+                  child: Text(
+                    data.description,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 12, height: 1.25),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       );
