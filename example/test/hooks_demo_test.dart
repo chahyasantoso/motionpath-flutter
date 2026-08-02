@@ -1,0 +1,4 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:motionpath_flutter_example/hooks_demo.dart';
+void main(){testWidgets('Hooks Demo mounts composed rocket and cloud host',(tester)async{await tester.pumpWidget(const MaterialApp(home:HooksDemoPage()));await tester.pump();expect(find.text('MotionPath Hooks Demo'),findsOneWidget);expect(find.text('🚀'),findsOneWidget);expect(find.text('☁️'),findsOneWidget);expect(tester.takeException(),isNull);});testWidgets('Hooks Demo tears down scroll wiring',(tester)async{await tester.pumpWidget(const MaterialApp(home:HooksDemoPage()));await tester.pump();await tester.pumpWidget(const MaterialApp(home:SizedBox.shrink()));await tester.pump();expect(find.byType(HooksDemoPage),findsNothing);expect(tester.takeException(),isNull);});}
