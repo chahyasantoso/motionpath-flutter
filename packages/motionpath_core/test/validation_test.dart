@@ -180,4 +180,49 @@ void main() {
       hasLength(2),
     );
   });
+
+  test('warns on first-point controls without blocking the project', () {
+    final List<MotionPathDiagnostic> diagnostics = validateProject(
+      _project(<String, Object?>{
+        'path': <String, Object?>{
+          'points': <Object?>[
+            <String, Object?>{'x': 0, 'y': 0, 'ctrlX': 1, 'ctrlY': 1},
+            <String, Object?>{'x': 10, 'y': 10},
+          ],
+          'stops': <Object?>[
+            <String, Object?>{'p': 0, 'v': 0},
+            <String, Object?>{'p': 1, 'v': 1},
+          ],
+        },
+      }),
+    );
+    expect(
+      diagnostics.any((MotionPathDiagnostic d) => d.severity == MotionPathSeverity.warning && d.code == 'path-shape'),
+      isTrue,
+    );
+    expect(hasFatalErrors(diagnostics), isFalse);
+  });
+
+  test('rejects path stop values outside normalized progress', () {
+    final List<MotionPathDiagnostic> diagnostics = validateProject(
+      _project(<String, Object?>{
+        'path': <String, Object?>{
+          'points': <Object?>[
+            <String, Object?>{'x': 0, 'y': 0},
+            <String, Object?>{'x': 10, 'y': 10},
+          ],
+          'stops': <Object?>[
+            <String, Object?>{'p': 0, 'v': -0.1},
+            <String, Object?>{'p': 1, 'v': 1.5},
+          ],
+        },
+      }),
+    );
+    final List<MotionPathDiagnostic> errors = diagnostics
+        .where((MotionPathDiagnostic d) => d.isFatal && d.code == 'path-shape')
+        .toList(growable: false);
+    expect(errors, hasLength(2));
+    expect(errors.first.path, endsWith('stops[0].v'));
+    expect(errors.last.path, endsWith('stops[1].v'));
+  });
 }
