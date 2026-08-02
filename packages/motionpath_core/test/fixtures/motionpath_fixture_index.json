@@ -1,0 +1,13 @@
+{
+  "format": "motionpath-fixture-index",
+  "formatVersion": 1,
+  "fixtures": [
+    {"file": "motionpath_parity_fixtures.json", "test": "js_parity_fixture_test.dart", "tolerance": 1e-9, "cases": ["easing", "transformsAndColors", "filters", "imageSequence", "observationGraph"]},
+    {"file": "motionpath_trajectory_fixtures.json", "test": "js_trajectory_parity_test.dart", "tolerance": 1e-9, "cases": ["card", "rotation3d", "rig", "sprite", "badge"]},
+    {"file": "motionpath_observation_fixtures.json", "test": "js_observation_fixture_test.dart", "tolerance": 1e-9, "cases": ["inputEdge", "outputMerge", "diamond", "stableOrder", "cycle", "missingSource"]},
+    {"file": "motionpath_lifecycle_fixtures.json", "test": "js_lifecycle_fixture_test.dart", "tolerance": 1e-9, "cases": ["mountPrepare", "playPauseSeekReverse", "completionRestart", "unmountDestroy"]},
+    {"file": "motionpath_repeat_fixtures.json", "test": "js_repeat_fixture_test.dart", "tolerance": 1e-9, "cases": ["delayRepeatYoyo", "staggeredTracks"]},
+    {"file": "motionpath_diagnostics_fixtures.json", "test": "js_diagnostics_fixture_test.dart", "tolerance": null, "cases": ["schemaAndLegacyFields", "duplicateIds", "invalidTriggers", "invalidEases", "badStopRanges", "invalidPathControlsAndAnchors", "badImageFramesAndIndices", "nonFiniteNumbers", "invalidObservations", "motionsNotAnArray", "nonNumericPerspective", "warningsOnly"]},
+    {"file": "motionpath_plugin_fixtures.json", "test": "js_plugin_fixture_test.dart", "tolerance": 1e-9, "cases": ["filter", "cssVariables"]}
+  ]
+}
