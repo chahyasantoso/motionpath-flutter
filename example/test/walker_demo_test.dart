@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:motionpath_flutter/motionpath_flutter.dart';
 import 'package:motionpath_flutter_example/walker_demo.dart';
 
 void main() {
