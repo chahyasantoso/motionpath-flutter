@@ -87,7 +87,9 @@ class MotionPathTrackRuntime implements MotionPathLayoutChild {
     _onChildRemoved?.call(child);
     for (final MotionPathReflowTarget target in layoutDelegate.computeReflow(siblings, child, stagger: child._staggerOffset)) {
       final MotionPathLayoutChild moved = target.child;
-      if (moved is! MotionPathTrackRuntime) continue;
+      if (moved is! MotionPathTrackRuntime) {
+        continue;
+      }
       moved._currentOffset = target.offset;
       _onChildReflowed?.call(moved, target.offset);
     }
@@ -119,14 +121,18 @@ class MotionPathTrackRuntime implements MotionPathLayoutChild {
     ctx[this] = null;
     Map<String, Object?> raw = rawData ?? snapshot();
     for (final MotionPathObservation observation in _observed) {
-      if (!observation.isInput) continue;
+      if (!observation.isInput) {
+        continue;
+      }
       final String? key = observation.input;
       if (key == null || key.isEmpty) throw StateError('Track "$id" contains an input observation without a target key.');
       raw = <String, Object?>{...raw, key: observation.source.compose(context: ctx)};
     }
     Map<String, Object?> patch = composePatch(plugins, raw);
     for (final MotionPathObservation observation in _observed) {
-      if (!observation.isInput) patch = mergePatches(patch, observation.source.compose(context: ctx));
+      if (!observation.isInput) {
+        patch = mergePatches(patch, observation.source.compose(context: ctx));
+      }
     }
     ctx[this] = patch;
     return patch;
@@ -149,7 +155,10 @@ class MotionPathTrackRuntime implements MotionPathLayoutChild {
     _disposed = true;
     _listeners.clear();
     _observed.clear();
-    for (final MotionPathTrackRuntime child in List<MotionPathTrackRuntime>.of(_children.values)) { child._parent = null; child.dispose(); }
+    for (final MotionPathTrackRuntime child in List<MotionPathTrackRuntime>.of(_children.values)) {
+      child._parent = null;
+      child.dispose();
+    }
     _children.clear();
     _parent = null;
     onChildSpawned = null;
@@ -204,6 +213,7 @@ List<MotionPathStop> stopsFromKeyframe(Object? raw, {String propertyKey = ''}) {
   }
   return List<MotionPathStop>.unmodifiable(result);
 }
+
 Map<String, List<MotionPathStop>> propertiesFromTrack(MotionPathTrack track) {
   final Map<String, List<MotionPathStop>> result = <String, List<MotionPathStop>>{};
   for (final MapEntry<String, Object?> entry in track.keyframes.entries) {
