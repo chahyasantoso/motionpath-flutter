@@ -6,19 +6,17 @@
 
 Add a production-style Helix scene that exercises 3D transforms and deterministic depth ordering without adding Helix-specific semantics to core composition.
 
-## Existing foundation
+## Completed evidence on `main`
 
-- `MotionPathPatchTransform` already resolves `z`, `rotationX`, `rotationY`, `scaleZ`, and `perspective` into a Flutter-compatible 4x4 transform.
-- The shared patch consumer already recognizes the 3D renderer keys.
-- Spawn identity, reflow, front-most hit testing, and lifecycle teardown are covered by the Phase 4 and Phase 7 evidence.
+- PR #124 adds the generic depth-order contract: composed `z`/`translateZ` controls back-to-front paint order, missing depth falls back to offset order, equal-depth items preserve authored order, and hit testing traverses front-most first.
+- PR #124 applies composed 3D transforms through Flutter `Matrix4` in the generic spawn host and covers the host with widget tests.
+- PR #125 adds the shared Helix scene builder with authored x/y/z, Y rotation, scale, and perspective values, plus sampled trajectory assertions.
 
 ## Next implementation slice
 
-1. Add an explicit depth-order contract for spawned instances: sort by composed `z`, use stable authored order for equal depth, and keep hit testing front-most first.
-2. Add a Helix scene builder that authors position, depth, rotation, scale, and perspective through normal tracks and patches.
-3. Add trajectory assertions at representative progress points, including depth crossings and equal-depth ties.
-4. Add widget coverage proving Matrix4 rendering and deterministic paint order across depth changes.
-5. Record any intentional Flutter/JS differences and close the gate only after CI is green.
+1. Add a real Helix demo host that renders the shared scene through `MotionPathSpawnView`.
+2. Add widget coverage for the Helix host across depth crossings, perspective, and stable equal-depth ordering.
+3. Record any intentional Flutter/JS differences and close the gate only after CI is green.
 
 ## Design decision
 
