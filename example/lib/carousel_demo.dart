@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:motionpath_core/motionpath_core.dart';
 import 'package:motionpath_flutter/motionpath_flutter.dart';
 
+import 'carousel_scene.dart';
+
 /// A production-style Carousel consumer of the shared path and spawn layers.
 class CarouselDemoPage extends StatefulWidget {
   const CarouselDemoPage({super.key});
@@ -56,7 +58,7 @@ class _CarouselDemoPageState extends State<CarouselDemoPage> {
   void _onScroll() {
     if (!_scroll.hasClients) return;
     final double raw = ((_scroll.offset - _scrollStart) / (_scrollEnd - _scrollStart)).clamp(0.0, 1.0).toDouble();
-    final double timelineEnd = math.max(1, _spawns.liveCount - 1) * 0.1 + 1;
+    final double timelineEnd = math.max(1, _spawns.liveCount - 1) * carouselCardStagger + 1;
     setState(() {
       _progress = raw;
       _spawns.advanceTo(raw * timelineEnd);
@@ -67,48 +69,7 @@ class _CarouselDemoPageState extends State<CarouselDemoPage> {
     final int cardIndex = index ?? _nextId++ % _templates.length;
     final _CarouselCardData data = _templates[cardIndex];
     final String id = 'carousel-${_nextId++}';
-    _spawns.spawn(
-      MotionPathTrackRuntime(
-        id,
-        properties: <String, List<MotionPathStop>>{
-          'path': <MotionPathStop>[
-            MotionPathStop(
-              progress: 0,
-              value: <String, Object?>{
-                'points': <Object?>[
-                  <String, Object?>{'x': -260, 'y': 310},
-                  <String, Object?>{'x': 200, 'y': 130, 'ctrlX': -20, 'ctrlY': 70},
-                  <String, Object?>{'x': 660, 'y': 360, 'ctrlX': 520, 'ctrlY': 180},
-                  <String, Object?>{'x': 1120, 'y': 150, 'ctrlX': 900, 'ctrlY': 560},
-                  <String, Object?>{'x': 1520, 'y': 300, 'ctrlX': 1320, 'ctrlY': -80},
-                ],
-                'autoRotate': true,
-              },
-            ),
-            MotionPathStop(
-              progress: 1,
-              value: <String, Object?>{
-                'points': <Object?>[
-                  <String, Object?>{'x': -260, 'y': 310},
-                  <String, Object?>{'x': 200, 'y': 130, 'ctrlX': -20, 'ctrlY': 70},
-                  <String, Object?>{'x': 660, 'y': 360, 'ctrlX': 520, 'ctrlY': 180},
-                  <String, Object?>{'x': 1120, 'y': 150, 'ctrlX': 900, 'ctrlY': 560},
-                  <String, Object?>{'x': 1520, 'y': 300, 'ctrlX': 1320, 'ctrlY': -80},
-                ],
-                'autoRotate': true,
-              },
-            ),
-          ],
-          'opacity': <MotionPathStop>[
-            const MotionPathStop(progress: 0, value: 0),
-            const MotionPathStop(progress: 0.15, value: 1),
-            const MotionPathStop(progress: 0.85, value: 1),
-            const MotionPathStop(progress: 1, value: 0),
-          ],
-        },
-      ),
-      stagger: 0.1,
-    );
+    _spawns.spawn(carouselCardTrack(id), stagger: carouselCardStagger);
     _cardData[id] = data;
     if (mounted) setState(() {});
   }
