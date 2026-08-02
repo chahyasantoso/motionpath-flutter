@@ -7,24 +7,39 @@ import 'motionpath_plugin.dart';
 ///
 /// Nodes accept `{x, y, z?, ctrlX?, ctrlY?, ctrlZ?}`. Controls describe the
 /// quadratic segment ending at that node, matching the JavaScript reference.
+///
+/// The authored payload is either a bare node list or a
+/// `{points, autoRotate}` object. With `autoRotate` the plugin also emits
+/// `rotation`, the curve tangent in degrees, so a renderer never has to
+/// differentiate the path itself.
 const MotionPathPlugin pathPlugin = MotionPathPlugin(
   name: 'path',
   keys: <String>['path'],
   inputs: <String>['progress'],
-  outputs: <String>['x', 'y', 'z'],
+  outputs: <String>['x', 'y', 'z', 'rotation'],
   internalKeys: <String>['path'],
   stage: 20,
   compose: _composePath,
 );
 
 Map<String, Object?>? _composePath(Map<String, Object?> raw) {
-  final List<_PathNode> nodes = _nodes(raw['path']);
+  final Object? authored = raw['path'];
+  final List<_PathNode> nodes = _nodes(_authoredPoints(authored));
   if (nodes.length < 2) return null;
   final double progress = raw['progress'] is num
       ? (raw['progress']! as num).toDouble().clamp(0.0, 1.0).toDouble()
       : 0;
-  return _samplePath(nodes, progress);
+  return _samplePath(nodes, progress, autoRotate: _authoredAutoRotate(authored));
 }
+
+/// Unwraps the node list from either authored payload shape.
+Object? _authoredPoints(Object? authored) => authored is Map<Object?, Object?>
+    ? asStringKeyedMap(authored)['points']
+    : authored;
+
+bool _authoredAutoRotate(Object? authored) =>
+    authored is Map<Object?, Object?> &&
+    asStringKeyedMap(authored)['autoRotate'] == true;
 
 class _PathNode {
   const _PathNode({
@@ -78,7 +93,11 @@ List<_PathNode> _nodes(Object? raw) {
   return result;
 }
 
-Map<String, Object?> _samplePath(List<_PathNode> nodes, double progress) {
+Map<String, Object?> _samplePath(
+  List<_PathNode> nodes,
+  double progress, {
+  bool autoRotate = false,
+}) {
   final List<_CubicSegment> segments = <_CubicSegment>[];
   double totalLength = 0;
   for (int index = 1; index < nodes.length; index++) {
@@ -119,6 +138,7 @@ Map<String, Object?> _samplePath(List<_PathNode> nodes, double progress) {
       'x': nodes.first.x,
       'y': nodes.first.y,
       'z': nodes.first.z,
+      if (autoRotate) 'rotation': 0.0,
     };
   }
 
@@ -128,11 +148,48 @@ Map<String, Object?> _samplePath(List<_PathNode> nodes, double progress) {
     if (target <= segment.length || index == segments.length - 1) {
       final double localDistance = target.clamp(0, segment.length).toDouble();
       final double t = _parameterAtDistance(segment, localDistance);
-      return _point(segment, t);
+      return _sample(segment, t, autoRotate: autoRotate);
     }
     target -= segment.length;
   }
-  return _point(segments.last, 1);
+  return _sample(segments.last, 1, autoRotate: autoRotate);
+}
+
+Map<String, Object?> _sample(
+  _CubicSegment segment,
+  double t, {
+  required bool autoRotate,
+}) {
+  final Map<String, Object?> point = _point(segment, t);
+  if (!autoRotate) return point;
+  return <String, Object?>{...point, 'rotation': _tangentDegrees(segment, t)};
+}
+
+/// Curve heading at [t], in degrees, matching the reference's tangent rotation.
+///
+/// This is the analytic cubic derivative rather than a finite difference: a
+/// sampled neighbour would flip sign at a segment boundary and make a card
+/// twitch as it crosses a waypoint.
+double _tangentDegrees(_CubicSegment segment, double t) {
+  final double mt = 1 - t;
+  double derivative(double p0, double p1, double p2, double p3) =>
+      3 * mt * mt * (p1 - p0) + 6 * mt * t * (p2 - p1) + 3 * t * t * (p3 - p2);
+  final double dx = derivative(
+    segment.p0.x,
+    segment.p1.x,
+    segment.p2.x,
+    segment.p3.x,
+  );
+  final double dy = derivative(
+    segment.p0.y,
+    segment.p1.y,
+    segment.p2.y,
+    segment.p3.y,
+  );
+  // A cusp has no defined heading. Reporting zero keeps the value finite and
+  // deterministic instead of leaking a NaN into the patch.
+  if (dx == 0 && dy == 0) return 0;
+  return math.atan2(dy, dx) * 180 / math.pi;
 }
 
 Map<String, Object?> _point(_CubicSegment segment, double t) {
