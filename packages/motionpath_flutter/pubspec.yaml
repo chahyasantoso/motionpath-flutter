@@ -1,7 +1,6 @@
 name: motionpath_flutter
 description: Flutter adapters and renderers for the MotionPath v4 engine.
 version: 0.1.0
-publish_to: none
 repository: https://github.com/chahyasantoso/motionpath-flutter
 issue_tracker: https://github.com/chahyasantoso/motionpath-flutter/issues
 documentation: https://github.com/chahyasantoso/motionpath-flutter/tree/main/docs
@@ -11,8 +10,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  motionpath_core:
-    path: ../motionpath_core
+  motionpath_core: ^0.1.0
   vector_math: ^2.1.4
 dev_dependencies:
   flutter_test:
