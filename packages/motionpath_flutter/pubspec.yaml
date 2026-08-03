@@ -10,7 +10,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  motionpath_core: ^0.1.0
+  motionpath_core:
+    path: ../motionpath_core
   vector_math: ^2.1.4
 dev_dependencies:
   flutter_test:
