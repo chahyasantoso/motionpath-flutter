@@ -7,77 +7,69 @@
 - Add formatting, analysis, unit-test, integration-test, and CI checks.
 - Import the first shared JSON fixtures.
 
-Exit criteria: both packages analyze cleanly, core tests run without Flutter, and fixture loading is deterministic.
-
 ## Phase 1: contract and validation
 
 - Implement v4 schema types and JSON parsing.
 - Implement collect-all validation and structured diagnostics.
 - Reject legacy fields and malformed stops, triggers, plugins, and observations.
-- Match reference fixture diagnostics.
-
-Exit criteria: invalid projects fail before runtime objects or platform work are created.
 
 ## Phase 2: graph compiler
 
 - Port immutable observation graph IR.
-- Implement stable topological ordering.
-- Implement cycle, duplicate-edge, missing-node, role, target, and ownership diagnostics.
+- Implement stable topological ordering and graph diagnostics.
 - Add diamond and FK fixtures.
-
-Exit criteria: Walker graph compiles once and produces the same order as the reference.
 
 ## Phase 3: pure runtime
 
-- Implement interpolation stops and easing.
-- Implement Track, Motion, triggers, and Engine ownership.
-- Implement play, pause, seek, reverse, repeat, yoyo, delay, and manual progress.
-- Implement plugin registration, contribution, composition, and patch merging.
-- Implement GraphPublisher batching.
-
-Exit criteria: core runs in a Dart VM test with no Flutter imports and matches sampled reference outputs.
+- Implement interpolation, easing, runtime ownership, plugin registration, composition, and GraphPublisher batching.
 
 ## Phase 4: Flutter scheduling and renderers
 
-- Add a Ticker-backed driver.
-- Add MotionController lifecycle integration.
-- Add scroll and gesture bindings.
-- Add CustomPainter and canvas patch renderer.
-- Add an optional widget adapter for simple tracks.
+- Add Ticker, controller lifecycle, scroll and gesture bindings.
+- Add CustomPainter and widget adapters.
+- Add shared frame source and renderer capability metadata.
 
-Exit criteria: one time-driven and one scroll-driven scene render correctly without per-frame `setState`.
+## Phase 5: production hardening
 
-## Phase 5: Walker and production hardening
-
-- Port the Walker forward-kinematics demo.
-- Add matrix and transform golden tests.
-- Add lifecycle leak tests for route changes and disposed controllers.
-- Benchmark 14, 50, and 250-track rigs.
-- Profile paint invalidations and allocation pressure on mobile hardware.
-
-Exit criteria: Walker behavior is compatible, teardown is clean, and performance budgets are documented.
+- Port Walker and add transform/lifecycle tests.
+- Benchmark track rigs and paint invalidations.
+- Add asset lifecycle, deterministic recording, error recovery, and reduced-motion policy.
 
 ## Phase 6: package release
 
 - Stabilize public APIs and semver.
 - Publish core and Flutter packages separately.
-- Add API docs, migration guide, examples, and changelog.
-- Establish fixture compatibility checks against the JavaScript repository.
-
-Exit criteria: consumers can use pure Dart headlessly or Flutter rendering independently.
+- Add API docs, migration guide, examples, changelog, and fixture compatibility checks.
 
 ## Phase 7: product primitives
 
-- Build `MotionPathListView.builder` on top of `CustomScrollView` and sliver-native lazy construction.
-- Extract or share the canonical path sampler with the existing `path` plugin.
-- Preserve controller behavior, recycling, semantics, reverse scroll, pagination, and stable keys.
-- Validate two non-demo use cases: gesture education and a data-backed journey/process timeline.
-- Add reduced-motion guidance and examples where motion explains state rather than decorates it.
+- Build `MotionPathListView.builder` on sliver-native lazy construction.
+- Preserve recycling, semantics, reverse scroll, pagination, and stable keys.
+- Validate gesture education and a data-backed journey/process timeline.
 
-Exit criteria: a team can ship a meaningful path-based interaction without hand-written scroll math, per-item runtimes, or abandoning native list behavior. See [`docs/WISHLIST.md`](WISHLIST.md) and [`docs/USE_CASES_AND_PRODUCT_RATIONALE.md`](USE_CASES_AND_PRODUCT_RATIONALE.md).
+## Phase 8: renderer formalization
 
-## Recommended first milestone
+- Ship the shared immutable frame source.
+- Formalize CanvasRenderer, WidgetRenderer, RenderObjectRenderer, OverlayRenderer, and HeadlessRenderer.
+- Add capability metadata, compatibility diagnostics, and the renderer matrix.
+- Prove one runtime can feed multiple renderer types without duplicate tickers.
+- Build `MotionPathHero` on Flutter Hero lifecycle and support plugin-driven in-flight choreography.
 
-Build Phases 0 through 2 before writing widgets. The engine contract and graph compiler are the hard parts; a pretty demo before those are stable is just expensive wallpaper.
+**Exit criteria:** a mixed scene uses Canvas, Widget, RenderObject, and Overlay outputs from one runtime, with deterministic headless samples and clean attach/detach behavior.
 
-The next product milestone is not another showcase scene. It is a reusable list primitive plus two evidence-driven examples that prove the system reduces implementation cost and improves user orientation.
+## Phase 9: system maturity
+
+- Stable entity identity and scene ownership across route changes, recycling, spawn, and promotion to overlay.
+- Asset prefetch/cache/eviction contracts.
+- Transformed hit testing, semantic projections, and reduced-motion behavior.
+- Frame budgeting, profiling, and backpressure for dense scenes.
+- Game-loop adapter with fixed-step option, pause/resume, visibility, and deterministic replay.
+- Authoring/tooling for inspecting graphs, previewing frames, and validating capability compatibility.
+- Versioned schema migration, plugin versioning, structured runtime errors, and recovery policy.
+- Cross-platform adapter experiments after Flutter contracts stabilize.
+
+**Exit criteria:** production consumers can diagnose, profile, replay, and recover from renderer/runtime failures without patching engine internals.
+
+## Recommended order
+
+Do not add more showcase demos before proving the renderer contract. Build the shared frame source and capability diagnostics first, then RenderObject and Overlay targets, then the two product primitives. The missing foundation is not more animation features; it is ownership, observability, and predictable presentation boundaries.
