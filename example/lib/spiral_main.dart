@@ -35,8 +35,6 @@ class _SpiralZumaPageState extends State<SpiralZumaPage>
   late final MotionPathSpawnTickerBinding _tickerBinding;
   late final void Function() _removeAutoSpawnListener;
   final MotionPathEngine _engine = MotionPathEngine();
-  final Map<String, MotionPathPatchSource> _patchSources =
-      <String, MotionPathPatchSource>{};
   final List<Offset> _guide = <Offset>[];
   double _spawnInterval = 1.25;
   double _spawnClock = 0;
@@ -107,30 +105,11 @@ class _SpiralZumaPageState extends State<SpiralZumaPage>
         _spawn();
       }
     }
-    _publishInstancePatches();
     if (_spawns.liveCount == 0 && _waveSpawned > 0) {
       _spawns.restartEmptyWave();
       _waveSpawned = 0;
       _spawnClock = 0;
       _spawn();
-    }
-  }
-
-  void _publishInstancePatches() {
-    final Set<String> live = <String>{};
-    for (final MotionPathSpawnInstance instance in _spawns.instances) {
-      live.add(instance.id);
-      final MotionPathPatchSource source = _patchSources.putIfAbsent(
-        instance.id,
-        MotionPathPatchSource.new,
-      );
-      source.publish(<String, Map<String, Object?>>{
-        instance.id: instance.patch,
-      });
-    }
-    for (final String id in _patchSources.keys.toList()) {
-      if (live.contains(id)) continue;
-      _patchSources.remove(id)?.dispose();
     }
   }
 
@@ -141,8 +120,6 @@ class _SpiralZumaPageState extends State<SpiralZumaPage>
     _waveSpawned++;
   }
 
-  void _pop(String id) => _spawns.remove(id);
-
   @override
   void dispose() {
     _removeAutoSpawnListener();
@@ -150,27 +127,8 @@ class _SpiralZumaPageState extends State<SpiralZumaPage>
     _spawns.dispose();
     _ticker.dispose();
     _engine.destroy();
-    for (final MotionPathPatchSource source in _patchSources.values) {
-      source.dispose();
-    }
     super.dispose();
   }
-
-  Widget _balls() => Stack(
-        clipBehavior: Clip.none,
-        children: <Widget>[
-          for (final MotionPathSpawnInstance instance in _spawns.instances)
-            if (_patchSources[instance.id] case final MotionPathPatchSource source)
-              KeyedSubtree(
-                key: ValueKey<String>(instance.id),
-                child: MotionPathPatchView(
-                  source: source,
-                  trackId: instance.id,
-                  child: const _SpiralBall(),
-                ),
-              ),
-        ],
-      );
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -180,7 +138,11 @@ class _SpiralZumaPageState extends State<SpiralZumaPage>
           actions: <Widget>[
             Padding(
               padding: const EdgeInsets.only(right: 20),
-              child: Center(child: Text('${_spawns.liveCount} balls')),
+              child: AnimatedBuilder(
+                animation: _spawns,
+                builder: (BuildContext context, Widget? child) =>
+                    Text('${_spawns.liveCount} balls'),
+              ),
             ),
           ],
         ),
@@ -189,44 +151,21 @@ class _SpiralZumaPageState extends State<SpiralZumaPage>
           icon: const Icon(Icons.add),
           label: const Text('Add ball'),
         ),
-        body: AnimatedBuilder(
-          animation: _spawns,
-          builder: (BuildContext context, Widget? child) => Center(
-            child: SizedBox(
-              width: 360,
-              height: 360,
-              child: GestureDetector(
-                onTapUp: (TapUpDetails details) {
-                  MotionPathSpawnInstance? nearest;
-                  double distance = double.infinity;
-                  for (final MotionPathSpawnInstance instance
-                      in _spawns.instances) {
-                    final MotionPathPatchTransform transform =
-                        MotionPathPatchTransform.fromPatch(instance.patch);
-                    final double d = (Offset(
-                      transform.translateX,
-                      transform.translateY,
-                    ) - details.localPosition).distance;
-                    if (d < distance) {
-                      distance = d;
-                      nearest = instance;
-                    }
-                  }
-                  if (nearest != null && distance < _ballRadius * 1.8) {
-                    _pop(nearest.id);
-                  }
-                },
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: <Widget>[
-                    CustomPaint(
-                      size: const Size(360, 360),
-                      painter: _SpiralGuidePainter(_guide),
-                    ),
-                    _balls(),
-                  ],
-                ),
-              ),
+        body: Center(
+          child: SizedBox(
+            width: 360,
+            height: 360,
+            child: MotionPathSpawnView(
+              alignment: Alignment.topLeft,
+              controller: _spawns,
+              itemBuilder: (BuildContext context, MotionPathSpawnInstance instance) =>
+                  const _SpiralBall(),
+              onHit: (MotionPathSpawnInstance instance, Offset localPosition) {
+                final MotionPathPatchTransform transform =
+                    MotionPathPatchTransform.fromPatch(instance.patch);
+                final Offset center = Offset(transform.translateX, transform.translateY);
+                return (center - localPosition).distance < _ballRadius * 1.8;
+              },
             ),
           ),
         ),
