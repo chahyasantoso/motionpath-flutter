@@ -29,6 +29,7 @@ class _SpiralZumaPageState extends State<SpiralZumaPage>
   static const double _ballRadius = 21;
   static const double _ballDuration = 12;
   static const int _waveSize = 30;
+  static const double _fallbackSpawnInterval = 1.25;
 
   late final MotionPathTickerDriver _ticker;
   late final MotionPathSpawnController _spawns;
@@ -36,7 +37,7 @@ class _SpiralZumaPageState extends State<SpiralZumaPage>
   late final void Function() _removeAutoSpawnListener;
   final MotionPathEngine _engine = MotionPathEngine();
   final List<Offset> _guide = <Offset>[];
-  double _spawnInterval = 1.25;
+  double _spawnInterval = _fallbackSpawnInterval;
   double _spawnClock = 0;
   int _waveSpawned = 0;
   int _nextId = 0;
@@ -64,6 +65,7 @@ class _SpiralZumaPageState extends State<SpiralZumaPage>
     const int rawSegments = 2000;
     const int pathSegments = 240;
     const Offset centre = Offset(180, 180);
+    _guide.clear();
     final List<Offset> raw = <Offset>[];
     for (int i = 0; i <= rawSegments; i++) {
       final double p = i / rawSegments;
@@ -78,15 +80,21 @@ class _SpiralZumaPageState extends State<SpiralZumaPage>
       distances.add(total);
     }
     final double step = total / pathSegments;
+    // The cursor is monotonic across samples, so hoisting it keeps the scan
+    // linear. It stops one pair short of the end and the target is clamped to
+    // the measured total, because i * step can round just above total on the
+    // final sample and walk the cursor off the end of the table.
+    int cursor = 0;
     for (int i = 0; i <= pathSegments; i++) {
-      final double target = i * step;
-      int cursor = 0;
-      while (cursor < distances.length - 1 && distances[cursor + 1] < target) cursor++;
+      final double target = math.min(i * step, total);
+      while (cursor < distances.length - 2 && distances[cursor + 1] < target) {
+        cursor++;
+      }
       final double span = distances[cursor + 1] - distances[cursor];
-      final double ratio = span == 0 ? 0 : (target - distances[cursor]) / span;
+      final double ratio = span == 0 ? 0.0 : ((target - distances[cursor]) / span).clamp(0.0, 1.0);
       _guide.add(Offset.lerp(raw[cursor], raw[cursor + 1], ratio)!);
     }
-    _spawnInterval = (_ballRadius * 2) / (total / _ballDuration);
+    _spawnInterval = total == 0 ? _fallbackSpawnInterval : (_ballRadius * 2) / (total / _ballDuration);
   }
 
   void _autoSpawn(double delta) {
@@ -177,7 +185,9 @@ class _SpiralGuidePainter extends CustomPainter {
     final Paint guide = Paint()..color = const Color(0x557C5CFF)..style = PaintingStyle.stroke..strokeWidth = 2..strokeCap = StrokeCap.round;
     if (path.isEmpty) return;
     final Path spiral = Path()..moveTo(path.first.dx, path.first.dy);
-    for (final Offset point in path.skip(1)) spiral.lineTo(point.dx, point.dy);
+    for (final Offset point in path.skip(1)) {
+      spiral.lineTo(point.dx, point.dy);
+    }
     canvas.drawPath(spiral, guide);
     final Offset centre = path.last;
     canvas.drawCircle(centre, 44, Paint()..color = const Color(0xFF160A25));
