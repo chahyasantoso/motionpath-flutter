@@ -2,112 +2,109 @@
 
 ## Summary
 
-Formalize MotionPath rendering as a composable multi-renderer system. One validated runtime publishes renderer-neutral patches once; multiple renderer instances consume the same frame for different visual entities. Renderers are selected per entity, not globally.
+Formalize MotionPath rendering as a composable multi-renderer system. One runtime publishes renderer-neutral patches once; multiple renderers consume the same frame for different entities or surfaces. Renderers are selected per visual entity, not globally.
 
-## User problem
+A scene may combine a canvas background, widget-based interactive actors, render-object list items, and an overlay Hero flight while preserving one source of motion truth.
 
-The current system can render patches through painters, widgets, and spawned views, but the capability boundary is implicit. That makes it unclear which plugins work in which target, how Canvas, widget, render-object, and overlay output can coexist, and how Hero flights or dense game scenes should share one runtime.
+## Problem
 
-## Product promise
-
-Authors define motion once. Applications choose the best presentation target for each entity without duplicating motion logic or creating one runtime per renderer.
+The repository already has painters, patch views, spawn views, transforms, depth, image/filter consumers, and lifecycle-aware scheduling. Those capabilities are useful but currently read as separate adapters rather than one deliberate contract. Without formalization, plugin support will become inconsistent, Hero integration will be bolted on, and every new renderer will invent its own lifecycle, hit testing, semantics, and capability rules.
 
 ## Goals
 
-- Define a stable renderer capability contract.
-- Support Canvas, Widget, RenderObject, Overlay, and Headless/recording targets.
-- Allow several renderer instances to subscribe to one runtime frame.
-- Keep plugin composition in core and presentation concerns in adapters.
-- Make unsupported plugin fields explicit through capability checks and diagnostics.
-- Preserve Flutter semantics, hit testing, lifecycle, and performance expectations.
-- Support Hero-style route flights without replacing Flutter Hero pairing and overlay ownership.
+- Define a stable renderer-neutral frame and entity identity contract.
+- Allow several renderer types to consume the same runtime frame.
+- Make renderer capabilities explicit per plugin output.
+- Support Canvas, Widget, RenderObject, Overlay, and Headless renderers.
+- Preserve one scheduler, one runtime state, and deterministic patch ordering.
+- Provide clear behavior for unsupported fields, missing assets, hit testing, semantics, reduced motion, and disposal.
+- Make Hero flights a first-class OverlayRenderer integration without replacing Flutter Hero pairing.
 
 ## Non-goals
 
-- One universal renderer that can consume every plugin.
-- Replacing Flutter's layout, Navigator, Hero, or game loop.
-- Turning Canvas into a semantic widget tree.
-- Creating one Motion runtime per visible item or renderer.
-- Hiding capability differences behind silent visual degradation.
+- A universal renderer that supports every plugin.
+- Replacing Flutter's widget, sliver, Hero, or semantics systems.
+- Making Canvas and Widget rendering interchangeable at the pixel level.
+- Turning MotionPath into a complete game engine.
+- Adding a second animation loop per renderer.
 
-## Renderer targets
+## Core concepts
 
-### CanvasRenderer
+### Runtime frame
 
-For dense particles, bullets, maps, graph edges, effects, and low-overhead scenes. Consumes transform, opacity, color, image, filter, and custom geometry fields where supported. Owns paint caching, clipping, z ordering, and optional canvas hit testing.
+A runtime frame contains a monotonically identified frame/sample, playhead information, and immutable patches keyed by stable entity ID. Renderers never mutate runtime patches.
 
-### WidgetRenderer
+### Entity identity
 
-For normal Flutter subtrees that need gestures, semantics, focus, inherited themes, and accessibility. Uses stable child identity and patch-driven repaint/transform wrappers. It is the easiest integration target, not the cheapest for thousands of entities.
+Every visible entity needs a stable ID independent of its widget instance, list index, or render target. Identity enables renderer handoff, Hero promotion, spawn/reflow, caching, hit testing, and deterministic tests.
 
-### RenderObjectRenderer
+### Renderer instance
 
-For layout-aware, high-frequency children such as path lists, dynamic actors, and complex hit testing. Updates paint and compositing state without rebuilding widget subtrees. This is the performance path for `MotionPathListView`.
+A renderer instance binds a set of entity IDs to one presentation target. It owns target-specific resources and subscriptions, but not motion truth or engine time.
 
-### OverlayRenderer
+### Capability declaration
 
-For Hero flights, route transitions, drag previews, tooltips, sheets, and selected entities promoted above normal layout. Flutter owns overlay insertion and route pairing; MotionPath owns the sampled choreography.
+Each renderer declares the patch fields and plugin outputs it can consume. Unsupported output must be reported through diagnostics or an explicit fallback policy, never silently ignored.
 
-### HeadlessRenderer
+## Renderer matrix
 
-For deterministic tests, golden sampling, export/recording, telemetry, and future non-Flutter adapters. Produces sampled frames or validated capability reports without painting.
+| Renderer | Best for | Owns | Must support first |
+|---|---|---|---|
+| CanvasRenderer | Dense particles, bullets, maps, charts, background scenes | Canvas paint, batching, canvas hit testing | transforms, opacity, images, basic filters |
+| WidgetRenderer | Interactive Flutter subtrees, forms, semantic content | Widget composition and state | transforms, opacity, semantics, gestures |
+| RenderObjectRenderer | High-volume transformed children, path lists, layout-aware hit testing | Layout/paint invalidation and layers | transforms, depth, hit testing, repaint isolation |
+| OverlayRenderer | Hero flights, drag previews, route transitions, portals | Overlay entry and flight lifecycle | transforms, opacity, route progress, handoff |
+| HeadlessRenderer | Tests, sampling, recording, export, server-side validation | Deterministic output snapshots | all data fields without Flutter objects |
 
-## Core contract
+## Composition rules
 
-```dart
-abstract class MotionPathRenderer {
-  RendererCapabilities get capabilities;
-  void attach(MotionPathFrameSource source);
-  void detach();
-  void dispose();
-}
-
-class RendererCapabilities {
-  final Set<String> pluginNames;
-  final Set<String> outputKeys;
-  final bool supportsSemantics;
-  final bool supportsHitTesting;
-  final bool supportsOverlay;
-}
-```
-
-The exact API may change, but the rule should not: plugins emit patches, renderers declare what they consume, and the runtime never imports Flutter presentation types.
-
-## Frame and subscription model
-
-- One `MotionPathEngine` or `MotionPathMotionRuntime` owns truth.
-- A frame is immutable and versioned.
-- Subscribers filter by entity IDs and output interest.
-- Renderers may share a source and repaint independently.
-- Attach/detach is idempotent.
-- Renderer disposal never destroys a shared runtime unless it owns that runtime explicitly.
+1. One runtime may feed many renderer instances.
+2. One entity uses one active renderer at a time unless explicitly duplicated for a mirror/preview.
+3. Renderer handoff must preserve entity identity and current sampled state.
+4. Renderer order is separate from runtime graph order. Runtime resolves data; scene composition resolves visual layering.
+5. A renderer may consume only the capabilities it declares.
+6. No renderer creates a ticker, timer, or competing playhead.
+7. Renderers may request repaint, relayout, or resource work, but they may not mutate engine state during paint.
 
 ## Plugin compatibility
 
-Every plugin should declare output metadata and renderer requirements. A renderer must choose one of three explicit outcomes:
+Plugins should declare output metadata and renderer requirements. Examples:
 
-1. consume the field;
-2. report unsupported capability before mounting;
-3. intentionally ignore a nonessential field with diagnostics in debug mode.
+- Path and transform outputs: all visual renderers.
+- Opacity: all visual renderers.
+- Image sequence: Canvas, Widget, RenderObject, and Overlay with an image resolver.
+- Blur/filter: Canvas and RenderObject first; Widget through explicit wrappers where possible.
+- CSS variables: Widget or a platform adapter, not Canvas by default.
+- Spawner: scene composition/runtime layer, not a paint primitive.
+- Custom geometry: Canvas or a plugin-specific RenderObject.
 
-Required compatibility tests should cover path, image sequence, CSS variable, filter, overlay, spawner, and forward-kinematics outputs across relevant renderers.
+The compatibility decision must be explicit: consume, degrade, fallback, or reject.
 
-## Hero integration
+## Hero support
 
-Add `MotionPathHero` as an adapter around Flutter `Hero`, not a replacement. Flutter continues to pair tags, manage the Navigator overlay, placeholders, route lifecycle, and reverse gestures. The adapter supplies a MotionPath-driven in-flight child or render target that can consume any supported plugin output, not only path geometry.
+Add a `MotionPathHero` adapter that uses Flutter Hero for tag pairing, overlay placement, placeholders, route lifecycle, and reverse gestures. MotionPath supplies the in-flight playhead and composed plugin patches through an OverlayRenderer.
 
-The adapter must handle source/destination bounds, inherited themes, GlobalKey restrictions, direction reversal, cancellation, and route disposal. Unsupported plugins should fail clearly rather than produce a broken flight.
+The API should accept a project-backed motion/runtime, not only a path. The Hero flight can therefore use path, scale, opacity, image sequence, filters, dependent tracks, or any plugin with an overlay capability.
+
+```dart
+MotionPathHero.runtime(
+  tag: product.id,
+  motion: heroMotion,
+  trackId: 'product-flight',
+  child: ProductThumbnail(product),
+)
+```
 
 ## Accessibility and reduced motion
 
-Renderers must preserve logical semantics and focus order where possible. Motion cannot be the only communication channel. Add a reduced-motion policy that can snap to the final state, remove rotation/depth effects, or use a short opacity transition while preserving the same semantic state change.
+Motion must never be the only state signal. Preserve logical semantics and focus order even when entities move visually. Add a reduced-motion policy that can snap to the destination state, reduce transforms, or keep only essential continuity. The policy belongs above individual renderers so Canvas, Widget, RenderObject, and Overlay agree.
 
-## Acceptance criteria
+## Success criteria
 
-- Two renderer types consume the same frame and remain synchronized.
-- A plugin capability mismatch is diagnosable before or during mount.
-- Canvas and widget outputs can coexist in one scene.
-- RenderObjectRenderer can update visible list children without full widget rebuilds.
-- OverlayRenderer supports a custom MotionPathHero flight.
-- Headless sampling matches Flutter renderer inputs for the same fixture.
-- Attach, detach, route cancellation, and shared-runtime disposal are covered by tests.
+- A single runtime frame can drive at least two renderer types in one scene.
+- Capability mismatches produce actionable diagnostics.
+- Entity handoff from Widget to Overlay preserves visual state and identity.
+- Hero transitions support reverse and user-controlled route gestures.
+- Canvas and RenderObject paths do not rebuild widget subtrees per frame.
+- Headless snapshots match runtime samples used by Flutter renderers.
+- Disposal leaves no renderer subscriptions, overlay entries, image handles, or ticker leaks.

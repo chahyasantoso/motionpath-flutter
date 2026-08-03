@@ -1,85 +1,84 @@
-# Renderer implementation plan
+# Renderer system implementation plan
 
-## Phase 0: inventory and invariants
+## Phase 1: contract and inventory
 
-- Inventory existing `MotionPathPatchView`, `MotionPathSpawnView`, painters, consumers, image cache, transforms, filters, depth, and hit testing.
-- Document current patch keys and lifecycle ownership.
-- Freeze the invariant that core publishes plain immutable data and renderers never mutate runtime state.
-- Add a renderer decision record for intentional capability gaps.
+- Inventory current painters, patch consumers, spawn views, transforms, filters, image cache, hit testing, and lifecycle APIs.
+- Define `MotionPathFrame`, `MotionPathEntityId`, `MotionPathRendererBinding`, `MotionPathRendererCapabilities`, and renderer diagnostics.
+- Define output ownership: runtime patches are immutable; renderer state is target-local.
+- Add contract tests for stable entity identity, patch immutability, ordering, and unsupported fields.
 
-## Phase 1: shared frame source
+## Phase 2: shared frame distribution
 
-Create a Flutter-neutral frame source abstraction over `GraphPublisher`/patch sources.
+- Add a frame publisher that can fan out one composed frame to multiple renderer bindings.
+- Add interest filtering so each renderer receives only the entity IDs and fields it needs.
+- Keep batching and dirty-node semantics from `GraphPublisher`.
+- Define attach, detach, replace, and dispose behavior as idempotent operations.
 
-- Immutable frame version and timestamp/progress.
-- Interest-scoped entity and key filtering.
-- Multiple listeners with independent attach/detach.
-- No per-renderer runtime or ticker.
-- Tests for ordering, coalescing, stale frame rejection, and disposal.
+## Phase 3: capability registry
 
-## Phase 2: capabilities and diagnostics
+- Extend plugin metadata with renderer capability requirements and fallback policy.
+- Validate a scene before mount when a plugin cannot be consumed by its selected renderer.
+- Add diagnostics for unsupported output, missing image providers, invalid filter bounds, and conflicting ownership.
+- Document the capability matrix and version it with the public contract.
 
-- Add renderer capability metadata.
-- Add plugin output metadata and required/optional key classification.
-- Validate compatibility before mount where possible.
-- Add debug diagnostics for ignored keys, unsupported plugins, duplicate consumers, and lifecycle misuse.
-- Add a capability matrix to `docs/RENDERER_CAPABILITY_MATRIX.md`.
+## Phase 4: formalize existing Flutter renderers
 
-## Phase 3: formalize existing adapters
+- Adapt existing patch views and spawn views to the binding contract.
+- Formalize `CanvasRenderer` around `CustomPainter` and repaint `Listenable` behavior.
+- Formalize `WidgetRenderer` around stable keyed subtrees and patch consumers.
+- Add `RenderObjectRenderer` for layout-aware transforms, path lists, repaint isolation, and hit testing.
+- Add renderer-level performance counters without putting instrumentation in hot paths by default.
 
-- Wrap current painters as `CanvasRenderer`.
-- Wrap patch and spawn views as `WidgetRenderer`.
-- Keep stable child wrappers and image cache behavior.
-- Separate renderer lifecycle from engine lifecycle.
-- Add shared fixture tests proving old demos do not change.
+## Phase 5: Overlay and Hero
 
-## Phase 4: RenderObjectRenderer
+- Implement `OverlayRenderer` with explicit overlay entry ownership.
+- Build `MotionPathHero` on Flutter Hero's pairing and flight lifecycle.
+- Add runtime-driven flight progress and plugin patch consumption.
+- Support handoff from source Widget/RenderObject to overlay and back without duplicate global keys.
+- Cover push, pop, reverse gesture, cancellation, route disposal, and missing destination cases.
 
-- Implement `RenderMotionPathChild` and the list integration.
-- Update transforms, opacity, filters, and z/depth during paint/compositing rather than `setState`.
-- Add layout-aware transformed hit testing.
-- Use this target for `MotionPathListView` and dense interactive children.
-- Benchmark 20, 100, and 1000 logical items with stable keys.
+## Phase 6: Headless and export
 
-## Phase 5: OverlayRenderer and Hero
+- Implement a headless renderer that records sampled frames and capability diagnostics.
+- Add deterministic JSON snapshots for geometry, transforms, opacity, depth, and plugin fields.
+- Use snapshots for cross-renderer parity and future recording/export tools.
 
-- Define an overlay target contract for bounds, child identity, route direction, and cancellation.
-- Implement `MotionPathHero` using `Hero.flightShuttleBuilder` and a shared frame source.
-- Support any plugin fields accepted by the in-flight target, not only `path`.
-- Test push, pop, user gesture reversal, cancellation, nested navigators, GlobalKey constraints, and disposal.
+## Phase 7: hardening
 
-## Phase 6: Headless and recording
+- Add golden tests for each renderer and mixed-renderer scenes.
+- Add semantics and reduced-motion tests.
+- Add image/filter/asset lifecycle tests.
+- Benchmark 20, 250, and 1000 entities across Canvas, Widget, RenderObject, and mixed scenes.
+- Profile frame fan-out, allocations, raster time, layer count, and repaint boundaries on real devices.
 
-- Add a headless frame collector for deterministic tests and exported timelines.
-- Add sampled-frame JSON output with schema/version metadata.
-- Use it for golden comparisons and cross-renderer parity.
-- Keep recording out of the hot path unless explicitly enabled.
+## Proposed package layout
 
-## Phase 7: production hardening
+```text
+packages/motionpath_core/lib/src/rendering/
+  frame.dart
+  entity_id.dart
+  renderer_capabilities.dart
+  renderer_diagnostics.dart
+  renderer_registry.dart
 
-- Add performance overlays and frame-cost telemetry in debug/profile builds.
-- Verify memory ownership for image sequences, filters, and spawned children.
-- Add reduced-motion and accessibility tests.
-- Add documentation and examples showing one runtime feeding Canvas, Widget, RenderObject, and Overlay targets.
-- Publish stable APIs only after capability and lifecycle contracts stop moving.
+packages/motionpath_flutter/lib/src/renderers/
+  motion_path_canvas_renderer.dart
+  motion_path_widget_renderer.dart
+  motion_path_render_object_renderer.dart
+  motion_path_overlay_renderer.dart
+  motion_path_headless_adapter.dart
+  motion_path_renderer_binding.dart
 
-## Test strategy
+packages/motionpath_flutter/lib/src/hero/
+  motion_path_hero.dart
+```
 
-- Contract tests: frame immutability, ordering, key interest, capability validation.
-- Renderer tests: identical input fixture produces equivalent transform/opacity/depth samples.
-- Widget tests: semantics, hit testing, route transitions, recycling, and stable identity.
-- Golden tests: canvas, widget, render-object, and overlay snapshots.
-- Performance tests: repaint counts, allocations, frame time, and 1000-entity scenes.
-- Failure tests: unsupported plugins, missing assets, stale frames, disposal during flight, and reduced motion.
+## Acceptance tests
 
-## Risks and mitigations
-
-- **Abstraction bloat:** keep the contract small and capability-based.
-- **Different visual semantics:** define equivalence at patch/frame level, not pixel identity.
-- **Overlay complexity:** reuse Flutter Hero lifecycle rather than implementing a second Navigator system.
-- **Performance regressions:** measure repaint boundaries and allocations before optimizing API shape.
-- **Plugin mismatch:** fail early with actionable diagnostics.
-
-## Definition of done
-
-A production example uses one runtime to drive canvas particles, widget actors, a render-object path list, and one Hero overlay flight. The example has deterministic headless samples, capability diagnostics, semantics/reduced-motion coverage, clean teardown, and documented performance numbers.
+- One engine tick publishes one frame consumed by Canvas and Widget renderers.
+- A RenderObject list can update paint without rebuilding child widgets.
+- A Hero flight can consume a full runtime motion, not only a path.
+- Unsupported plugin fields fail clearly or follow a documented fallback.
+- Renderer handoff preserves stable entity ID and current patch.
+- Reduced motion produces an understandable destination state.
+- All renderer resources detach cleanly after route replacement.

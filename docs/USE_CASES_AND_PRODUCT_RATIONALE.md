@@ -2,74 +2,74 @@
 
 ## Executive conclusion
 
-MotionPath should make spatial relationships and state changes explicit in Flutter interfaces, without forcing teams to choose between expressive motion and native rendering behavior.
+MotionPath should make spatial relationships and state changes explicit in Flutter interfaces and small game-like experiences, without forcing teams to choose between expressive motion and native rendering behavior.
 
-Its durable value is a portable system that describes motion as data, validates it, composes dependent tracks, drives it from time or input, and publishes one frame that Canvas, Widget, RenderObject, Overlay, or Headless targets can consume.
+Its durable value is not a collection of flashy demos. It is a data-driven system that validates motion, composes dependent tracks, drives them from time or input, publishes immutable patches, and lets multiple renderers present the same state.
 
-## Why renderer composition matters
+## New renderer insight
 
-Real products mix visual workloads. A map may draw roads on Canvas, render a selected marker as a Widget, promote that marker into a Hero Overlay, and use a RenderObject list for nearby events. A game may draw hundreds of projectiles on Canvas while the player, inventory, and dialogue remain interactive widgets. Requiring one renderer forces bad tradeoffs.
+The renderer system expands the product from a motion adapter into a presentation platform. Canvas, Widget, RenderObject, Overlay, and Headless renderers can work together from one runtime frame. That enables a dense background plus interactive widgets, a lazy path list plus a Hero flight, or a game scene plus inspectable headless replay without duplicating motion logic.
 
-The correct model is **one runtime, many renderer instances, one primary renderer per entity**. That preserves shared truth without pretending every target has the same semantics.
+The strongest wedge remains `MotionPathListView.builder`, followed by `MotionPathHero.runtime`. Together they address two common gaps: expressive lazy lists and custom shared-element transitions.
 
-## Core problems solved
+## Problem map
 
-1. Continuity is expensive when transitions become scattered controller code.
-2. Scroll and gesture choreography needs consistent paths, easing, dependencies, and reverse behavior.
-3. Rich motion fights lazy list and widget performance.
-4. Motion logic gets trapped in one renderer.
-5. Mixed scenes need different performance, semantics, and hit-testing tradeoffs.
-6. Route and overlay transitions need the same authored behavior without a second runtime.
+| Problem | Need | MotionPath answer |
+|---|---|---|
+| Abrupt navigation loses context | Continuity and focus | Overlay renderer and runtime-authored Hero flights |
+| Gestures are invisible to first-time users | Preview and cause/effect | Scroll/gesture-bound playheads and composed tracks |
+| Feeds and catalogs are visually interchangeable | Spatial emphasis and memory | RenderObject path lists with lazy construction |
+| Dense scenes become expensive as widgets | Bounded paint work | Canvas renderer with batching and interest filtering |
+| Interactive children need native semantics | Real Flutter behavior | Widget and RenderObject renderers |
+| Designers and engineers disagree on motion | Reviewable data | JSON/typed contracts, fixtures, diagnostics |
+| Platform/renderers drift | Shared behavior | Pure Dart runtime and headless snapshots |
+| Games need synchronized choreography | One deterministic truth | Shared frames, identity, fixed-step input, replay hooks |
 
-## Product opportunities
+## Uses beyond demos
 
-- Spatial onboarding and gesture education.
-- Product discovery, editorial feeds, and catalogs.
-- Maps, routes, journeys, and process timelines.
-- Data storytelling and operational dashboards.
-- Creative portfolios and immersive browsing.
-- Shared list/detail/canvas/Hero transitions.
-- Game scenes with Canvas crowds, interactive Widget actors, RenderObject lists, and Overlay promotion.
+### Spatial onboarding and gesture education
+Motion previews show direction, sequence, and consequence before a user commits to a swipe, drag, or setup action.
 
-Motion is justified when it communicates where something went, how things relate, what a gesture will do, where the user is in a process, why a value changed, or which element has focus. It is not justified as decoration alone.
+### Product discovery and editorial catalogs
+Cards can follow a spatial rail while retaining lazy loading, stable keys, and semantics. This is the clearest use case for `MotionPathListView`.
 
-## System gaps beyond renderer formalization
+### Maps, routes, journeys, and process timelines
+Path position can communicate progress through deliveries, trips, workouts, learning, or approvals while labels and markers remain coordinated.
 
-Renderer composition is necessary but not sufficient. The system also needs:
+### Data storytelling and operational dashboards
+Observation graphs can explain relationships and causality, while Canvas handles dense nodes and Widgets handle interactive detail.
 
-- stable entity identity across spawn, recycling, route changes, and overlay promotion;
-- asset lifecycle contracts for image sequences, prefetch, cache, and eviction;
-- transformed hit testing and semantic projections;
-- reduced-motion policy that preserves state meaning;
-- frame budgeting, profiling, backpressure, and dirty-region discipline;
-- fixed-step and variable-step game-loop adapters, pause/resume, visibility, and replay;
-- authoring and debugging tools for graph inspection and frame preview;
-- schema migration, plugin versioning, structured errors, and recovery behavior;
-- cross-renderer parity fixtures and capability validation.
+### Shared list-to-detail and Hero transitions
+A selected entity can move from a list or canvas into a detail route using the same runtime motion and plugin composition, rather than a hard-coded rectangle tween.
 
-These are the difference between a clever animation library and a dependable system.
+### Small game-like experiences
+A single frame can drive canvas bullets, widget actors, render-object inventories, and overlay transitions. This is not a replacement for a full game engine; it is a choreography and presentation layer.
 
-## Recommended validation sequence
+## Use it when
 
-1. Build the shared frame source and capability diagnostics.
-2. Prove a mixed Canvas + Widget + RenderObject scene.
-3. Add Overlay/Hero promotion and cancellation.
-4. Validate the MotionPathListView and journey timeline outside the demos.
-5. Build a small game vertical slice only after lifecycle, performance, and replay behavior are measurable.
+Motion should explain where something came from, where it goes, how things relate, what a gesture does, where the user is in a process, why a value changed, or which element has focus.
 
-## Evidence
+Use Flutter's normal animation APIs for a simple fade, scale, or route transition. MotionPath is justified when the system needs shared authoring, graph dependencies, input-driven progress, multiple renderers, or deterministic reuse.
+
+## Remaining gaps
+
+A better system still needs: entity identity and handoff semantics, capability diagnostics, cross-renderer hit testing/input routing, accessibility and reduced motion, asset/cache lifecycle, headless recording and debug tooling, serialization migrations, hot reload and recovery behavior, fixed-step game-loop input, deterministic replay, and device-specific budgets.
+
+## Evidence and references
 
 - [Material motion](https://m1.material.io/motion/material-motion.html): motion describes spatial relationships, functionality, and intention.
-- [Material choreography](https://m1.material.io/motion/choreography.html): continuity and shared elements preserve focus.
-- [Material accessibility](https://m1.material.io/usability/accessibility.html): motion cannot be the only signal.
-- [Flutter animation guidance](https://docs.flutter.dev/ui/animations): specialized motion systems should earn their complexity.
-- [Flutter Hero animations](https://docs.flutter.dev/ui/animations/hero-animations): Hero is a shared-element transition between route states.
-- [Flutter CustomPainter](https://api.flutter.dev/flutter/rendering/CustomPainter-class.html): repaint-driven canvas rendering is appropriate for dense visuals.
+- [Material choreography](https://m1.material.io/motion/choreography.html): continuity and shared elements help users maintain focus.
+- [Material navigational transitions](https://m1.material.io/patterns/navigational-transitions.html): transitions communicate hierarchy and journey.
+- [Material accessibility](https://m1.material.io/usability/accessibility.html): motion cannot be the only state signal.
+- [Flutter Hero animations](https://docs.flutter.dev/ui/animations/hero-animations): shared-element transitions provide route continuity.
+- [Flutter CustomPainter](https://api.flutter.dev/flutter/rendering/CustomPainter-class.html): repaint-driven canvas rendering is appropriate for dense visual work.
+- [Flutter AnimatedList](https://api.flutter.dev/flutter/widgets/AnimatedList-class.html): standard list animation does not provide authored spatial paths.
 
 ## Validation questions
 
-- Does mixed rendering reduce code and frame cost versus separate controllers?
-- Can users explain the motion without a tooltip?
-- Does reduced motion preserve comprehension?
-- Can a team diagnose unsupported plugin output before shipping?
-- Can the same authored frame be replayed and compared across renderers?
+- Does the motion reduce orientation time or user error?
+- Does it remain understandable with reduced motion?
+- Does a path improve scanning over a normal list?
+- Does the renderer system reduce custom animation code?
+- Can the same motion be reused across list, canvas, detail, and Hero surfaces?
+- Can a small game-like vertical slice run with one scheduler and deterministic snapshots?

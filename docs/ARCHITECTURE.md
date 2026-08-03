@@ -10,9 +10,14 @@ JSON project
   -> resolved configs
   -> immutable observation graph IR
   -> Engine / Motion / Track
-  -> GraphPublisher / FrameSource
-  -> renderer-neutral immutable frame
-  -> Canvas, Widget, RenderObject, Overlay, or Headless renderer
+  -> GraphPublisher
+  -> immutable runtime frame
+  -> renderer fan-out
+     -> CanvasRenderer
+     -> WidgetRenderer
+     -> RenderObjectRenderer
+     -> OverlayRenderer
+     -> HeadlessRenderer
 ```
 
 ## Pure Dart core
@@ -26,25 +31,14 @@ packages/motionpath_core/lib/src/
   graph/           normalize, validate, and topologically order observations
   runtime/         Engine, Motion, Track, triggers, ownership, event bus
   interpolation/   stops, easing, normalized progress, repeat, yoyo
-  composition/     plugin folds, patch merging, GraphPublisher, FrameSource
+  composition/     plugin folds, patch merging, GraphPublisher
+  rendering/       immutable frames, entity IDs, capabilities, diagnostics
   plugins/         plugin contracts and built-in data plugins
   math/            matrices, transforms, paths, forward kinematics
   contract/        public Dart types and JSON serialization
 ```
 
-The core must not import Flutter, access platform APIs, schedule frames, or produce CSS/widget objects.
-
-## Renderer model
-
-MotionPath uses a composable renderer model. One runtime publishes one immutable frame; multiple renderer instances may consume filtered views of that frame. Renderers are selected per visual entity, not per scene.
-
-- **CanvasRenderer:** dense particles, bullets, maps, effects, and custom geometry.
-- **WidgetRenderer:** interactive Flutter subtrees, semantics, focus, and inherited context.
-- **RenderObjectRenderer:** high-frequency layout-aware children, transformed lists, and efficient hit testing.
-- **OverlayRenderer:** Hero flights, route transitions, drag previews, and promoted entities.
-- **HeadlessRenderer:** deterministic samples, tests, recording, and future adapters.
-
-Every renderer declares capabilities. Plugins declare output metadata. Unsupported required outputs produce diagnostics; optional outputs may be intentionally ignored only when declared.
+The core remains Flutter-free, platform-free, and renderer-neutral. It may describe output capabilities and data contracts, but never creates widgets, canvases, layers, overlays, or platform handles.
 
 ## Flutter adapter
 
@@ -53,34 +47,38 @@ packages/motionpath_flutter/lib/src/
   ticker/           Ticker-backed engine driver
   controllers/      MotionController and lifecycle ownership
   bindings/         scroll, gesture, and widget lifecycle adapters
-  renderers/        frame source, capabilities, canvas/widget/render/overlay adapters
+  renderers/        Canvas, Widget, RenderObject, Overlay, and headless adapters
   painters/         CustomPainter implementations and paint caches
-  scene/            patch views, spawn views, and scene hosts
-  list/             MotionPathListView and render-object list integration
+  hero/             MotionPathHero and Hero flight integration
+  scene/            patch views, spawn views, scene composition
+  scroll/           scroll bindings and path helpers
 ```
 
-The adapter converts Flutter time or scroll input into `Engine.tick(delta)` or `Motion.seek(progress)`. It should use `CustomPainter` or render objects for dense animation, not `setState` per property.
+The adapter converts Flutter time or scroll input into `Engine.tick(delta)` or `Motion.seek(progress)`. One runtime frame may feed many renderer bindings, but each visual entity has one active presentation owner unless explicitly mirrored. Canvas and RenderObject adapters should use paint/layer invalidation rather than `setState` per property.
 
 ## Runtime lifecycle
 
-`Engine.loadProject` validates and prepares a project without creating mounted runtime objects. `mountInstance` creates a Motion or Track. Ticks update progress, interpolate Track state, compose graph patches, and publish dirty nodes. `unmount` and `destroy` are idempotent and release every subscription and timeline-like resource.
-
-A renderer may attach to a shared frame source and detach without destroying the runtime. Overlay and Hero adapters must also release route listeners and in-flight children on cancellation.
-
-## Graph model
-
-Observation edges are normalized once into immutable JSON-safe nodes and edges. Diagnostics reject missing nodes, duplicate edges, self-cycles, cycles, invalid roles or targets, and ambiguous ownership. The compiled order is stable and parent-first. Diamonds reuse resolved context; cycles fail validation rather than relying on accidental runtime behavior.
+`Engine.loadProject` validates and prepares a project without creating mounted runtime objects. `mountInstance` creates a Motion or Track. Ticks update progress, interpolate Track state, compose graph patches, publish one immutable frame, and fan it out to interested renderers. `unmount`, renderer detach, and `destroy` are idempotent and release every subscription, overlay entry, image handle, and timeline-like resource.
 
 ## Rendering contract
 
-A patch is plain Dart data. Plugins declare output metadata, internal keys, and optional renderer requirements. Renderers own serialization into `Matrix4`, `Paint`, layout values, semantics, or custom geometry. The core never knows whether a patch targets a widget, canvas, scene, overlay, game entity, or headless test.
+A frame contains stable entity IDs, immutable patch data, sample metadata, and dirty/interest information. Plugins declare output metadata and renderer capability requirements. Renderers own serialization into `Matrix4`, `Paint`, layout values, semantics, overlays, or custom geometry. Unsupported fields must follow an explicit consume, degrade, fallback, or reject policy.
 
-One entity has one primary renderer at a time. A scene may combine renderer types, and several renderers may subscribe to the same runtime without creating duplicate schedules.
+Runtime graph order and visual paint order are separate. The runtime resolves dependencies parent-first; scene composition resolves z/depth and renderer layering afterward.
+
+## Multi-renderer composition
+
+Renderers work together. A game or app can draw dense particles on Canvas, interactive actors as Widgets, a path-following list through RenderObjects, and a selected item as an Overlay Hero, all from one runtime. Use one renderer per visual entity, not one renderer for the entire scene.
 
 ## Scheduling rule
 
-There is exactly one active frame source per engine integration. A Flutter adapter may use `Ticker`, but it must not create a second ticker, timer, or custom animation loop for the same engine. Scroll-driven motions are sampled through Flutter scroll notifications and mapped to `seek`.
+There is exactly one active frame source per engine integration. A Flutter adapter may use `Ticker`, but it must not create a second ticker, timer, or custom animation loop for the same engine. Scroll-driven motions are sampled through Flutter scroll notifications and mapped to `seek`. Future game integrations should provide fixed-step input through the same engine boundary rather than adding a second truth source.
 
-## Open system work
+## Cross-cutting requirements
 
-The renderer contract is only one part of production readiness. The remaining system work includes stable scene/entity identity, asset preloading and eviction, capability diagnostics, transformed hit testing, semantics and reduced-motion policies, deterministic recording, frame budgeting, game-loop integration, authoring/tooling, schema migration, plugin versioning, structured runtime errors, and recovery policy. These are tracked in [`RENDERER_IMPLEMENTATION_PLAN.md`](RENDERER_IMPLEMENTATION_PLAN.md) and [`ROADMAP.md`](ROADMAP.md).
+- Stable entity identity for renderer handoff and recycling.
+- Semantics and focus order independent of visual paint order.
+- Reduced-motion policy above individual renderers.
+- Explicit asset/cache ownership and memory budgets.
+- Deterministic snapshots for tests, replay, and future export.
+- Diagnostics before mount for invalid capability combinations.
