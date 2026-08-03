@@ -1,6 +1,6 @@
 # MotionPath Flutter handoff
 
-Updated 2026-08-03 after the full demo pass.
+Updated 2026-08-03 after PRs #146 and #147 merged green.
 
 ## Repository and workflow
 
@@ -11,20 +11,21 @@ Updated 2026-08-03 after the full demo pass.
 
 ## Current state
 
-- All nine JS demo routes are ported and covered: Carousel, Spiral/Zuma, Helix, Walker, Burst, Motorcycle, Pasar Malam, Pasar Malam Observer, Tower Defense, and Hooks Demo.
-- The launcher exposes every completed demo. PR #143 has a green rerun after fixing offstage drawer assertions and drawer-transition timing; merge it when the branch is ready.
-- Spiral now renders directly through `MotionPathSpawnView`; its manual per-ball patch-source plumbing is gone in PR #144.
-- Pasar Malam uses an asset-free frame indicator instead of bundling the reference WebP sequence. The difference is documented in `docs/COMPATIBILITY.md`.
+- All ten completed demo routes are ported, covered, and reachable from the launcher.
+- PR #143 is merged, PR #144 is merged, PR #146 is merged, and PR #147 is merged.
+- Spiral/Zuma uses the generic spawn renderer. Its endpoint resampling and launcher timing regressions are covered.
+- Spawn child identity uses namespaced value keys and an invariant wrapper tree; the former GlobalKey registry is gone.
+- Pasar Malam intentionally uses an asset-free frame indicator; the difference is documented in `docs/COMPATIBILITY.md`.
 - Phase 9 Release hardening remains open.
 
 ## Next work
 
-1. Merge PR #143 after its green rerun.
-2. Run clean-package analysis and tests for core, Flutter adapter, and example.
-3. Review public exports, API classifications, package metadata, and path dependencies.
-4. Run `dart pub publish --dry-run` and `flutter pub publish --dry-run` after publish settings are ready.
+1. Read `docs/CODEBASE_AUDIT.md` and decide whether the P1 validation and duplicate-observation items land before release.
+2. Run clean-package analysis/tests for core, Flutter adapter, and example from the release candidate commit.
+3. Review exports, API classifications, package metadata, and path dependencies.
+4. Run `dart pub publish --dry-run` and `flutter pub publish --dry-run` after release settings are ready.
 5. Capture controlled benchmark JSON with commit SHA, environment, Dart version, and build mode.
-6. Complete security, generated-file, and release-tag evidence.
+6. Complete security, generated-file, changelog, and release-tag evidence.
 
 ## Source of truth
 
@@ -33,4 +34,5 @@ Updated 2026-08-03 after the full demo pass.
 - `docs/COMPATIBILITY.md`
 - `docs/RELEASE_CHECKLIST.md`
 - `docs/API_SURFACE.md`
+- `docs/CODEBASE_AUDIT.md`
 - `docs/SESSION_HANDOFF.md`
