@@ -7,6 +7,7 @@ import 'hooks_demo.dart';
 import 'motorcycle_demo.dart';
 import 'pasar_malam_demo.dart';
 import 'pasar_malam_observer_demo.dart';
+import 'spiral_main.dart';
 import 'tower_defense_demo.dart';
 import 'walker_demo.dart';
 
@@ -41,6 +42,7 @@ class _DemoLauncherPageState extends State<DemoLauncherPage> {
     'Pasar Malam Observer',
     'Tower Defense',
     'Hooks Demo',
+    'Spiral / Zuma',
     'Helix',
     'Carousel',
   ];
@@ -53,6 +55,7 @@ class _DemoLauncherPageState extends State<DemoLauncherPage> {
     Icons.remove_red_eye,
     Icons.shield,
     Icons.auto_awesome,
+    Icons.route,
     Icons.all_inclusive,
     Icons.view_carousel,
   ];
@@ -65,6 +68,7 @@ class _DemoLauncherPageState extends State<DemoLauncherPage> {
     'Observer-driven lantern loop',
     'Interactive tower defense',
     'Direct patch consumption',
+    'Dynamic spawn lifecycle',
     'Depth and Matrix4',
     'Interactive path cards',
   ];
@@ -78,8 +82,9 @@ class _DemoLauncherPageState extends State<DemoLauncherPage> {
       case 4: return const PasarMalamObserverDemoPage();
       case 5: return const TowerDefenseDemoPage();
       case 6: return const HooksDemoPage();
-      case 7: return const HelixDemoPage();
-      case 8: return const CarouselDemoPage();
+      case 7: return const SpiralZumaPage();
+      case 8: return const HelixDemoPage();
+      case 9: return const CarouselDemoPage();
       default: return const WalkerDemoPage();
     }
   }

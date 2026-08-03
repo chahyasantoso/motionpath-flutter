@@ -11,7 +11,8 @@ void main() {
     await tester.pumpAndSettle();
     for (final String title in <String>[
       'Walker', 'Burst', 'Motorcycle', 'Pasar Malam',
-      'Pasar Malam Observer', 'Tower Defense', 'Hooks Demo', 'Helix', 'Carousel',
+      'Pasar Malam Observer', 'Tower Defense', 'Hooks Demo',
+      'Spiral / Zuma', 'Helix', 'Carousel',
     ]) {
       expect(find.text(title, skipOffstage: false), findsOneWidget);
     }
@@ -20,7 +21,7 @@ void main() {
   testWidgets('launcher switches into the new hosts', (WidgetTester tester) async {
     await tester.pumpWidget(const MotionPathExampleApp());
     await tester.pump();
-    for (final String selection in <String>['Pasar Malam', 'Tower Defense', 'Hooks Demo']) {
+    for (final String selection in <String>['Pasar Malam', 'Tower Defense', 'Hooks Demo', 'Spiral / Zuma']) {
       await tester.tap(find.byIcon(Icons.apps));
       await tester.pumpAndSettle();
       await tester.tap(find.text(selection, skipOffstage: false));
