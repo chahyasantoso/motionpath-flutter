@@ -87,9 +87,7 @@ class MotionPathTrackRuntime implements MotionPathLayoutChild {
     _onChildRemoved?.call(child);
     for (final MotionPathReflowTarget target in layoutDelegate.computeReflow(siblings, child, stagger: child._staggerOffset)) {
       final MotionPathLayoutChild moved = target.child;
-      if (moved is! MotionPathTrackRuntime) {
-        continue;
-      }
+      if (moved is! MotionPathTrackRuntime) continue;
       moved._currentOffset = target.offset;
       _onChildReflowed?.call(moved, target.offset);
     }
@@ -99,6 +97,10 @@ class MotionPathTrackRuntime implements MotionPathLayoutChild {
     if (role != 'input' && role != 'output') throw ArgumentError.value(role, 'role', 'must be input or output');
     if (role == 'input' && (input == null || input.isEmpty)) throw ArgumentError.value(input, 'input', 'is required for an input observation');
     if (role == 'output' && input != null) throw ArgumentError.value(input, 'input', 'must be omitted for an output observation');
+    final bool duplicate = _observed.any((MotionPathObservation observation) => identical(observation.source, source) && observation.role == role && observation.input == input);
+    if (duplicate) {
+      throw StateError('Track "$id" already observes "${source.id}" with role "$role"${input == null ? '' : ' and input "$input"'}.');
+    }
     _observed.add(MotionPathObservation(source: source, role: role, input: input));
   }
   void removeObserved(MotionPathTrackRuntime source) => _observed.removeWhere((MotionPathObservation observation) => observation.source == source);
@@ -121,18 +123,14 @@ class MotionPathTrackRuntime implements MotionPathLayoutChild {
     ctx[this] = null;
     Map<String, Object?> raw = rawData ?? snapshot();
     for (final MotionPathObservation observation in _observed) {
-      if (!observation.isInput) {
-        continue;
-      }
+      if (!observation.isInput) continue;
       final String? key = observation.input;
       if (key == null || key.isEmpty) throw StateError('Track "$id" contains an input observation without a target key.');
       raw = <String, Object?>{...raw, key: observation.source.compose(context: ctx)};
     }
     Map<String, Object?> patch = composePatch(plugins, raw);
     for (final MotionPathObservation observation in _observed) {
-      if (!observation.isInput) {
-        patch = mergePatches(patch, observation.source.compose(context: ctx));
-      }
+      if (!observation.isInput) patch = mergePatches(patch, observation.source.compose(context: ctx));
     }
     ctx[this] = patch;
     return patch;
@@ -155,10 +153,7 @@ class MotionPathTrackRuntime implements MotionPathLayoutChild {
     _disposed = true;
     _listeners.clear();
     _observed.clear();
-    for (final MotionPathTrackRuntime child in List<MotionPathTrackRuntime>.of(_children.values)) {
-      child._parent = null;
-      child.dispose();
-    }
+    for (final MotionPathTrackRuntime child in List<MotionPathTrackRuntime>.of(_children.values)) { child._parent = null; child.dispose(); }
     _children.clear();
     _parent = null;
     onChildSpawned = null;
@@ -169,25 +164,14 @@ class MotionPathTrackRuntime implements MotionPathLayoutChild {
 
 ValueBlend blendForProperty(String propertyKey) => kMotionPathColorKeys.contains(propertyKey) ? blendColorValues : MotionPathInterpolators.value;
 
-const Map<String, String> kMotionPathStaticPayloadKeys = <String, String>{
-  'path': 'points',
-  'imageSequence': 'frames',
-};
+const Map<String, String> kMotionPathStaticPayloadKeys = <String, String>{'path': 'points', 'imageSequence': 'frames'};
 
 Object _keyframePayload(Map<String, Object?> config, String propertyKey, String payloadKey) {
   final Object? payload = config[payloadKey];
-  if (payload is! List<Object?> || payload.isEmpty) {
-    throw ArgumentError.value(payload, payloadKey, 'A "$propertyKey" keyframe requires a non-empty "$payloadKey" list');
-  }
+  if (payload is! List<Object?> || payload.isEmpty) throw ArgumentError.value(payload, payloadKey, 'A "$propertyKey" keyframe requires a non-empty "$payloadKey" list');
   final List<Object?> entries = List<Object?>.unmodifiable(payload);
   if (propertyKey != 'path') return entries;
-  return Map<String, Object?>.unmodifiable(<String, Object?>{
-    'points': entries,
-    'stops': config['stops'],
-    if (config['autoRotate'] == true) 'autoRotate': true,
-    if (config.containsKey('ease')) 'ease': config['ease'],
-    if (config.containsKey('anchor')) 'anchor': config['anchor'],
-  });
+  return Map<String, Object?>.unmodifiable(<String, Object?>{'points': entries, 'stops': config['stops'], if (config['autoRotate'] == true) 'autoRotate': true, if (config.containsKey('ease')) 'ease': config['ease'], if (config.containsKey('anchor')) 'anchor': config['anchor']});
 }
 
 List<MotionPathStop> stopsFromKeyframe(Object? raw, {String propertyKey = ''}) {

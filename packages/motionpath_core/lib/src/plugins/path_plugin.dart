@@ -23,35 +23,25 @@ Map<String, Object?>? _composePath(Map<String, Object?> raw) {
   final double progress = raw['progress'] is num
       ? (raw['progress']! as num).toDouble().clamp(0.0, 1.0).toDouble()
       : 0;
-  final Map<String, Object?> patch = _samplePath(
-    nodes,
-    _pacedProgress(authored, progress),
-    autoRotate: _authoredAutoRotate(authored),
-  );
+  final Map<String, Object?> patch = _samplePath(nodes, _pacedProgress(authored, progress), autoRotate: _authoredAutoRotate(authored));
   patch.addAll(_anchorPatch(authored));
   return patch;
 }
 
-Object? _authoredPoints(Object? authored) => authored is Map<Object?, Object?>
-    ? asStringKeyedMap(authored)['points']
-    : authored;
+Object? _authoredPoints(Object? authored) => authored is Map<Object?, Object?> ? asStringKeyedMap(authored)['points'] : authored;
 
-bool _authoredAutoRotate(Object? authored) =>
-    authored is Map<Object?, Object?> &&
-    asStringKeyedMap(authored)['autoRotate'] == true;
+bool _authoredAutoRotate(Object? authored) => authored is Map<Object?, Object?> && asStringKeyedMap(authored)['autoRotate'] == true;
 
 Map<String, Object?> _anchorPatch(Object? authored) {
   if (authored is! Map<Object?, Object?>) return const <String, Object?>{};
   final Object? anchor = asStringKeyedMap(authored)['anchor'];
-  if (anchor == 'center') {
-    return <String, Object?>{'xPercent': -50.0, 'yPercent': -50.0};
-  }
+  if (anchor == 'center') return <String, Object?>{'xPercent': -50.0, 'yPercent': -50.0};
   if (anchor is Map<Object?, Object?>) {
     final Map<String, Object?> value = asStringKeyedMap(anchor);
-    return <String, Object?>{
-      'xPercent': (value['xPercent']! as num).toDouble(),
-      'yPercent': (value['yPercent']! as num).toDouble(),
-    };
+    final Object? xPercent = value['xPercent'];
+    final Object? yPercent = value['yPercent'];
+    if (xPercent is! num || yPercent is! num || !xPercent.toDouble().isFinite || !yPercent.toDouble().isFinite) return const <String, Object?>{};
+    return <String, Object?>{'xPercent': xPercent.toDouble(), 'yPercent': yPercent.toDouble()};
   }
   return const <String, Object?>{};
 }
@@ -65,11 +55,7 @@ double _pacedProgress(Object? authored, double progress) {
   for (final Object? candidate in rawStops) {
     final Map<String, Object?> stop = asStringKeyedMap(candidate);
     if (stop.isEmpty) continue;
-    stops.add(MotionPathStop(
-      progress: stop['p'] is num ? (stop['p']! as num).toDouble() : 0,
-      value: stop['v'] is num ? (stop['v']! as num).toDouble() : progress,
-      ease: stop.containsKey('ease') ? resolveEasing(stop['ease']) : resolveEasing(config['ease']),
-    ));
+    stops.add(MotionPathStop(progress: stop['p'] is num ? (stop['p']! as num).toDouble() : 0, value: stop['v'] is num ? (stop['v']! as num).toDouble() : progress, ease: stop.containsKey('ease') ? resolveEasing(stop['ease']) : resolveEasing(config['ease'])));
   }
   if (stops.length < 2) return progress;
   final Object? paced = interpolateStops(stops, progress);
@@ -101,9 +87,15 @@ List<_PathNode> _nodes(Object? raw) {
   final List<_PathNode> result = <_PathNode>[];
   for (final Object? value in raw) {
     final Map<String, Object?> point = asStringKeyedMap(value);
-    if (point['x'] is! num || point['y'] is! num) continue;
-    double? number(String key) => point[key] is num ? (point[key]! as num).toDouble() : null;
-    result.add(_PathNode(x: (point['x']! as num).toDouble(), y: (point['y']! as num).toDouble(), z: number('z') ?? 0, ctrlX: number('ctrlX'), ctrlY: number('ctrlY'), ctrlZ: number('ctrlZ')));
+    double? finiteNumber(String key) {
+      final Object? value = point[key];
+      if (value is! num || !value.toDouble().isFinite) return null;
+      return value.toDouble();
+    }
+    final double? x = finiteNumber('x');
+    final double? y = finiteNumber('y');
+    if (x == null || y == null) continue;
+    result.add(_PathNode(x: x, y: y, z: finiteNumber('z') ?? 0, ctrlX: finiteNumber('ctrlX'), ctrlY: finiteNumber('ctrlY'), ctrlZ: finiteNumber('ctrlZ')));
   }
   return result;
 }
