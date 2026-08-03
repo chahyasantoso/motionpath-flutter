@@ -66,6 +66,18 @@ Exit criteria: Walker behavior is compatible, teardown is clean, and performance
 
 Exit criteria: consumers can use pure Dart headlessly or Flutter rendering independently.
 
+## Phase 7: product primitives
+
+- Build `MotionPathListView.builder` on top of `CustomScrollView` and sliver-native lazy construction.
+- Extract or share the canonical path sampler with the existing `path` plugin.
+- Preserve controller behavior, recycling, semantics, reverse scroll, pagination, and stable keys.
+- Validate two non-demo use cases: gesture education and a data-backed journey/process timeline.
+- Add reduced-motion guidance and examples where motion explains state rather than decorates it.
+
+Exit criteria: a team can ship a meaningful path-based interaction without hand-written scroll math, per-item runtimes, or abandoning native list behavior. See [`docs/WISHLIST.md`](WISHLIST.md) and [`docs/USE_CASES_AND_PRODUCT_RATIONALE.md`](USE_CASES_AND_PRODUCT_RATIONALE.md).
+
 ## Recommended first milestone
 
 Build Phases 0 through 2 before writing widgets. The engine contract and graph compiler are the hard parts; a pretty demo before those are stable is just expensive wallpaper.
+
+The next product milestone is not another showcase scene. It is a reusable list primitive plus two evidence-driven examples that prove the system reduces implementation cost and improves user orientation.
