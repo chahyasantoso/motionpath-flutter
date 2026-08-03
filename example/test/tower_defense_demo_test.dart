@@ -1,0 +1,4 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:motionpath_flutter_example/tower_defense_demo.dart';
+void main(){testWidgets('Tower Defense mounts idle game and starts a wave',(tester)async{await tester.pumpWidget(const MaterialApp(home:TowerDefenseDemoPage()));await tester.pump();expect(find.text('MotionPath Tower Defense'),findsOneWidget);expect(find.text('Wave 1 Ready'),findsOneWidget);await tester.tap(find.text('Start Wave'));await tester.pump();expect(find.textContaining('Wave 1 / 5'),findsOneWidget);expect(tester.takeException(),isNull);});testWidgets('Tower Defense resets cleanly',(tester)async{await tester.pumpWidget(const MaterialApp(home:TowerDefenseDemoPage()));await tester.pump();await tester.tap(find.text('Start Wave'));await tester.pump();await tester.tap(find.text('Reset'));await tester.pump();expect(find.text('Wave 1 Ready'),findsOneWidget);expect(tester.takeException(),isNull);});}
