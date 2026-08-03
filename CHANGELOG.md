@@ -8,8 +8,9 @@ Initial unpublished release line, updated 2026-08-03.
   interpolation, plugins, forward kinematics, and immutable renderer-neutral patches.
 - Flutter ticker, scroll, viewport, patch, painter, Walker, dynamic child,
   Helix/depth, and lifecycle adapters.
-- Carousel, Helix, Walker, Burst, and Motorcycle examples consuming generic
-  composed patches, with deterministic z-depth ordering and Matrix4 rendering.
+- Nine runnable examples: Carousel, Spiral/Zuma, Helix, Walker, Burst,
+  Motorcycle, Pasar Malam, Pasar Malam Observer, Tower Defense, and Hooks Demo,
+  all consuming generic composed patches through the example launcher.
 - Cross-repository parity fixtures for authored payloads, paths, lifecycle,
   diagnostics, plugins, trajectories, and eased overshoot.
 - Deterministic tests, local benchmark harness, API inventory, compatibility

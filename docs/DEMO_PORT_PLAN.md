@@ -11,11 +11,15 @@ product demos.
 Already ported:
 
 - Carousel: complete, PRs #93, #94, and #114 through #122.
-- Spiral/Zuma: existing Flutter example, still needs a renderer-consumption audit because the current host retains some local patch plumbing.
+- Spiral/Zuma: complete after the generic spawn-renderer audit, PR #144.
 - Helix/depth: complete, PRs #124 through #126.
 - Walker: scene graph and real FK host merged, PRs #127 through #129.
 - Burst: scene contract and spawn host merged, PRs #130 and #132.
 - Motorcycle: scene contract and vector-art host merged, PRs #131 and #134.
+- Pasar Malam: scene contract and scroll host merged, PRs #136 and #137.
+- Pasar Malam Observer: observer-driven host merged, PR #138.
+- Tower Defense: scene contract and interactive host merged, PRs #139 and #141.
+- Hooks Demo: scene contract and host merged, PRs #140 and #142.
 
 ## Remaining demo matrix
 
@@ -23,11 +27,11 @@ Already ported:
 |---:|---|---|---|---|
 | 1 | `/walker` | FK chain, scroll scrub, 14 bone tracks, world-space patches, tone layering | `walker_demo.dart` plus shared Walker scene builder | Complete, PRs #127 through #129 |
 | 2 | `/burst` | Scroll-driven radial burst, staggered transforms, opacity, scale, and color | `burst_demo.dart` plus sampled burst scene | Complete, PRs #130 and #132 |
-| 3 | `/moto` | Scroll-driven motorcycle assembly, nested transforms, image/asset composition | `motorcycle_demo.dart` plus asset contract | Complete, PRs #131 and #134. Imagery is vector art by decision, recorded in `docs/COMPATIBILITY.md` |
-| 4 | `/pasarmalam` | Multi-track festival scene, scroll orchestration, authored plugin payloads | `pasar_malam_demo.dart` plus scene contract | Planned |
-| 5 | `/pasarmalam-observer` | Observer/input-output graph variant of Pasar Malam | `pasar_malam_observer_demo.dart` plus graph fixtures | Planned |
-| 6 | `/tower-defense` | Dynamic units, target/attack state, spawned children, interaction | `tower_defense_demo.dart` plus lifecycle contract | Planned |
-| 7 | `/hooks-demo` | Hook/runtime integration showcase and baseline consumer | `hooks_demo.dart` plus minimal project contract | Planned |
+| 3 | `/moto` | Scroll-driven motorcycle assembly, nested transforms, image/asset composition | `motorcycle_demo.dart` plus asset contract | Complete, PRs #131 and #134 |
+| 4 | `/pasarmalam` | Multi-track festival scene, scroll orchestration, authored plugin payloads | `pasar_malam_demo.dart` plus scene contract | Complete, PRs #136 and #137 |
+| 5 | `/pasarmalam-observer` | Observer/input-output graph variant of Pasar Malam | `pasar_malam_observer_demo.dart` plus graph fixtures | Complete, PR #138 |
+| 6 | `/tower-defense` | Dynamic units, target/attack state, spawned children, interaction | `tower_defense_demo.dart` plus lifecycle contract | Complete, PRs #139 and #141 |
+| 7 | `/hooks-demo` | Hook/runtime integration showcase and baseline consumer | `hooks_demo.dart` plus minimal project contract | Complete, PRs #140 and #142 |
 
 ## Porting rules
 
@@ -39,39 +43,20 @@ Already ported:
 6. Record intentional Flutter/JS differences in `docs/COMPATIBILITY.md` with owner and regression evidence.
 7. Merge one demo PR only after all four CI jobs are green. Docs-only updates go directly to `main`.
 
-## Parallelization
-
-Safe parallel workstreams:
-
-- Pasar Malam and Tower Defense scene inventories can proceed independently.
-- Observer work follows the Pasar Malam base scene contract but its fixture inventory can start in parallel.
-
-Do not parallelize edits to shared public renderer files without a dedicated contract PR first. Keep each demo in its own branch and PR.
-
 ## Consistency audit checklist
 
-For each port, compare the JS route against Flutter before marking complete:
-
-- Route exists and launches from the Flutter example.
-- Every JS motion/track has a Dart scene builder or an explicit unsupported asset decision.
-- Every authored property reaches a composed patch or is documented as host chrome.
-- Scroll, trigger, repeat, stagger, observer, and lifecycle semantics match.
-- Asset paths, image-frame payloads, CSS-variable payloads, and plugin outputs have a Flutter host consumer or an accepted difference.
-- Widget tests cover the host behavior without counting framework-owned widgets.
-- Public APIs stay in package exports; demo helpers stay in `example/lib`.
-- Docs, phase status, changelog, and compatibility notes agree.
-
-## Known audit gap
-
-`example/lib/main.dart` still boots a single hard-coded page, so Carousel,
-Helix, Burst, and Motorcycle are reachable from tests but not from the running
-example app. The first checklist line stays open for every ported demo until a
-demo launcher lands. Track that as its own PR rather than folding it into a
-port.
+- Route exists and launches from the Flutter example: complete for all nine ported demos via the launcher.
+- Every JS motion/track has a Dart scene builder or an explicit unsupported asset decision: complete for the nine routes.
+- Every authored property reaches a composed patch or is documented as host chrome: complete for the current demo scope.
+- Scroll, trigger, repeat, stagger, observer, and lifecycle semantics match: covered by scene and host tests; remaining differences are documented.
+- Asset paths, image-frame payloads, CSS-variable payloads, and plugin outputs have a Flutter host consumer or an accepted difference: accepted asset-free sequence presentation is documented for Pasar Malam.
+- Widget tests cover host behavior without counting framework-owned widgets: complete for current demo hosts.
+- Public APIs stay in package exports; demo helpers stay in `example/lib`: complete for current demo scope.
+- Docs, phase status, changelog, and compatibility notes agree: refreshed on main.
 
 ## Current next tasks
 
-1. Add a demo launcher to `example/lib/main.dart` so every ported route is reachable from the running app.
-2. Inventory and port Pasar Malam, then its observer variant.
-3. Port Tower Defense, then Hooks Demo.
-4. Audit the Spiral/Zuma host for leftover local patch plumbing.
+1. Run the release-hardening checklist from clean package directories.
+2. Review public exports and publish metadata, then run both package dry-runs.
+3. Capture controlled benchmark JSON and complete the security/release evidence.
+"},{
