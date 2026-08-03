@@ -54,6 +54,10 @@ class _MotionPathSpawnViewState extends State<MotionPathSpawnView> {
       oldWidget.controller.removeListener(_pruneDrainedChildren);
       widget.controller.addListener(_pruneDrainedChildren);
       _children.clear();
+    } else if (!identical(oldWidget.itemBuilder, widget.itemBuilder)) {
+      // Cached widgets close over the builder that created them. Reusing them
+      // after a builder swap silently keeps the old host contract alive.
+      _children.clear();
     }
   }
 
