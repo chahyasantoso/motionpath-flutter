@@ -41,6 +41,36 @@ class MotionPathSpawnView extends StatefulWidget {
 class _MotionPathSpawnViewState extends State<MotionPathSpawnView> {
   final Map<String, Widget> _children = <String, Widget>{};
 
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_pruneDrainedChildren);
+  }
+
+  @override
+  void didUpdateWidget(MotionPathSpawnView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!identical(oldWidget.controller, widget.controller)) {
+      oldWidget.controller.removeListener(_pruneDrainedChildren);
+      widget.controller.addListener(_pruneDrainedChildren);
+      _children.clear();
+    }
+  }
+
+  /// Drops cached subtrees for instances the controller has drained.
+  ///
+  /// This runs on the controller notification rather than inside the
+  /// [AnimatedBuilder] callback so the cache is never mutated during build.
+  void _pruneDrainedChildren() {
+    if (_children.isEmpty) return;
+    final Set<String> liveIds = <String>{
+      for (final MotionPathSpawnInstance instance
+          in widget.controller.instances)
+        instance.id,
+    };
+    _children.removeWhere((String id, Widget child) => !liveIds.contains(id));
+  }
+
   Widget _childFor(MotionPathSpawnInstance instance, BuildContext context) {
     return _children.putIfAbsent(
       instance.id,
@@ -53,6 +83,7 @@ class _MotionPathSpawnViewState extends State<MotionPathSpawnView> {
 
   @override
   void dispose() {
+    widget.controller.removeListener(_pruneDrainedChildren);
     _children.clear();
     super.dispose();
   }
@@ -62,14 +93,6 @@ class _MotionPathSpawnViewState extends State<MotionPathSpawnView> {
     final Widget stack = AnimatedBuilder(
       animation: widget.controller,
       builder: (BuildContext context, Widget? child) {
-        final Set<String> liveIds = <String>{
-          for (final MotionPathSpawnInstance instance
-              in widget.controller.instances)
-            instance.id,
-        };
-        _children.removeWhere(
-          (String id, Widget child) => !liveIds.contains(id),
-        );
         return Stack(
           alignment: widget.alignment,
           children: <Widget>[
@@ -108,6 +131,11 @@ class _MotionPathSpawnItem extends StatelessWidget {
     required this.child,
     super.key,
   });
+
+  /// Stand-in used while [ImageFiltered] is disabled, so the filter keeps its
+  /// slot in the element tree instead of appearing and disappearing.
+  static final ImageFilter _inertFilter = ImageFilter.blur();
+
   final MotionPathSpawnInstance instance;
   final int fallbackArgb;
   final Widget child;
@@ -119,48 +147,32 @@ class _MotionPathSpawnItem extends StatelessWidget {
       instance.patch,
       fallbackArgb: fallbackArgb,
     );
-    Widget result = child;
-    if (transform.opacity != 1) {
-      result = Opacity(opacity: transform.opacity, child: result);
-    }
     final ImageFilter? filter = MotionPathPatchConsumers.blurFilter(
       instance.patch,
     );
-    if (filter != null) {
-      result = ImageFiltered(imageFilter: filter, child: result);
-    }
-    final bool has3dTransform = transform.translateZ != 0 ||
-        transform.rotationX != 0 ||
-        transform.rotationY != 0 ||
-        transform.scaleZ != 1 ||
-        transform.perspective != 0;
-    if (has3dTransform) {
-      result = Transform(
-        alignment: Alignment.center,
-        transform: Matrix4.fromFloat64List(transform.toMatrix4Storage()),
-        child: result,
-      );
-    } else {
-      if (transform.scaleX != 1 || transform.scaleY != 1) {
-        result = Transform.scale(
-          scaleX: transform.scaleX,
-          scaleY: transform.scaleY,
-          child: result,
-        );
-      }
-      if (transform.rotationRadians != 0) {
-        result = Transform.rotate(
-          angle: transform.rotationRadians,
-          child: result,
-        );
-      }
-      if (transform.translateX != 0 || transform.translateY != 0) {
-        result = Transform.translate(
-          offset: Offset(transform.translateX, transform.translateY),
-          child: result,
-        );
-      }
-    }
-    return result;
+    // Every wrapper below is unconditional and stays mounted for the life of
+    // the instance. A conditional wrapper changes the shape of the element
+    // tree between frames, which forces Flutter to deactivate and re-inflate
+    // the spawned subtree and silently destroys any State it holds.
+    //
+    // Transform carries the full composed matrix, which reproduces the former
+    // translate/rotate/scale chain exactly: the matrix is T * R * S and the
+    // pure translation commutes with the center alignment, leaving rotation
+    // and scale about the center and translation in parent space.
+    //
+    // Opacity at 1 skips its layer, and a disabled ImageFiltered skips its
+    // own, so an untransformed instance costs nothing extra to paint.
+    return Transform(
+      alignment: Alignment.center,
+      transform: Matrix4.fromFloat64List(transform.toMatrix4Storage()),
+      child: Opacity(
+        opacity: transform.opacity,
+        child: ImageFiltered(
+          enabled: filter != null,
+          imageFilter: filter ?? _inertFilter,
+          child: child,
+        ),
+      ),
+    );
   }
 }
