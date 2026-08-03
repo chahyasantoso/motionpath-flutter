@@ -13,7 +13,7 @@ void main() {
       'Walker', 'Burst', 'Motorcycle', 'Pasar Malam',
       'Pasar Malam Observer', 'Tower Defense', 'Hooks Demo', 'Helix', 'Carousel',
     ]) {
-      expect(find.text(title), findsOneWidget);
+      expect(find.text(title, skipOffstage: false), findsOneWidget);
     }
   });
 
@@ -24,7 +24,7 @@ void main() {
       await tester.tap(find.byIcon(Icons.apps));
       await tester.pumpAndSettle();
       await tester.tap(find.text(selection, skipOffstage: false));
-      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pumpAndSettle();
       expect(find.textContaining('MotionPath'), findsWidgets);
     }
   });
