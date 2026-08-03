@@ -3,7 +3,11 @@ import 'package:flutter/material.dart';
 import 'burst_demo.dart';
 import 'carousel_demo.dart';
 import 'helix_demo.dart';
+import 'hooks_demo.dart';
 import 'motorcycle_demo.dart';
+import 'pasar_malam_demo.dart';
+import 'pasar_malam_observer_demo.dart';
+import 'tower_defense_demo.dart';
 import 'walker_demo.dart';
 
 void main() => runApp(const MotionPathExampleApp());
@@ -33,24 +37,50 @@ class _DemoLauncherPageState extends State<DemoLauncherPage> {
     'Walker',
     'Burst',
     'Motorcycle',
+    'Pasar Malam',
+    'Pasar Malam Observer',
+    'Tower Defense',
+    'Hooks Demo',
     'Helix',
     'Carousel',
   ];
 
+  static const List<IconData> _icons = <IconData>[
+    Icons.directions_walk,
+    Icons.blur_on,
+    Icons.two_wheeler,
+    Icons.nightlight,
+    Icons.remove_red_eye,
+    Icons.shield,
+    Icons.auto_awesome,
+    Icons.all_inclusive,
+    Icons.view_carousel,
+  ];
+
+  static const List<String> _descriptions = <String>[
+    'FK walking graph',
+    'Scroll-driven burst',
+    'Scroll-driven ride',
+    'Scroll-driven night market',
+    'Observer-driven lantern loop',
+    'Interactive tower defense',
+    'Direct patch consumption',
+    'Depth and Matrix4',
+    'Interactive path cards',
+  ];
+
   Widget _selectedDemo() {
     switch (_selectedIndex) {
-      case 0:
-        return const WalkerDemoPage();
-      case 1:
-        return const BurstDemoPage();
-      case 2:
-        return const MotorcycleDemoPage();
-      case 3:
-        return const HelixDemoPage();
-      case 4:
-        return const CarouselDemoPage();
-      default:
-        return const WalkerDemoPage();
+      case 0: return const WalkerDemoPage();
+      case 1: return const BurstDemoPage();
+      case 2: return const MotorcycleDemoPage();
+      case 3: return const PasarMalamDemoPage();
+      case 4: return const PasarMalamObserverDemoPage();
+      case 5: return const TowerDefenseDemoPage();
+      case 6: return const HooksDemoPage();
+      case 7: return const HelixDemoPage();
+      case 8: return const CarouselDemoPage();
+      default: return const WalkerDemoPage();
     }
   }
 
@@ -99,20 +129,4 @@ class _DemoLauncherPageState extends State<DemoLauncherPage> {
         ),
         body: _selectedDemo(),
       );
-
-  static const List<IconData> _icons = <IconData>[
-    Icons.directions_walk,
-    Icons.blur_on,
-    Icons.two_wheeler,
-    Icons.all_inclusive,
-    Icons.view_carousel,
-  ];
-
-  static const List<String> _descriptions = <String>[
-    'FK walking graph',
-    'Scroll-driven burst',
-    'Scroll-driven ride',
-    'Depth and Matrix4',
-    'Interactive path cards',
-  ];
 }
