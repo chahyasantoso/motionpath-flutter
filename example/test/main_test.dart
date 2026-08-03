@@ -24,7 +24,10 @@ void main() {
     for (final String selection in <String>['Pasar Malam', 'Tower Defense', 'Hooks Demo', 'Spiral / Zuma']) {
       await tester.tap(find.byIcon(Icons.apps));
       await tester.pumpAndSettle();
-      await tester.tap(find.text(selection, skipOffstage: false));
+      final Finder target = find.text(selection, skipOffstage: false);
+      await tester.ensureVisible(target);
+      await tester.pump();
+      await tester.tap(target);
       await tester.pumpAndSettle();
       expect(find.textContaining('MotionPath'), findsWidgets);
     }
