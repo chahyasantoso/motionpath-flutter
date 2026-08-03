@@ -40,13 +40,12 @@ class MotionPathSpawnView extends StatefulWidget {
 
 class _MotionPathSpawnViewState extends State<MotionPathSpawnView> {
   final Map<String, Widget> _children = <String, Widget>{};
-  final Map<String, GlobalKey> _childKeys = <String, GlobalKey>{};
 
   Widget _childFor(MotionPathSpawnInstance instance, BuildContext context) {
     return _children.putIfAbsent(
       instance.id,
       () => KeyedSubtree(
-        key: _childKeys.putIfAbsent(instance.id, GlobalKey.new),
+        key: ValueKey<String>('motion-path-spawn-${instance.id}'),
         child: widget.itemBuilder(context, instance),
       ),
     );
@@ -55,7 +54,6 @@ class _MotionPathSpawnViewState extends State<MotionPathSpawnView> {
   @override
   void dispose() {
     _children.clear();
-    _childKeys.clear();
     super.dispose();
   }
 
@@ -71,9 +69,6 @@ class _MotionPathSpawnViewState extends State<MotionPathSpawnView> {
         };
         _children.removeWhere(
           (String id, Widget child) => !liveIds.contains(id),
-        );
-        _childKeys.removeWhere(
-          (String id, GlobalKey key) => !liveIds.contains(id),
         );
         return Stack(
           alignment: widget.alignment,
