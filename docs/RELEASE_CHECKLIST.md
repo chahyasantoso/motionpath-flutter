@@ -19,7 +19,7 @@ This repository is not publish-ready until every item below is checked on the re
 - [ ] Set the release version and update `CHANGELOG.md`.
 - [ ] Run `dart pub publish --dry-run` for the core package.
 - [ ] Run `flutter pub publish --dry-run` for the Flutter package.
-- [x] Confirm repository, issue tracker, and documentation links in both package manifests.
+- [ ] Confirm repository, issue tracker, and documentation links in both package manifests.
 
 ## Flutter integration
 
@@ -42,9 +42,14 @@ This repository is not publish-ready until every item below is checked on the re
 - [x] Phase 6 parity closeout, including eased overshoot regression coverage, PR #123.
 - [x] Phase 7 Carousel closeout, PRs #121 and #122.
 - [x] Phase 8 Helix/depth closeout, PRs #124 through #126.
-- [x] Launcher exposes Spiral/Zuma and the endpoint resampling regression is covered, PR #146.
+- [x] Launcher exposes Spiral/Zuma and endpoint resampling is covered, PR #146.
 - [x] Spawn identity no longer depends on a global key registry, PR #147.
 - [x] Code smell and stale-document audit recorded in `docs/CODEBASE_AUDIT.md`.
+- [x] Parallel implementation plan recorded in `docs/AUDIT_IMPLEMENTATION_PLAN.md`.
+
+## Active implementation plan
+
+See `docs/AUDIT_IMPLEMENTATION_PLAN.md` for workstreams A through E, dependencies, and exit criteria.
 
 ## Explicit non-goals
 

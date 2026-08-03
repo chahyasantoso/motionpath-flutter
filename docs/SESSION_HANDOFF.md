@@ -1,6 +1,6 @@
 # MotionPath Flutter handoff
 
-Updated 2026-08-03 after PRs #146 and #147 merged green.
+Updated 2026-08-03 after the audit implementation plan was recorded.
 
 ## Repository and workflow
 
@@ -12,20 +12,18 @@ Updated 2026-08-03 after PRs #146 and #147 merged green.
 ## Current state
 
 - All ten completed demo routes are ported, covered, and reachable from the launcher.
-- PR #143 is merged, PR #144 is merged, PR #146 is merged, and PR #147 is merged.
-- Spiral/Zuma uses the generic spawn renderer. Its endpoint resampling and launcher timing regressions are covered.
+- PRs #143, #144, #146, and #147 are merged.
+- Spiral/Zuma uses the generic spawn renderer; endpoint resampling and launcher timing regressions are covered.
 - Spawn child identity uses namespaced value keys and an invariant wrapper tree; the former GlobalKey registry is gone.
-- Pasar Malam intentionally uses an asset-free frame indicator; the difference is documented in `docs/COMPATIBILITY.md`.
-- Phase 9 Release hardening remains open.
+- The codebase audit and parallel implementation plan are recorded in `docs/CODEBASE_AUDIT.md` and `docs/AUDIT_IMPLEMENTATION_PLAN.md`.
+- Phase 9 release hardening remains open.
 
 ## Next work
 
-1. Read `docs/CODEBASE_AUDIT.md` and decide whether the P1 validation and duplicate-observation items land before release.
-2. Run clean-package analysis/tests for core, Flutter adapter, and example from the release candidate commit.
-3. Review exports, API classifications, package metadata, and path dependencies.
-4. Run `dart pub publish --dry-run` and `flutter pub publish --dry-run` after release settings are ready.
-5. Capture controlled benchmark JSON with commit SHA, environment, Dart version, and build mode.
-6. Complete security, generated-file, changelog, and release-tag evidence.
+1. Implement workstreams A and B in the core runtime/plugin PR.
+2. Implement workstreams C and D in the adapter/release PR.
+3. Start workstream E immediately: clean-package checks, parity inventory, metadata, publish dry-runs, benchmark, security, and generated-file evidence.
+4. Update this handoff and `RELEASE_CHECKLIST.md` with commit-specific evidence after each green PR.
 
 ## Source of truth
 
@@ -35,4 +33,5 @@ Updated 2026-08-03 after PRs #146 and #147 merged green.
 - `docs/RELEASE_CHECKLIST.md`
 - `docs/API_SURFACE.md`
 - `docs/CODEBASE_AUDIT.md`
+- `docs/AUDIT_IMPLEMENTATION_PLAN.md`
 - `docs/SESSION_HANDOFF.md`
