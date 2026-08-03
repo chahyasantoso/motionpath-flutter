@@ -39,13 +39,19 @@ void main() {
     expect(find.byKey(const ValueKey<String>('content-a')), findsOneWidget);
     expect(find.byKey(const ValueKey<String>('content-b')), findsOneWidget);
     expect(find.byType(Stack), findsOneWidget);
-    expect(find.byType(Transform), findsNothing);
+    // These wrappers are intentionally invariant from the first frame.
+    // Conditional wrappers change the element tree when a patch gains
+    // translation, opacity, or blur and can deactivate the child State.
+    expect(find.byType(Transform), findsNWidgets(2));
+    expect(find.byType(Opacity), findsNWidgets(2));
+    expect(find.byType(ImageFiltered), findsNWidgets(2));
 
     controller.advanceTo(5);
     await tester.pump();
 
-    expect(find.byType(Transform), findsWidgets);
-    expect(find.byType(Opacity), findsWidgets);
+    expect(find.byType(Transform), findsNWidgets(2));
+    expect(find.byType(Opacity), findsNWidgets(2));
+    expect(find.byType(ImageFiltered), findsNWidgets(2));
     expect(tester.takeException(), isNull);
     controller.dispose();
   });
