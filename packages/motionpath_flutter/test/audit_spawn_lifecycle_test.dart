@@ -10,6 +10,17 @@ Widget _content(String label) => SizedBox(
       child: Text(label),
     );
 
+Widget _host({
+  required MotionPathSpawnController controller,
+  required MotionPathSpawnItemBuilder itemBuilder,
+}) => Directionality(
+      textDirection: TextDirection.ltr,
+      child: MotionPathSpawnView(
+        controller: controller,
+        itemBuilder: itemBuilder,
+      ),
+    );
+
 void main() {
   testWidgets('controller replacement drops cached children', (WidgetTester tester) async {
     final MotionPathSpawnController first = MotionPathSpawnController(
@@ -20,7 +31,7 @@ void main() {
     )..spawn(_child('same'));
 
     await tester.pumpWidget(
-      MotionPathSpawnView(
+      _host(
         controller: first,
         itemBuilder: (BuildContext context, MotionPathSpawnInstance instance) =>
             _content('first'),
@@ -29,7 +40,7 @@ void main() {
     expect(find.text('first'), findsOneWidget);
 
     await tester.pumpWidget(
-      MotionPathSpawnView(
+      _host(
         controller: second,
         itemBuilder: (BuildContext context, MotionPathSpawnInstance instance) =>
             _content('second'),
@@ -53,12 +64,12 @@ void main() {
         _content('second');
 
     await tester.pumpWidget(
-      MotionPathSpawnView(controller: controller, itemBuilder: buildFirst),
+      _host(controller: controller, itemBuilder: buildFirst),
     );
     expect(find.text('first'), findsOneWidget);
 
     await tester.pumpWidget(
-      MotionPathSpawnView(controller: controller, itemBuilder: buildSecond),
+      _host(controller: controller, itemBuilder: buildSecond),
     );
     expect(find.text('first'), findsNothing);
     expect(find.text('second'), findsOneWidget);
