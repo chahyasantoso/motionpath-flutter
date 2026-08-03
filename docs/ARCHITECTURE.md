@@ -83,4 +83,4 @@ There is exactly one active frame source per engine integration. A Flutter adapt
 
 ## Open system work
 
-The renderer contract is only one part of production readiness. The remaining system work includes stable scene/entity identity, asset preloading and eviction, capability diagnostics, transformed hit testing, semantics and reduced-motion policies, deterministic recording, frame budgeting, game-loop integration, authoring/tooling, schema migration, and stronger error recovery. These are tracked in [`RENDERER_IMPLEMENTATION_PLAN.md`](RENDERER_IMPLEMENTATION_PLAN.md) and [`ROADMAP.md`](ROADMAP.md).
+The renderer contract is only one part of production readiness. The remaining system work includes stable scene/entity identity, asset preloading and eviction, capability diagnostics, transformed hit testing, semantics and reduced-motion policies, deterministic recording, frame budgeting, game-loop integration, authoring/tooling, schema migration, plugin versioning, structured runtime errors, and recovery policy. These are tracked in [`RENDERER_IMPLEMENTATION_PLAN.md`](RENDERER_IMPLEMENTATION_PLAN.md) and [`ROADMAP.md`](ROADMAP.md).
