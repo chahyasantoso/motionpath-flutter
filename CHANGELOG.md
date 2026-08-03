@@ -8,7 +8,7 @@ Initial unpublished release line, updated 2026-08-03.
   interpolation, plugins, forward kinematics, and immutable renderer-neutral patches.
 - Flutter ticker, scroll, viewport, patch, painter, Walker, dynamic child,
   Helix/depth, and lifecycle adapters.
-- Nine runnable examples: Carousel, Spiral/Zuma, Helix, Walker, Burst,
+- Ten runnable examples: Carousel, Spiral/Zuma, Helix, Walker, Burst,
   Motorcycle, Pasar Malam, Pasar Malam Observer, Tower Defense, and Hooks Demo,
   all consuming generic composed patches through the example launcher.
 - Cross-repository parity fixtures for authored payloads, paths, lifecycle,
