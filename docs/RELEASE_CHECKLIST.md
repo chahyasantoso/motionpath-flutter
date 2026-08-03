@@ -1,6 +1,6 @@
 # Release checklist
 
-This repository is not publish-ready until every item below is checked on the release commit.
+Publishing and release hardening are **deferred until further notice**. Do not merge PR #150 or run publish dry-runs/tagging until publishing is reactivated.
 
 ## Contract and compatibility
 
@@ -14,11 +14,11 @@ This repository is not publish-ready until every item below is checked on the re
 
 - [ ] Review every export in both public library entrypoints.
 - [x] Classify stable, experimental, and internal APIs in `docs/API_SURFACE.md`.
-- [x] Manually inventory both public entrypoints against `docs/API_SURFACE.md`; generated export automation remains a post-release tooling improvement.
-- [ ] Replace path dependency with the published core version in the Flutter package before publishing.
-- [ ] Set the release version and update `CHANGELOG.md`.
-- [ ] Run `dart pub publish --dry-run` for the core package.
-- [ ] Run `flutter pub publish --dry-run` for the Flutter package.
+- [x] Manually inventory both public entrypoints against `docs/API_SURFACE.md`; generated export automation remains deferred.
+- [ ] Replace path dependency with the published core version, **deferred**.
+- [ ] Set the release version and update `CHANGELOG.md`, **deferred**.
+- [ ] Run `dart pub publish --dry-run`, **deferred**.
+- [ ] Run `flutter pub publish --dry-run`, **deferred**.
 - [x] Confirm repository, issue tracker, and documentation links in both package manifests.
 
 ## Flutter integration
@@ -31,20 +31,23 @@ This repository is not publish-ready until every item below is checked on the re
 
 ## Performance and release hygiene
 
-- [ ] Record controlled benchmark JSON with commit SHA, OS, CPU, Dart version, and build mode.
+- [ ] Record controlled benchmark JSON, **deferred**.
 - [ ] Review analyzer output with strict casts, inference, and raw types.
 - [ ] Confirm no generated files, credentials, or machine-local benchmark output are committed.
-- [ ] Tag the release commit only after CI is green.
-- [ ] Publish core and Flutter packages separately, in that order.
+- [ ] Tag the release commit, **deferred**.
+- [ ] Publish core and Flutter packages separately, **deferred**.
 
-## Active implementation evidence
+## Completed audit evidence
 
 - [x] Launcher exposes Spiral/Zuma and endpoint resampling is covered, PR #146.
 - [x] Spawn identity no longer depends on a global key registry, PR #147.
-- [x] Code smell and stale-document audit recorded in `docs/CODEBASE_AUDIT.md`.
-- [x] Parallel implementation plan recorded in `docs/AUDIT_IMPLEMENTATION_PLAN.md`.
 - [x] Runtime and plugin boundary hardening, PR #148.
 - [x] Spawn cache replacement coverage, PR #149.
+- [x] Code smell and stale-document audit recorded in `docs/CODEBASE_AUDIT.md`.
+
+## Resume trigger
+
+When publishing is reactivated, review PR #150, rerun the release-candidate matrix from its resulting commit, and then resume the unchecked release gates above.
 
 ## Explicit non-goals
 

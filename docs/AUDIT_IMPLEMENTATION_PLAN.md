@@ -2,7 +2,7 @@
 
 Updated 2026-08-03 after PRs #146 through #149 merged green.
 
-The goal is to remove release-relevant correctness risks without blocking independent release preparation. Code changes use separate PRs; documentation-only updates may land directly on `main`.
+The goal was to remove release-relevant correctness risks without blocking independent release preparation. Code workstreams A through D are complete. Publishing and release evidence are explicitly deferred until further notice.
 
 ## Workstreams
 
@@ -27,7 +27,7 @@ Status: **manual review complete; automation deferred**.
 
 - Both public entrypoints were reviewed against `docs/API_SURFACE.md`.
 - Intentional experimental adapters remain exported; implementation details remain under `lib/src/`.
-- Add generated export automation when release tooling is introduced. Until then, the manual review is the explicit release decision.
+- Generated export automation is deferred as a release-tooling improvement.
 
 ### D. Spawn cache lifecycle, P1
 
@@ -40,22 +40,18 @@ Status: **complete in PR #149**.
 
 ### E. Release evidence, P1
 
-Status: **active**.
+Status: **deferred until further notice**.
 
-- Run clean-package analyze/test commands and retain logs.
-- Complete parity inventory, package metadata/versioning, path dependency replacement, publish dry-runs, benchmark JSON, security scan, and generated-file hygiene.
+The following work is intentionally paused and must not be represented as complete:
 
-## Recommended execution order
+- clean-package release-candidate evidence
+- package metadata changes and path-dependency replacement
+- publish dry-runs
+- benchmark capture for release evidence
+- release security review and tagging
 
-1. PRs #148 and #149 are merged and their four-job CI matrices are green.
-2. Run the clean-package matrix from the current `main` tip and retain commit-specific artifacts.
-3. Finish package metadata, publish dry-runs, benchmark, security, and generated-file evidence in parallel where possible.
-4. Update `RELEASE_CHECKLIST.md` with commit-specific evidence, then tag only from the fully green release commit.
+PR #150 contains package metadata changes for a future publishing pass. It remains unmerged while publishing is deferred.
 
-## Exit criteria
+## Current conclusion
 
-- No duplicate observation registration is silently accepted. **Met by PR #148.**
-- Malformed plugin payloads fail consistently with actionable errors or produce the documented empty result, never an opaque cast error. **Met by PR #148.**
-- Public exports have an automated or explicitly reviewed inventory. **Manual review met; automation deferred.**
-- Spawn cache behavior under controller/builder replacement is tested and documented. **Met by PR #149.**
-- Release checklist has reproducible command and artifact evidence. **Pending.**
+All audit implementation work is complete. No additional audit code PR is currently required. Resume workstream E only when publishing is explicitly reactivated.

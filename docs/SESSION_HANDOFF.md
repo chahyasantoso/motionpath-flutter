@@ -1,6 +1,6 @@
 # MotionPath Flutter handoff
 
-Updated 2026-08-03 after the audit implementation plan was recorded.
+Updated 2026-08-03 after PRs #146 through #149 merged green.
 
 ## Repository and workflow
 
@@ -12,18 +12,18 @@ Updated 2026-08-03 after the audit implementation plan was recorded.
 ## Current state
 
 - All ten completed demo routes are ported, covered, and reachable from the launcher.
-- PRs #143, #144, #146, and #147 are merged.
+- PRs #143, #144, #146, #147, #148, and #149 are merged green.
 - Spiral/Zuma uses the generic spawn renderer; endpoint resampling and launcher timing regressions are covered.
-- Spawn child identity uses namespaced value keys and an invariant wrapper tree; the former GlobalKey registry is gone.
-- The codebase audit and parallel implementation plan are recorded in `docs/CODEBASE_AUDIT.md` and `docs/AUDIT_IMPLEMENTATION_PLAN.md`.
-- Phase 9 release hardening remains open.
+- Spawn child identity uses namespaced value keys and an invariant wrapper tree; cache replacement is covered.
+- Runtime duplicate-observation and malformed path/anchor payload hardening is complete.
+- Publishing and release hardening are deferred until further notice.
+- PR #150 is intentionally unmerged and reserved for a future publishing pass.
 
 ## Next work
 
-1. Implement workstreams A and B in the core runtime/plugin PR.
-2. Implement workstreams C and D in the adapter/release PR.
-3. Start workstream E immediately: clean-package checks, parity inventory, metadata, publish dry-runs, benchmark, security, and generated-file evidence.
-4. Update this handoff and `RELEASE_CHECKLIST.md` with commit-specific evidence after each green PR.
+1. No audit implementation work remains; workstreams A through D are complete.
+2. Do not merge PR #150 or run publish dry-runs, tagging, or release benchmark capture until publishing is reactivated.
+3. When reactivated, review PR #150, rerun clean-package checks from the resulting commit, and resume the release checklist.
 
 ## Source of truth
 
