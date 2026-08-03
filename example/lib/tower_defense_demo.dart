@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:motionpath_core/motionpath_core.dart';
-import 'package:motionpath_flutter/motionpath_flutter.dart';
 import 'tower_defense_scene.dart';
 
 class TowerDefenseDemoPage extends StatefulWidget { const TowerDefenseDemoPage({super.key}); @override State<TowerDefenseDemoPage> createState()=>_TowerDefenseDemoPageState(); }
