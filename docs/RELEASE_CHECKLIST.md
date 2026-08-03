@@ -14,7 +14,7 @@ This repository is not publish-ready until every item below is checked on the re
 
 - [ ] Review every export in both public library entrypoints.
 - [x] Classify stable, experimental, and internal APIs in `docs/API_SURFACE.md`.
-- [ ] Add an automated export inventory check or record why the manual review is sufficient.
+- [x] Manually inventory both public entrypoints against `docs/API_SURFACE.md`; generated export automation remains a post-release tooling improvement.
 - [ ] Replace path dependency with the published core version in the Flutter package before publishing.
 - [ ] Set the release version and update `CHANGELOG.md`.
 - [ ] Run `dart pub publish --dry-run` for the core package.
@@ -37,19 +37,14 @@ This repository is not publish-ready until every item below is checked on the re
 - [ ] Tag the release commit only after CI is green.
 - [ ] Publish core and Flutter packages separately, in that order.
 
-## Phase evidence already on `main`
+## Active implementation evidence
 
-- [x] Phase 6 parity closeout, including eased overshoot regression coverage, PR #123.
-- [x] Phase 7 Carousel closeout, PRs #121 and #122.
-- [x] Phase 8 Helix/depth closeout, PRs #124 through #126.
 - [x] Launcher exposes Spiral/Zuma and endpoint resampling is covered, PR #146.
 - [x] Spawn identity no longer depends on a global key registry, PR #147.
 - [x] Code smell and stale-document audit recorded in `docs/CODEBASE_AUDIT.md`.
 - [x] Parallel implementation plan recorded in `docs/AUDIT_IMPLEMENTATION_PLAN.md`.
-
-## Active implementation plan
-
-See `docs/AUDIT_IMPLEMENTATION_PLAN.md` for workstreams A through E, dependencies, and exit criteria.
+- [ ] Runtime and plugin boundary hardening, PR #148.
+- [ ] Spawn cache replacement coverage, PR #149.
 
 ## Explicit non-goals
 

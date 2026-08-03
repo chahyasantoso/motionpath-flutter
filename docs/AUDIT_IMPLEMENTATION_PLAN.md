@@ -8,58 +8,50 @@ The goal is to remove release-relevant correctness risks without blocking indepe
 
 ### A. Runtime contract hardening, P0
 
-Owner: core runtime.
+Status: **in PR #148**.
 
 - Reject duplicate observation edges in `MotionPathTrackRuntime.observe()`.
 - Add focused tests for duplicate output edges, duplicate input edges, and valid distinct edges.
 - Preserve insertion-order merge semantics for distinct output observations and document it.
 
-Blocked by: none. This is the first code slice.
-
 ### B. Plugin payload validation, P0
 
-Owner: core plugin boundary.
+Status: **in PR #148**.
 
 - Replace unsafe authored-anchor casts with finite numeric validation.
-- Decide and document the malformed-path policy: strict validation at construction versus empty composition at runtime. Use one policy consistently.
+- Ignore malformed or non-finite path nodes consistently instead of allowing opaque cast errors.
 - Add tests for malformed anchors, non-finite values, malformed nodes, and short paths.
-
-Blocked by: the contract decision in this workstream. Can run in parallel with A once the policy is fixed.
 
 ### C. Public API inventory, P1
 
-Owner: package/release tooling.
+Status: **manual review complete; automation deferred**.
 
-- Add a small test or script that compares public entrypoint exports with the API classification.
-- Keep implementation files under `lib/src/` internal by convention and document intentional experimental exports.
-- Add the result to the release checklist.
-
-Blocked by: none. Can run in parallel with A and B.
+- Reviewed both public entrypoints against `docs/API_SURFACE.md`.
+- Intentional experimental adapters remain exported; implementation details remain under `lib/src/`.
+- Add a generated export inventory when release tooling is introduced. Until then, the manual review is the explicit release decision.
 
 ### D. Spawn cache lifecycle, P1
 
-Owner: Flutter adapter.
+Status: **in PR #149**.
 
-- Add controller replacement coverage.
-- Add builder replacement coverage and decide whether builder changes invalidate cached children or require a stable builder contract.
+- Clear cached spawn children when the controller changes.
+- Clear cached spawn children when the item builder changes, preventing stale host closures from surviving.
 - Keep the invariant wrapper and value-key behavior from PR #147.
-
-Blocked by: none. Can run in parallel with A and B.
+- Add controller replacement and builder replacement coverage.
 
 ### E. Release evidence, P1
 
-Owner: release hardening.
+Status: **pending; can run in parallel**.
 
 - Run clean-package analyze/test commands and retain logs.
 - Complete parity inventory, package metadata/versioning, path dependency replacement, publish dry-runs, benchmark JSON, security scan, and generated-file hygiene.
 
-Blocked by: A and B release decisions; the mechanical evidence work can start immediately.
-
 ## Recommended execution order
 
-1. Implement A and B together in one focused core PR because both change boundary correctness and need the same fixture/test pass.
-2. Implement C and D in a separate Flutter/release PR so API tooling and widget lifecycle coverage do not block core review.
-3. Run E after both PRs are green, then update `RELEASE_CHECKLIST.md` with commit-specific evidence.
+1. Land PR #148 and PR #149 after all four CI jobs are green.
+2. Start E immediately from the current main tip; do not wait for the code PRs for mechanical evidence gathering.
+3. Re-run the clean-package matrix after both PRs merge.
+4. Update `RELEASE_CHECKLIST.md` with commit-specific evidence, then tag only from the fully green release commit.
 
 ## Exit criteria
 
